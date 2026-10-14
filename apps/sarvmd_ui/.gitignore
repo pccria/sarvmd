@@ -27,11 +27,19 @@ migrate_working_dir/
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
+.flutter-plugins
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
 /build/
 /coverage/
+
+# Executables & Binaries
+*.exe
+*.dll
+*.so
+*.dylib
+*.pdb
 
 # Symbolication related
 app.*.symbols
@@ -39,7 +47,13 @@ app.*.symbols
 # Obfuscation related
 app.*.map.json
 
+# Platform ephemeral
+/windows/flutter/ephemeral/
+/linux/flutter/ephemeral/
+
 # Android Studio will place build artifacts here
 /android/app/debug
 /android/app/profile
 /android/app/release
+/android/local.properties
+.gradle/

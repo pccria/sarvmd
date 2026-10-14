@@ -1,0 +1,4 @@
+# Dart CLI executable output
+bin/*.exe
+*.exe
+.dart_tool/

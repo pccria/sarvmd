@@ -3,48 +3,90 @@
 *.log
 *.pyc
 *.swp
+*~
+*.bak
+*.tmp
 .DS_Store
 .atom/
 .buildlog/
 .history
 .svn/
-.vscode/
 
-# IntelliJ related
+# Executables, compiled binaries, and debug symbols
+*.exe
+*.dll
+*.so
+*.dylib
+*.pdb
+*.o
+*.obj
+*.a
+*.lib
+*.exp
+*.ilk
+
+# IDE and Editor configurations
 *.iml
 *.ipr
 *.iws
 .idea/
+.vscode/
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
-
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
-.dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
-.pub-cache/
-.pub/
+# Flutter / Dart / Pub monorepo patterns
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.pub-cache/
+**/.pub/
 **/build/
+**/coverage/
+**/doc/api/
+
+# Platform-specific Flutter ephemeral and build artifacts
+**/windows/flutter/ephemeral/
+**/linux/flutter/ephemeral/
+**/macos/Flutter/ephemeral/
+**/ios/Flutter/ephemeral/
+**/ios/Flutter/.last_build_id
+**/ios/Pods/
+**/ios/.symlinks/
+**/macos/Pods/
+
+# Android specific
+**/android/local.properties
+**/android/app/debug/
+**/android/app/profile/
+**/android/app/release/
+**/.gradle/
+**/android/.gradle/
+**/android/app/build/
+**/captures/
+
+# Windows specific
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.vcxproj.user
+*.opendb
+Thumbs.db
+ehthumbs.db
+desktop.ini
 
 # Web related
-lib/generated_plugin_registrant.dart
+**/lib/generated_plugin_registrant.dart
 
-# Symbolication related
+# Symbolication & Obfuscation related
 app.*.symbols
-
-# Obfuscation related
 app.*.map.json
 
-# Exceptions to above rules.
+# Exceptions to above rules
 !/packages.dart
 
-# Output folder for generated PDFs
+# Output folder for generated PDFs and test outputs
 output/
+**/output/
+test_results/
 
 # Personal / Local task lists
 /Todo
