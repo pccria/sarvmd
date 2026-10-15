@@ -199,22 +199,39 @@ class _SettingsPanelState extends State<SettingsPanel> {
               ),
             ),
 
-            // Drawer Body Content
+            // Drawer Body Content (Touch Section Spine + Active Section Content)
             Expanded(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 220),
-                switchInCurve: Curves.easeOut,
-                switchOutCurve: Curves.easeIn,
-                child: currentSection == SettingsSection.mainMenu
-                    ? _buildMainMenu(context, cs, l10n)
-                    : _buildSectionContent(
-                        context,
-                        cs,
-                        l10n,
-                        sectionTextDir,
-                        currentSection,
-                        shouldTransparentize: shouldTransparentize,
-                      ),
+              child: Row(
+                children: [
+                  _TouchSectionSpine(
+                    activeSection: currentSection,
+                    onSectionSelected: (section) => _navigateTo(context, section),
+                    shouldTransparentize: shouldTransparentize,
+                  ),
+                  Container(
+                    width: 1.0,
+                    color: shouldTransparentize
+                        ? Colors.transparent
+                        : cs.outlineVariant.withValues(alpha: 0.25),
+                  ),
+                  Expanded(
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 220),
+                      switchInCurve: Curves.easeOut,
+                      switchOutCurve: Curves.easeIn,
+                      child: currentSection == SettingsSection.mainMenu
+                          ? _buildMainMenu(context, cs, l10n)
+                          : _buildSectionContent(
+                              context,
+                              cs,
+                              l10n,
+                              sectionTextDir,
+                              currentSection,
+                              shouldTransparentize: shouldTransparentize,
+                            ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -836,5 +853,230 @@ class _GlanceButtonState extends State<GlanceButton> {
         ),
       ),
     );
+  }
+}
+
+/// Slender vertical navigation spine for Touch Mode.
+///
+/// Provides rapid 1-tap direct inter-section jumps across all 7 panel categories
+/// without forcing the user through the nested `Back -> Menu -> Category` drill-down loop.
+/// Adapts gracefully to both portrait drawers and docked landscape side sheets with zero overflow.
+class _TouchSectionSpine extends StatelessWidget {
+  const _TouchSectionSpine({
+    required this.activeSection,
+    required this.onSectionSelected,
+    required this.shouldTransparentize,
+  });
+
+  final SettingsSection activeSection;
+  final ValueChanged<SettingsSection> onSectionSelected;
+  final bool shouldTransparentize;
+
+  static const List<_SpineItem> _items = [
+    _SpineItem(
+      section: SettingsSection.mainMenu,
+      icon: Icons.grid_view_rounded,
+    ),
+    _SpineItem(
+      section: SettingsSection.profiles,
+      icon: Icons.queue_music_rounded,
+    ),
+    _SpineItem(
+      section: SettingsSection.pageSetup,
+      icon: Icons.description_outlined,
+    ),
+    _SpineItem(
+      section: SettingsSection.margins,
+      icon: Icons.space_dashboard_outlined,
+    ),
+    _SpineItem(
+      section: SettingsSection.staffSpacing,
+      icon: Icons.format_line_spacing_rounded,
+    ),
+    _SpineItem(
+      section: SettingsSection.systemHierarchy,
+      icon: Icons.account_tree_outlined,
+    ),
+    _SpineItem(
+      section: SettingsSection.export,
+      icon: Icons.ios_share_rounded,
+    ),
+  ];
+
+  String _getSectionLabel(
+    SettingsSection section,
+    AppLocalizations l10n,
+    bool isFa,
+  ) {
+    switch (section) {
+      case SettingsSection.mainMenu:
+        return isFa ? 'منوی اصلی' : 'Main Menu';
+      case SettingsSection.profiles:
+        return l10n.headerEnsembleProfiles;
+      case SettingsSection.pageSetup:
+        return l10n.pageSettings;
+      case SettingsSection.margins:
+        return l10n.marginsLabel;
+      case SettingsSection.staffSpacing:
+        return l10n.staffSpacing;
+      case SettingsSection.systemHierarchy:
+        return l10n.systemHierarchy;
+      case SettingsSection.export:
+        return l10n.exportManuscriptTitle;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
+    final isFa = Localizations.localeOf(context).languageCode == 'fa';
+
+    return Container(
+      width: 42.0,
+      decoration: BoxDecoration(
+        color: shouldTransparentize
+            ? Colors.transparent
+            : cs.surfaceContainerHighest.withValues(alpha: 0.16),
+      ),
+      child: ScrollConfiguration(
+        behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: CustomPaint(
+            painter: _SpineTrackPainter(
+              color: shouldTransparentize
+                  ? Colors.transparent
+                  : cs.outlineVariant.withValues(alpha: 0.35),
+              trackWidth: 1.5,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (int i = 0; i < _items.length; i++) ...[
+                  if (i > 0) const SizedBox(height: 6.0),
+                  _buildBead(context, _items[i], cs, l10n, isFa),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBead(
+    BuildContext context,
+    _SpineItem item,
+    ColorScheme cs,
+    AppLocalizations l10n,
+    bool isFa,
+  ) {
+    final isActive = item.section == activeSection;
+    final label = _getSectionLabel(item.section, l10n, isFa);
+
+    return Tooltip(
+      message: label,
+      preferBelow: false,
+      verticalOffset: 16,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          key: ValueKey('touch_spine_${item.section.name}'),
+          borderRadius: BorderRadius.circular(8.0),
+          onTap: () {
+            HapticFeedback.selectionClick();
+            onSectionSelected(item.section);
+          },
+          child: Container(
+            width: 38.0,
+            height: 34.0,
+            alignment: Alignment.center,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              curve: Curves.easeOutCubic,
+              width: 28.0,
+              height: 28.0,
+              decoration: BoxDecoration(
+                color: isActive
+                    ? cs.primary
+                    : (shouldTransparentize
+                        ? Colors.transparent
+                        : cs.surfaceContainerHighest.withValues(alpha: 0.45)),
+                borderRadius: BorderRadius.circular(8.0),
+                border: isActive
+                    ? null
+                    : Border.all(
+                        color: shouldTransparentize
+                            ? Colors.transparent
+                            : cs.outlineVariant.withValues(alpha: 0.35),
+                        width: 1.0,
+                      ),
+                boxShadow: isActive && !shouldTransparentize
+                    ? [
+                        BoxShadow(
+                          color: cs.primary.withValues(alpha: 0.35),
+                          blurRadius: 6.0,
+                          offset: const Offset(0, 1.5),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Icon(
+                item.icon,
+                size: isActive ? 16.5 : 15.5,
+                color: isActive
+                    ? cs.onPrimary
+                    : cs.onSurfaceVariant.withValues(
+                        alpha: shouldTransparentize ? 0.3 : 0.85,
+                      ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SpineItem {
+  const _SpineItem({
+    required this.section,
+    required this.icon,
+  });
+
+  final SettingsSection section;
+  final IconData icon;
+}
+
+class _SpineTrackPainter extends CustomPainter {
+  const _SpineTrackPainter({
+    required this.color,
+    required this.trackWidth,
+  });
+
+  final Color color;
+  final double trackWidth;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (color.a == 0.0 || size.height <= 36.0) return;
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = trackWidth
+      ..strokeCap = StrokeCap.round;
+
+    final centerX = size.width / 2.0;
+    canvas.drawLine(
+      Offset(centerX, 17.0),
+      Offset(centerX, size.height - 17.0),
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _SpineTrackPainter oldDelegate) {
+    return oldDelegate.color != color || oldDelegate.trackWidth != trackWidth;
   }
 }
