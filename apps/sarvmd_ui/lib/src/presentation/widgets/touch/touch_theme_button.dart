@@ -117,19 +117,19 @@ class TouchThemeButton extends StatelessWidget {
       buttonBuilder: (context, onTap) {
         final accentColor = viewState.accent.primary;
         return Container(
-          height: 38.0,
-          width: 38.0,
+          height: 40.0,
+          width: 44.0,
           decoration: BoxDecoration(
             color: cs.surfaceContainerHighest.withValues(alpha: 0.85),
-            borderRadius: BorderRadius.circular(19.0),
+            borderRadius: BorderRadius.circular(14.0),
             border: Border.all(
               color: accentColor,
-              width: 1.6,
+              width: 1.8,
             ),
             boxShadow: [
               BoxShadow(
-                color: accentColor.withValues(alpha: 0.25),
-                blurRadius: 4.0,
+                color: accentColor.withValues(alpha: 0.30),
+                blurRadius: 5.0,
                 offset: const Offset(0, 1.5),
               ),
               BoxShadow(
@@ -141,15 +141,15 @@ class TouchThemeButton extends StatelessWidget {
           ),
           child: Center(
             child: Container(
-              width: 22.0,
-              height: 22.0,
+              width: 26.0,
+              height: 26.0,
               decoration: BoxDecoration(
-                color: accentColor.withValues(alpha: 0.15),
+                color: accentColor.withValues(alpha: 0.16),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 modeIcon,
-                size: 13.5,
+                size: 16.0,
                 color: accentColor,
               ),
             ),

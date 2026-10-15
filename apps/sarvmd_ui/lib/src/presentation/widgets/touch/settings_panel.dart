@@ -188,9 +188,9 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         TouchLanguageButton(),
-                        SizedBox(width: 4.0),
+                        SizedBox(width: 6.0),
                         TouchThemeButton(),
-                        SizedBox(width: 4.0),
+                        SizedBox(width: 6.0),
                         GlanceButton(showLabel: false, compact: true),
                       ],
                     ),
@@ -806,13 +806,13 @@ class _GlanceButtonState extends State<GlanceButton> {
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            borderRadius: BorderRadius.circular(19.0),
+            borderRadius: BorderRadius.circular(14.0),
             onTap: () {}, // Handled by Listener for 0ms latency
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
               curve: Curves.easeOutCubic,
-              height: 38.0,
-              width: widget.showLabel ? null : 38.0,
+              height: 40.0,
+              width: widget.showLabel ? null : 44.0,
               constraints: widget.showLabel
                   ? const BoxConstraints(minWidth: 44.0)
                   : null,
@@ -823,12 +823,12 @@ class _GlanceButtonState extends State<GlanceButton> {
                 color: isPeeking
                     ? cs.primary
                     : cs.surfaceContainerHighest.withValues(alpha: 0.85),
-                borderRadius: BorderRadius.circular(19.0),
+                borderRadius: BorderRadius.circular(14.0),
                 border: Border.all(
                   color: isPeeking
                       ? cs.primary
                       : cs.outlineVariant.withValues(alpha: 0.6),
-                  width: 1.0,
+                  width: 1.2,
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -845,8 +845,8 @@ class _GlanceButtonState extends State<GlanceButton> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Container(
-                          width: 22.0,
-                          height: 22.0,
+                          width: 26.0,
+                          height: 26.0,
                           decoration: BoxDecoration(
                             color: isPeeking
                                 ? cs.onPrimary.withValues(alpha: 0.22)
@@ -857,7 +857,7 @@ class _GlanceButtonState extends State<GlanceButton> {
                             isPeeking
                                 ? Icons.visibility_off_outlined
                                 : Icons.visibility_outlined,
-                            size: 13.0,
+                            size: 16.0,
                             color: isPeeking ? cs.onPrimary : cs.primary,
                           ),
                         ),
@@ -874,8 +874,8 @@ class _GlanceButtonState extends State<GlanceButton> {
                     )
                   : Center(
                       child: Container(
-                        width: 22.0,
-                        height: 22.0,
+                        width: 26.0,
+                        height: 26.0,
                         decoration: BoxDecoration(
                           color: isPeeking
                               ? cs.onPrimary.withValues(alpha: 0.22)
@@ -886,7 +886,7 @@ class _GlanceButtonState extends State<GlanceButton> {
                           isPeeking
                               ? Icons.visibility_off_outlined
                               : Icons.visibility_outlined,
-                          size: 13.0,
+                          size: 16.0,
                           color: isPeeking ? cs.onPrimary : cs.primary,
                         ),
                       ),

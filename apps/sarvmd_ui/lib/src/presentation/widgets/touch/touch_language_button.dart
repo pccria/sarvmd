@@ -55,14 +55,14 @@ class TouchLanguageButton extends StatelessWidget {
       },
       buttonBuilder: (context, onTap) {
         return Container(
-          height: 38.0,
-          width: 38.0,
+          height: 40.0,
+          width: 44.0,
           decoration: BoxDecoration(
             color: cs.surfaceContainerHighest.withValues(alpha: 0.85),
-            borderRadius: BorderRadius.circular(19.0),
+            borderRadius: BorderRadius.circular(14.0),
             border: Border.all(
               color: cs.outlineVariant.withValues(alpha: 0.6),
-              width: 1.0,
+              width: 1.2,
             ),
             boxShadow: [
               BoxShadow(
@@ -73,59 +73,30 @@ class TouchLanguageButton extends StatelessWidget {
             ],
           ),
           child: Center(
-            child: SizedBox(
-              width: 26.0,
-              height: 26.0,
-              child: Stack(
-                alignment: Alignment.center,
-                clipBehavior: Clip.none,
-                children: [
-                  Container(
-                    width: 22.0,
-                    height: 22.0,
-                    decoration: BoxDecoration(
-                      color: cs.primary.withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.language_rounded,
-                      size: 13.0,
-                      color: cs.primary,
-                    ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Icon(
+                  Icons.language_rounded,
+                  size: 24.0,
+                  color: cs.primary.withValues(alpha: 0.22),
+                ),
+                Text(
+                  currentCode,
+                  style: TextStyle(
+                    fontSize: 12.0,
+                    fontWeight: FontWeight.w900,
+                    color: cs.primary,
+                    letterSpacing: 0.5,
+                    shadows: [
+                      Shadow(
+                        color: cs.surfaceContainerHighest,
+                        blurRadius: 3.0,
+                      ),
+                    ],
                   ),
-                  Positioned(
-                    top: -1.0,
-                    right: -3.0,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 3.0,
-                        vertical: 0.5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: cs.primary,
-                        borderRadius: BorderRadius.circular(5.0),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.2),
-                            blurRadius: 2.0,
-                            offset: const Offset(0, 1),
-                          ),
-                        ],
-                      ),
-                      child: Text(
-                        currentCode,
-                        style: TextStyle(
-                          fontSize: 7.5,
-                          fontWeight: FontWeight.w900,
-                          color: cs.onPrimary,
-                          letterSpacing: -0.2,
-                          height: 1.0,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         );
