@@ -56,8 +56,7 @@ class TouchLanguageButton extends StatelessWidget {
       buttonBuilder: (context, onTap) {
         return Container(
           height: 38.0,
-          constraints: const BoxConstraints(minWidth: 44.0),
-          padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
+          width: 38.0,
           decoration: BoxDecoration(
             color: cs.surfaceContainerHighest.withValues(alpha: 0.85),
             borderRadius: BorderRadius.circular(19.0),
@@ -73,33 +72,61 @@ class TouchLanguageButton extends StatelessWidget {
               ),
             ],
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 22.0,
-                height: 22.0,
-                decoration: BoxDecoration(
-                  color: cs.primary.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.language_rounded,
-                  size: 13.0,
-                  color: cs.primary,
-                ),
+          child: Center(
+            child: SizedBox(
+              width: 26.0,
+              height: 26.0,
+              child: Stack(
+                alignment: Alignment.center,
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: 22.0,
+                    height: 22.0,
+                    decoration: BoxDecoration(
+                      color: cs.primary.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.language_rounded,
+                      size: 13.0,
+                      color: cs.primary,
+                    ),
+                  ),
+                  Positioned(
+                    top: -1.0,
+                    right: -3.0,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 3.0,
+                        vertical: 0.5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: cs.primary,
+                        borderRadius: BorderRadius.circular(5.0),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.2),
+                            blurRadius: 2.0,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        currentCode,
+                        style: TextStyle(
+                          fontSize: 7.5,
+                          fontWeight: FontWeight.w900,
+                          color: cs.onPrimary,
+                          letterSpacing: -0.2,
+                          height: 1.0,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 6.0),
-              Text(
-                currentCode,
-                style: TextStyle(
-                  fontSize: 12.0,
-                  fontWeight: FontWeight.bold,
-                  color: cs.onSurface,
-                  letterSpacing: 0.6,
-                ),
-              ),
-            ],
+            ),
           ),
         );
       },

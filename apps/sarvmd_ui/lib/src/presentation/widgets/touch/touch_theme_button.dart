@@ -115,55 +115,44 @@ class TouchThemeButton extends StatelessWidget {
         return const SizedBox.shrink();
       },
       buttonBuilder: (context, onTap) {
+        final accentColor = viewState.accent.primary;
         return Container(
           height: 38.0,
-          constraints: const BoxConstraints(minWidth: 44.0),
-          padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
+          width: 38.0,
           decoration: BoxDecoration(
             color: cs.surfaceContainerHighest.withValues(alpha: 0.85),
             borderRadius: BorderRadius.circular(19.0),
             border: Border.all(
-              color: cs.outlineVariant.withValues(alpha: 0.6),
-              width: 1.0,
+              color: accentColor,
+              width: 1.6,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.08),
+                color: accentColor.withValues(alpha: 0.25),
                 blurRadius: 4.0,
+                offset: const Offset(0, 1.5),
+              ),
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.06),
+                blurRadius: 3.0,
                 offset: const Offset(0, 2),
               ),
             ],
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 22.0,
-                height: 22.0,
-                decoration: BoxDecoration(
-                  color: cs.primary.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  modeIcon,
-                  size: 13.0,
-                  color: cs.primary,
-                ),
+          child: Center(
+            child: Container(
+              width: 22.0,
+              height: 22.0,
+              decoration: BoxDecoration(
+                color: accentColor.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
               ),
-              const SizedBox(width: 6.0),
-              Container(
-                width: 10.0,
-                height: 10.0,
-                decoration: BoxDecoration(
-                  color: viewState.accent.primary,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: cs.onSurface.withValues(alpha: 0.2),
-                    width: 1.0,
-                  ),
-                ),
+              child: Icon(
+                modeIcon,
+                size: 13.5,
+                color: accentColor,
               ),
-            ],
+            ),
           ),
         );
       },

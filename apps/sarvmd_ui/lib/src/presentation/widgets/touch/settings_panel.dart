@@ -183,15 +183,15 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       ),
                     ),
 
-                    // Controls (Glance, Language & Theme)
+                    // Controls (Language, Theme & Peek)
                     const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        GlanceButton(showLabel: false, compact: true),
-                        SizedBox(width: 6.0),
                         TouchLanguageButton(),
                         SizedBox(width: 4.0),
                         TouchThemeButton(),
+                        SizedBox(width: 4.0),
+                        GlanceButton(showLabel: false, compact: true),
                       ],
                     ),
                   ],
@@ -804,50 +804,93 @@ class _GlanceButtonState extends State<GlanceButton> {
       child: Tooltip(
         message: l10n.peekCanvas,
         child: Material(
-          color: isPeeking
-              ? cs.primary
-              : cs.primary.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(16.0),
+          color: Colors.transparent,
           child: InkWell(
-            borderRadius: BorderRadius.circular(16.0),
+            borderRadius: BorderRadius.circular(19.0),
             onTap: () {}, // Handled by Listener for 0ms latency
-            child: Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: widget.showLabel ? 10.0 : 8.0,
-                vertical: widget.compact ? 4.0 : 6.0,
-              ),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              curve: Curves.easeOutCubic,
+              height: 38.0,
+              width: widget.showLabel ? null : 38.0,
+              constraints: widget.showLabel
+                  ? const BoxConstraints(minWidth: 44.0)
+                  : null,
+              padding: widget.showLabel
+                  ? const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0)
+                  : const EdgeInsets.all(4.0),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16.0),
+                color: isPeeking
+                    ? cs.primary
+                    : cs.surfaceContainerHighest.withValues(alpha: 0.85),
+                borderRadius: BorderRadius.circular(19.0),
                 border: Border.all(
                   color: isPeeking
                       ? cs.primary
-                      : cs.primary.withValues(alpha: 0.35),
+                      : cs.outlineVariant.withValues(alpha: 0.6),
                   width: 1.0,
                 ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    isPeeking
-                        ? Icons.visibility_off_outlined
-                        : Icons.visibility_outlined,
-                    size: 15.0,
-                    color: isPeeking ? cs.onPrimary : cs.primary,
+                boxShadow: [
+                  BoxShadow(
+                    color: isPeeking
+                        ? cs.primary.withValues(alpha: 0.35)
+                        : Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 4.0,
+                    offset: const Offset(0, 2),
                   ),
-                  if (widget.showLabel) ...[
-                    const SizedBox(width: 5.0),
-                    Text(
-                      l10n.peekCanvas,
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w700,
-                        color: isPeeking ? cs.onPrimary : cs.primary,
-                      ),
-                    ),
-                  ],
                 ],
               ),
+              child: widget.showLabel
+                  ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 22.0,
+                          height: 22.0,
+                          decoration: BoxDecoration(
+                            color: isPeeking
+                                ? cs.onPrimary.withValues(alpha: 0.22)
+                                : cs.primary.withValues(alpha: 0.12),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            isPeeking
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
+                            size: 13.0,
+                            color: isPeeking ? cs.onPrimary : cs.primary,
+                          ),
+                        ),
+                        const SizedBox(width: 6.0),
+                        Text(
+                          l10n.peekCanvas,
+                          style: TextStyle(
+                            fontSize: 12.0,
+                            fontWeight: FontWeight.bold,
+                            color: isPeeking ? cs.onPrimary : cs.onSurface,
+                          ),
+                        ),
+                      ],
+                    )
+                  : Center(
+                      child: Container(
+                        width: 22.0,
+                        height: 22.0,
+                        decoration: BoxDecoration(
+                          color: isPeeking
+                              ? cs.onPrimary.withValues(alpha: 0.22)
+                              : cs.primary.withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          isPeeking
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                          size: 13.0,
+                          color: isPeeking ? cs.onPrimary : cs.primary,
+                        ),
+                      ),
+                    ),
             ),
           ),
         ),
