@@ -537,5 +537,7 @@
   "shortcutToggleZenMode": "Toggle Zen / distraction-free mode",
   "shortcutHelp": "Show keyboard shortcuts",
   "shortcutCloseDialog": "Close dialog / dismiss",
-  "noShortcutsFound": "No matching shortcuts found"
+  "noShortcutsFound": "No matching shortcuts found",
+  "peekCanvas": "Peek Canvas",
+  "restorePanel": "Restore Settings Panel"
 }

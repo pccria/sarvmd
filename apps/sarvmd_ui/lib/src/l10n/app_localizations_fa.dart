@@ -1244,4 +1244,10 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get noShortcutsFound => 'میانبری با این عبارت یافت نشد';
+
+  @override
+  String get peekCanvas => 'مشاهده بوم';
+
+  @override
+  String get restorePanel => 'نمایش پنل تنظیمات';
 }

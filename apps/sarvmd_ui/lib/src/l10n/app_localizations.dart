@@ -2419,6 +2419,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No matching shortcuts found'**
   String get noShortcutsFound;
+
+  /// No description provided for @peekCanvas.
+  ///
+  /// In en, this message translates to:
+  /// **'Peek Canvas'**
+  String get peekCanvas;
+
+  /// No description provided for @restorePanel.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore Settings Panel'**
+  String get restorePanel;
 }
 
 class _AppLocalizationsDelegate

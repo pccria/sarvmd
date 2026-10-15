@@ -55,15 +55,14 @@ class TouchLanguageButton extends StatelessWidget {
       },
       buttonBuilder: (context, onTap) {
         return Container(
-          height: 38.0,
-          constraints: const BoxConstraints(minWidth: 44.0),
-          padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
+          height: 40.0,
+          width: 44.0,
           decoration: BoxDecoration(
             color: cs.surfaceContainerHighest.withValues(alpha: 0.85),
-            borderRadius: BorderRadius.circular(19.0),
+            borderRadius: BorderRadius.circular(14.0),
             border: Border.all(
               color: cs.outlineVariant.withValues(alpha: 0.6),
-              width: 1.0,
+              width: 1.2,
             ),
             boxShadow: [
               BoxShadow(
@@ -73,33 +72,32 @@ class TouchLanguageButton extends StatelessWidget {
               ),
             ],
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 22.0,
-                height: 22.0,
-                decoration: BoxDecoration(
-                  color: cs.primary.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
+          child: Center(
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Icon(
                   Icons.language_rounded,
-                  size: 13.0,
-                  color: cs.primary,
+                  size: 24.0,
+                  color: cs.primary.withValues(alpha: 0.22),
                 ),
-              ),
-              const SizedBox(width: 6.0),
-              Text(
-                currentCode,
-                style: TextStyle(
-                  fontSize: 12.0,
-                  fontWeight: FontWeight.bold,
-                  color: cs.onSurface,
-                  letterSpacing: 0.6,
+                Text(
+                  currentCode,
+                  style: TextStyle(
+                    fontSize: 12.0,
+                    fontWeight: FontWeight.w900,
+                    color: cs.primary,
+                    letterSpacing: 0.5,
+                    shadows: [
+                      Shadow(
+                        color: cs.surfaceContainerHighest,
+                        blurRadius: 3.0,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },

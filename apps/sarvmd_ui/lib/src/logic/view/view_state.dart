@@ -37,6 +37,9 @@ class ViewState {
   final double calibrationFactor;
   final Set<GuideType> activeGuides;
   final String? activeScrubbingMargin;
+  final bool isScrubbing;
+  final String? activeScrubbingTelemetry;
+  final bool isPanelPeeking;
   final InputMode inputMode;
   final SettingsSection activeTouchSection;
   final Set<SettingsSection> expandedPointerSections;
@@ -50,6 +53,9 @@ class ViewState {
     this.calibrationFactor = 1.0,
     this.activeGuides = const {GuideType.paperEdges, GuideType.rulerWings},
     this.activeScrubbingMargin,
+    this.isScrubbing = false,
+    this.activeScrubbingTelemetry,
+    this.isPanelPeeking = false,
     this.inputMode = InputMode.pointer,
     this.activeTouchSection = SettingsSection.mainMenu,
     this.expandedPointerSections = const {
@@ -71,6 +77,10 @@ class ViewState {
     Set<GuideType>? activeGuides,
     String? activeScrubbingMargin,
     bool clearScrubbingMargin = false,
+    bool? isScrubbing,
+    String? activeScrubbingTelemetry,
+    bool clearScrubbingTelemetry = false,
+    bool? isPanelPeeking,
     InputMode? inputMode,
     SettingsSection? activeTouchSection,
     Set<SettingsSection>? expandedPointerSections,
@@ -87,6 +97,11 @@ class ViewState {
       activeScrubbingMargin: clearScrubbingMargin
           ? null
           : (activeScrubbingMargin ?? this.activeScrubbingMargin),
+      isScrubbing: isScrubbing ?? this.isScrubbing,
+      activeScrubbingTelemetry: clearScrubbingTelemetry
+          ? null
+          : (activeScrubbingTelemetry ?? this.activeScrubbingTelemetry),
+      isPanelPeeking: isPanelPeeking ?? this.isPanelPeeking,
       inputMode: inputMode ?? this.inputMode,
       activeTouchSection: activeTouchSection ?? this.activeTouchSection,
       expandedPointerSections:

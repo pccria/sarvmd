@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sarvmd_core/sarvmd_core.dart' as core;
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/layout_policy.dart';
 import '../../../core/utils/unit_formatter.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../logic/view/view_cubit.dart';
 import '../common/property_row.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -546,6 +548,9 @@ class _AnnotatedSliderState extends State<_AnnotatedSlider> {
       _isDragging = true;
       FocusManager.instance.primaryFocus?.unfocus();
       setState(() => _isScrubbing = true);
+      context.read<ViewCubit?>()?.startScrubbing(
+        telemetry: '${widget.label}: ${widget.value.toStringAsFixed(2)} mm',
+      );
     }
     if (_isDragging) {
       final range = widget.max - widget.min;
@@ -557,6 +562,9 @@ class _AnnotatedSliderState extends State<_AnnotatedSlider> {
       if (rounded != widget.value) {
         widget.onChanged(rounded);
         _controller.text = rounded.toStringAsFixed(2);
+        context.read<ViewCubit?>()?.updateScrubbingTelemetry(
+          '${widget.label}: ${rounded.toStringAsFixed(2)} mm',
+        );
       }
     }
   }
@@ -565,6 +573,7 @@ class _AnnotatedSliderState extends State<_AnnotatedSlider> {
     if (_isDragging) {
       _isDragging = false;
       setState(() => _isScrubbing = false);
+      context.read<ViewCubit?>()?.endScrubbing();
     }
     _dragStartPos = null;
   }
@@ -573,6 +582,7 @@ class _AnnotatedSliderState extends State<_AnnotatedSlider> {
     if (_isDragging) {
       _isDragging = false;
       setState(() => _isScrubbing = false);
+      context.read<ViewCubit?>()?.endScrubbing();
     }
     _dragStartPos = null;
   }
@@ -695,7 +705,22 @@ class _AnnotatedSliderState extends State<_AnnotatedSlider> {
                     value: widget.value.clamp(widget.min, widget.max),
                     min: widget.min,
                     max: widget.max,
-                    onChanged: widget.enabled ? widget.onChanged : null,
+                    onChangeStart: (v) {
+                      context.read<ViewCubit?>()?.startScrubbing(
+                        telemetry: '${widget.label}: ${v.toStringAsFixed(2)} mm',
+                      );
+                    },
+                    onChanged: widget.enabled
+                        ? (v) {
+                            widget.onChanged(v);
+                            context.read<ViewCubit?>()?.updateScrubbingTelemetry(
+                              '${widget.label}: ${v.toStringAsFixed(2)} mm',
+                            );
+                          }
+                        : null,
+                    onChangeEnd: (_) {
+                      context.read<ViewCubit?>()?.endScrubbing();
+                    },
                   ),
                 ),
               ),

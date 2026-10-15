@@ -38,7 +38,8 @@ class PointerEditorScreen extends StatefulWidget {
   State<PointerEditorScreen> createState() => _PointerEditorScreenState();
 }
 
-class _PointerEditorScreenState extends State<PointerEditorScreen> {
+class _PointerEditorScreenState extends State<PointerEditorScreen>
+    with TickerProviderStateMixin {
   final TransformationController _transformationController =
       TransformationController();
   final ValueNotifier<Offset?> _cursorNotifier = ValueNotifier(null);
@@ -50,6 +51,11 @@ class _PointerEditorScreenState extends State<PointerEditorScreen> {
   final GlobalKey _hierarchyAnchorKey = GlobalKey();
   BoxConstraints? _lastConstraints;
   bool _hasCentered = false;
+  ZoomPreset _currentPreset = ZoomPreset.fitScreen;
+  late final AnimationController _cameraAnimationController;
+  Animation<double>? _cameraCurveAnimation;
+  Matrix4? _startMatrix;
+  Matrix4? _targetMatrix;
   bool _isDraggingSidebar = false;
   bool _isDraggingViewPanel = false;
   bool _isHoveringSidebarHandle = false;
@@ -63,6 +69,23 @@ class _PointerEditorScreenState extends State<PointerEditorScreen> {
   @override
   void initState() {
     super.initState();
+    _cameraAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 120),
+    )..addListener(() {
+        if (_startMatrix == null || _targetMatrix == null) return;
+        final t = _cameraCurveAnimation?.value ?? _cameraAnimationController.value;
+        final lerped = Matrix4.zero();
+        for (int i = 0; i < 16; i++) {
+          lerped.storage[i] = _startMatrix!.storage[i] +
+              (_targetMatrix!.storage[i] - _startMatrix!.storage[i]) * t;
+        }
+        _transformationController.value = lerped;
+      });
+    _cameraCurveAnimation = CurvedAnimation(
+      parent: _cameraAnimationController,
+      curve: Curves.easeOutCubic,
+    );
     _loadLayoutPrefs();
   }
 
@@ -272,48 +295,161 @@ class _PointerEditorScreenState extends State<PointerEditorScreen> {
     required TextDirection sidebarTextDir,
     required double screenWidth,
   }) {
+    final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
+    final viewState = context.watch<ViewCubit>().state;
+    final isScrubbing = viewState.isScrubbing;
+    final isPeeking = viewState.isPanelPeeking;
+
     final maxAllowed = screenWidth * 0.85;
     final minAllowed = math.min(minSidebarWidth, maxAllowed);
     final overlayWidth = _sidebarWidth.clamp(minAllowed, maxAllowed);
+    final totalWidth = overlayWidth + 12;
+    final peekSlideFraction = (totalWidth - 56.0) / totalWidth;
+
+    final isCovering = CanvasZoomCalculator.isTargetOccluded(
+      matrix: _transformationController.value,
+      config: configState,
+      panelWidth: totalWidth,
+      panelLeft: 0.0,
+      canvasLeft: 0.0,
+      activeScrubbingMargin: viewState.activeScrubbingMargin,
+    );
+    final shouldTransparentize = isScrubbing && isCovering;
 
     return Positioned(
       top: 0,
       bottom: 0,
       left: 0,
-      width: overlayWidth + 12,
-      child: Material(
-        elevation: 16,
-        shadowColor: Colors.black54,
-        color: Theme.of(context).colorScheme.surfaceContainer,
-        child: Container(
-          decoration: BoxDecoration(
-            border: Border(
-              right: BorderSide(
-                color: Theme.of(context)
-                    .colorScheme
-                    .outlineVariant
-                    .withValues(alpha: 0.5),
-                width: 1,
-              ),
+      width: totalWidth,
+      child: AnimatedSlide(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
+        offset: isPeeking ? Offset(-peekSlideFraction, 0) : Offset.zero,
+        child: Material(
+          elevation: (shouldTransparentize || isPeeking) ? 0.0 : 16.0,
+          shadowColor:
+              (shouldTransparentize || isPeeking) ? Colors.transparent : Colors.black54,
+          color: shouldTransparentize
+              ? Colors.transparent
+              : cs.surfaceContainer,
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border(
+                      right: BorderSide(
+                        color: shouldTransparentize
+                            ? Colors.transparent
+                            : cs.outlineVariant.withValues(alpha: 0.5),
+                        width: 1,
+                      ),
+                    ),
+                  ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _buildSidebarContent(
+                            context: context,
+                            documentCubit: documentCubit,
+                            configState: configState,
+                            sidebarTextDir: sidebarTextDir,
+                            isOverlay: true,
+                          ),
+                        ),
+                        if (!isPeeking)
+                          _buildLeftResizeHandle(context, maxWidth: maxAllowed),
+                      ],
+                    ),
+                  ),
+                ),
+                // Full-Height 56px Edge Restore Strip
+                if (isPeeking)
+                  Positioned(
+                    top: 0,
+                    bottom: 0,
+                    right: 0,
+                    width: 56.0,
+                    child: Listener(
+                      onPointerDown: (_) {
+                        context.read<ViewCubit>().togglePanelPeeking(false);
+                      },
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () =>
+                            context.read<ViewCubit>().togglePanelPeeking(false),
+                      onHorizontalDragUpdate: (details) {
+                        if (details.primaryDelta != null && details.primaryDelta! > 6) {
+                          context.read<ViewCubit>().togglePanelPeeking(false);
+                        }
+                      },
+                      onHorizontalDragEnd: (details) {
+                        if (details.primaryVelocity != null &&
+                            details.primaryVelocity! > 60) {
+                          context.read<ViewCubit>().togglePanelPeeking(false);
+                        }
+                      },
+                      child: Tooltip(
+                        message: l10n.restorePanel,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: cs.primary.withValues(alpha: 0.15),
+                            border: Border(
+                              left: BorderSide(
+                                color: cs.primary.withValues(alpha: 0.5),
+                                width: 2.0,
+                              ),
+                            ),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: cs.primary,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: cs.primary.withValues(alpha: 0.4),
+                                      blurRadius: 8,
+                                      offset: const Offset(1, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Icon(
+                                  Icons.arrow_forward_ios_rounded,
+                                  size: 16,
+                                  color: cs.onPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 14),
+                              RotatedBox(
+                                quarterTurns: 3,
+                                child: Text(
+                                  l10n.restorePanel.toUpperCase(),
+                                  style: TextStyle(
+                                    color: cs.primary,
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 1.2,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          child: Row(
-            children: [
-              Expanded(
-                child: _buildSidebarContent(
-                  context: context,
-                  documentCubit: documentCubit,
-                  configState: configState,
-                  sidebarTextDir: sidebarTextDir,
-                  isOverlay: true,
-                ),
-              ),
-              _buildLeftResizeHandle(context, maxWidth: maxAllowed),
-            ],
-          ),
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildRightOverlay({
@@ -413,54 +549,132 @@ class _PointerEditorScreenState extends State<PointerEditorScreen> {
     required TextDirection sidebarTextDir,
     bool isOverlay = false,
   }) {
+    final viewState = context.watch<ViewCubit>().state;
+    final isCovering = isOverlay &&
+        CanvasZoomCalculator.isTargetOccluded(
+          matrix: _transformationController.value,
+          config: configState,
+          panelWidth: _sidebarWidth + 12,
+          panelLeft: 0.0,
+          canvasLeft: 0.0,
+          activeScrubbingMargin: viewState.activeScrubbingMargin,
+        );
+    final shouldTransparentize = isCovering && viewState.isScrubbing;
+
     return Column(
       children: [
         if (isOverlay)
           Directionality(
             textDirection: sidebarTextDir,
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.paddingLarge,
-                vertical: AppSpacing.paddingSmall,
-              ),
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .outlineVariant
-                        .withValues(alpha: 0.5),
-                    width: 1,
-                  ),
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onHorizontalDragUpdate: (details) {
+                if (details.primaryDelta != null && details.primaryDelta! < -8) {
+                  context.read<ViewCubit>().togglePanelPeeking(true);
+                }
+              },
+              onHorizontalDragEnd: (details) {
+                if (details.primaryVelocity != null && details.primaryVelocity! < -50) {
+                  context.read<ViewCubit>().togglePanelPeeking(true);
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.paddingLarge,
+                  vertical: AppSpacing.paddingSmall,
                 ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.tune_rounded,
-                        size: 18,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                      const SizedBox(width: AppSpacing.itemGapSmall),
-                      Text(
-                        AppLocalizations.of(context)!.pageSettings,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.onSurface,
+                decoration: BoxDecoration(
+                  color: shouldTransparentize
+                      ? Colors.transparent
+                      : Theme.of(context).colorScheme.surfaceContainerHigh,
+                  border: shouldTransparentize
+                      ? null
+                      : Border(
+                          bottom: BorderSide(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .outlineVariant
+                                .withValues(alpha: 0.5),
+                            width: 1,
+                          ),
+                        ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Header Title Area (Double-tap to peek/restore)
+                    Expanded(
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onDoubleTap: () =>
+                            context.read<ViewCubit>().togglePanelPeeking(),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.tune_rounded,
+                              size: 18,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                            const SizedBox(width: AppSpacing.itemGapSmall),
+                            Expanded(
+                              child: Text(
+                                AppLocalizations.of(context)!.pageSettings,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).colorScheme.onSurface,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close, size: 20),
-                    tooltip: AppLocalizations.of(context)!.close,
-                    onPressed: () => setState(() => _sidebarCollapsed = true),
-                  ),
-                ],
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Tooltip(
+                          message: AppLocalizations.of(context)!.peekCanvas,
+                          child: Listener(
+                            onPointerDown: (_) {
+                              context.read<ViewCubit>().togglePanelPeeking(true);
+                            },
+                            onPointerUp: (_) {
+                              context.read<ViewCubit>().togglePanelPeeking(false);
+                            },
+                            onPointerCancel: (_) {
+                              context.read<ViewCubit>().togglePanelPeeking(false);
+                            },
+                            child: IconButton(
+                              icon: Icon(
+                                context.watch<ViewCubit>().state.isPanelPeeking
+                                    ? Icons.visibility_off_outlined
+                                    : Icons.visibility_outlined,
+                                size: 18,
+                              ),
+                              visualDensity: VisualDensity.compact,
+                              tooltip: AppLocalizations.of(context)!.peekCanvas,
+                              onPressed: () => context
+                                  .read<ViewCubit>()
+                                  .togglePanelPeeking(),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 4.0),
+                        IconButton(
+                          icon: const Icon(Icons.close, size: 20),
+                          visualDensity: VisualDensity.compact,
+                          tooltip: AppLocalizations.of(context)!.close,
+                          onPressed: () {
+                            setState(() => _sidebarCollapsed = true);
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -478,11 +692,15 @@ class _PointerEditorScreenState extends State<PointerEditorScreen> {
                 return Stack(
                   children: [
                     Positioned.fill(
-                      child: ScrollConfiguration(
-                        behavior: ScrollConfiguration.of(context).copyWith(
-                          scrollbars: false,
-                        ),
-                        child: ListView(
+                      child: AnimatedOpacity(
+                        duration: const Duration(milliseconds: 150),
+                        curve: Curves.easeOutCubic,
+                        opacity: shouldTransparentize ? 0.10 : 1.0,
+                        child: ScrollConfiguration(
+                          behavior: ScrollConfiguration.of(context).copyWith(
+                            scrollbars: false,
+                          ),
+                          child: ListView(
                           key: const PageStorageKey('pointer_primary_sidebar'),
                           controller: _sidebarScrollController,
                           padding: const EdgeInsets.fromLTRB(
@@ -628,6 +846,7 @@ class _PointerEditorScreenState extends State<PointerEditorScreen> {
                         ),
                       ),
                     ),
+                  ),
                     Positioned(
                       top: 0,
                       bottom: 0,
@@ -643,6 +862,41 @@ class _PointerEditorScreenState extends State<PointerEditorScreen> {
                             viewCubit.setActiveSection(section),
                       ),
                     ),
+                    if (viewState.isScrubbing &&
+                        viewState.activeScrubbingTelemetry != null)
+                      Positioned(
+                        top: 14.0,
+                        left: 36.0,
+                        right: 16.0,
+                        child: Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14.0,
+                              vertical: 7.0,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primary,
+                              borderRadius: BorderRadius.circular(20.0),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.28),
+                                  blurRadius: 8.0,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Text(
+                              viewState.activeScrubbingTelemetry!,
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onPrimary,
+                                fontSize: 12.0,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                   ],
                 );
               },
@@ -793,7 +1047,16 @@ class _PointerEditorScreenState extends State<PointerEditorScreen> {
     );
   }
 
-  void _applyZoomPreset(ZoomPreset preset) {
+  void _animateMatrixTo(Matrix4 target) {
+    _startMatrix = _transformationController.value.clone();
+    _targetMatrix = target;
+    _cameraAnimationController.stop();
+    _cameraAnimationController.reset();
+    _cameraAnimationController.forward();
+  }
+
+  void _applyZoomPreset(ZoomPreset preset, {bool animate = false}) {
+    _currentPreset = preset;
     final constraints = _lastConstraints;
     if (constraints == null) return;
 
@@ -806,9 +1069,15 @@ class _PointerEditorScreenState extends State<PointerEditorScreen> {
       config: config,
       calibrationFactor: viewState.calibrationFactor,
       padding: 40.0,
+      leftInset: 0.0,
+      rightInset: 0.0,
     );
 
-    _transformationController.value = transform.matrix;
+    if (animate && _hasCentered) {
+      _animateMatrixTo(transform.matrix);
+    } else {
+      _transformationController.value = transform.matrix;
+    }
   }
 
   void _zoomIn() => _zoomBy(1.2);
@@ -837,6 +1106,7 @@ class _PointerEditorScreenState extends State<PointerEditorScreen> {
 
   @override
   void dispose() {
+    _cameraAnimationController.dispose();
     _sidebarScrollController.dispose();
     _transformationController.dispose();
     _cursorNotifier.dispose();
@@ -846,20 +1116,25 @@ class _PointerEditorScreenState extends State<PointerEditorScreen> {
   @override
   Widget build(BuildContext context) {
     final documentCubit = context.watch<DocumentCubit>();
-    return BlocListener<DocumentCubit, DocumentState>(
-      listenWhen: (previous, current) =>
-          previous.config.effectiveWidth != current.config.effectiveWidth ||
-          previous.config.effectiveHeight != current.config.effectiveHeight,
-      listener: (context, state) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) _applyZoomPreset(ZoomPreset.fitScreen);
-        });
-      },
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<DocumentCubit, DocumentState>(
+          listenWhen: (previous, current) =>
+              previous.config.effectiveWidth != current.config.effectiveWidth ||
+              previous.config.effectiveHeight != current.config.effectiveHeight,
+          listener: (context, state) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) _applyZoomPreset(_currentPreset, animate: true);
+            });
+          },
+        ),
+      ],
       child: BlocBuilder<DocumentCubit, DocumentState>(
         builder: (context, docState) {
           final configState = docState.config;
           final isFa = Localizations.localeOf(context).languageCode == 'fa';
-          final sidebarTextDir = isFa ? TextDirection.rtl : TextDirection.ltr;          final screenWidth = MediaQuery.sizeOf(context).width;
+          final sidebarTextDir = isFa ? TextDirection.rtl : TextDirection.ltr;
+          final screenWidth = MediaQuery.sizeOf(context).width;
           final canDockLeft = SarvBreakpoints.canDockPrimarySidebar(context);
           final canDockRight = SarvBreakpoints.canDockBothSidebars(context);
 
@@ -938,160 +1213,162 @@ class _PointerEditorScreenState extends State<PointerEditorScreen> {
                                   child: Container(
                                     color: Theme.of(context).colorScheme.surface,
                                     child: LayoutBuilder(
-                                    builder: (context, constraints) {
-                                      _lastConstraints = constraints;
-                                      if (!_hasCentered) {
-                                        _hasCentered = true;
-                                        WidgetsBinding.instance
-                                            .addPostFrameCallback((_) {
-                                          _applyZoomPreset(ZoomPreset.fitScreen);
-                                        });
-                                      }
+                                      builder: (context, constraints) {
+                                        _lastConstraints = constraints;
+                                        if (!_hasCentered) {
+                                          _hasCentered = true;
+                                          WidgetsBinding.instance
+                                              .addPostFrameCallback((_) {
+                                            if (mounted) _applyZoomPreset(_currentPreset, animate: false);
+                                          });
+                                        }
 
-                                      return Stack(
-                                        children: [
-                                          Positioned.fill(
-                                            child: CanvasStrictScope(
-                                              child: RulerBox(
-                                                transformationController:
-                                                    _transformationController,
-                                                viewState: viewState,
-                                                cursorNotifier: _cursorNotifier,
-                                                paperSizeMm: Size(
-                                                  configState.effectiveWidth,
-                                                  configState.effectiveHeight,
-                                                ),
-                                                child: MouseRegion(
-                                                  onHover: (event) {
-                                                    _cursorNotifier.value =
-                                                        event.localPosition;
-                                                  },
-                                                  onExit: (_) {
-                                                    _cursorNotifier.value = null;
-                                                  },
-                                                  child: Stack(
-                                                    children: [
-                                                      Positioned.fill(
-                                                        child: InteractiveViewer(
-                                                          transformationController:
-                                                              _transformationController,
-                                                          boundaryMargin:
-                                                              const EdgeInsets.all(
-                                                                  100000),
-                                                          minScale:
-                                                              ScaleMetrics.minZoom,
-                                                          maxScale:
-                                                              ScaleMetrics.maxZoom,
-                                                          constrained: false,
-                                                          alignment:
-                                                              Alignment.topLeft,
-                                                          child: PreviewCanvas(
-                                                            layout:
-                                                                documentCubit.layout,
-                                                            viewState: viewState,
+                                        return Stack(
+                                          children: [
+                                            Positioned.fill(
+                                              child: CanvasStrictScope(
+                                                child: RulerBox(
+                                                  transformationController:
+                                                      _transformationController,
+                                                  viewState: viewState,
+                                                  cursorNotifier: _cursorNotifier,
+                                                  paperSizeMm: Size(
+                                                    configState.effectiveWidth,
+                                                    configState.effectiveHeight,
+                                                  ),
+                                                  child: MouseRegion(
+                                                    onHover: (event) {
+                                                      _cursorNotifier.value =
+                                                          event.localPosition;
+                                                    },
+                                                    onExit: (_) {
+                                                      _cursorNotifier.value = null;
+                                                    },
+                                                    child: Stack(
+                                                      children: [
+                                                        Positioned.fill(
+                                                          child: InteractiveViewer(
+                                                            transformationController:
+                                                                _transformationController,
+                                                            boundaryMargin:
+                                                                const EdgeInsets.all(
+                                                                    100000),
+                                                            minScale:
+                                                                ScaleMetrics.minZoom,
+                                                            maxScale:
+                                                                ScaleMetrics.maxZoom,
+                                                            constrained: false,
+                                                            alignment:
+                                                                Alignment.topLeft,
+                                                            child: PreviewCanvas(
+                                                              layout:
+                                                                  documentCubit.layout,
+                                                              viewState: viewState,
+                                                            ),
                                                           ),
                                                         ),
-                                                      ),
-                                                      // Sidebar Toggle (Left)
-                                                      Positioned(
-                                                        top: 16,
-                                                        left: 16,
-                                                        child: FloatingActionButton.small(
-                                                          heroTag: 'left_toggle',
-                                                          onPressed: () =>
-                                                              _toggleLeftSidebar(
-                                                                  canDockLeft,
-                                                                  canDockRight),
-                                                          backgroundColor:
-                                                              Theme.of(context)
-                                                                  .colorScheme
-                                                                  .surface,
-                                                          foregroundColor:
-                                                              Theme.of(context)
-                                                                  .colorScheme
-                                                                  .onSurfaceVariant,
-                                                          elevation: 2,
-                                                          tooltip: _sidebarCollapsed
-                                                              ? (canDockLeft
-                                                                  ? 'Expand Left Sidebar'
-                                                                  : 'Open Sidebar')
-                                                              : 'Collapse Left Sidebar',
-                                                          child: Icon(
-                                                            _sidebarCollapsed
-                                                                ? Icons.menu
-                                                                : Icons
-                                                                    .arrow_back_ios_new,
-                                                            size: 20,
+                                                        // Sidebar Toggle (Left)
+                                                        Positioned(
+                                                          top: 16,
+                                                          left: 16,
+                                                          child: FloatingActionButton.small(
+                                                            heroTag: 'left_toggle',
+                                                            onPressed: () =>
+                                                                _toggleLeftSidebar(
+                                                                    canDockLeft,
+                                                                    canDockRight),
+                                                            backgroundColor:
+                                                                Theme.of(context)
+                                                                    .colorScheme
+                                                                    .surface,
+                                                            foregroundColor:
+                                                                Theme.of(context)
+                                                                    .colorScheme
+                                                                    .onSurfaceVariant,
+                                                            elevation: 2,
+                                                            tooltip: _sidebarCollapsed
+                                                                ? (canDockLeft
+                                                                    ? 'Expand Left Sidebar'
+                                                                    : 'Open Sidebar')
+                                                                : 'Collapse Left Sidebar',
+                                                            child: Icon(
+                                                              _sidebarCollapsed
+                                                                  ? Icons.menu
+                                                                  : Icons
+                                                                      .arrow_back_ios_new,
+                                                              size: 20,
+                                                            ),
                                                           ),
                                                         ),
-                                                      ),
-                                                      // View Panel Toggle (Right)
-                                                      Positioned(
-                                                        top: 16,
-                                                        right: 16,
-                                                        child: FloatingActionButton.small(
-                                                          heroTag: 'right_toggle',
-                                                          onPressed: () =>
-                                                              _toggleViewPanel(
-                                                                  canDockLeft,
-                                                                  canDockRight),
-                                                          backgroundColor:
-                                                              Theme.of(context)
-                                                                  .colorScheme
-                                                                  .surface,
-                                                          foregroundColor:
-                                                              Theme.of(context)
-                                                                  .colorScheme
-                                                                  .onSurfaceVariant,
-                                                          elevation: 2,
-                                                          tooltip: _viewPanelCollapsed
-                                                              ? (canDockRight
-                                                                  ? 'Expand Settings'
-                                                                  : 'Open Settings')
-                                                              : 'Collapse Settings',
-                                                          child: Icon(
-                                                            _viewPanelCollapsed
-                                                                ? Icons.tune
-                                                                : Icons
-                                                                    .arrow_forward_ios,
-                                                            size: 20,
+                                                        // View Panel Toggle (Right)
+                                                        Positioned(
+                                                          top: 16,
+                                                          right: 16,
+                                                          child: FloatingActionButton.small(
+                                                            heroTag: 'right_toggle',
+                                                            onPressed: () =>
+                                                                _toggleViewPanel(
+                                                                    canDockLeft,
+                                                                    canDockRight),
+                                                            backgroundColor:
+                                                                Theme.of(context)
+                                                                    .colorScheme
+                                                                    .surface,
+                                                            foregroundColor:
+                                                                Theme.of(context)
+                                                                    .colorScheme
+                                                                    .onSurfaceVariant,
+                                                            elevation: 2,
+                                                            tooltip: _viewPanelCollapsed
+                                                                ? (canDockRight
+                                                                    ? 'Expand Settings'
+                                                                    : 'Open Settings')
+                                                                : 'Collapse Settings',
+                                                            child: Icon(
+                                                              _viewPanelCollapsed
+                                                                  ? Icons.tune
+                                                                  : Icons
+                                                                      .arrow_forward_ios,
+                                                              size: 20,
+                                                            ),
                                                           ),
                                                         ),
-                                                      ),
-                                                    ],
+                                                      ],
+                                                    ),
                                                   ),
                                                 ),
                                               ),
                                             ),
-                                          ),
-                                          // Scrim for overlay drawer(s)
-                                          if ((!canDockLeft &&
-                                                  !_sidebarCollapsed) ||
-                                              (!canDockRight &&
-                                                  !_viewPanelCollapsed))
-                                            Positioned.fill(
-                                              child: GestureDetector(
-                                                behavior:
-                                                    HitTestBehavior.opaque,
-                                                onTap: () {
-                                                  setState(() {
-                                                    if (!canDockLeft) {
-                                                      _sidebarCollapsed =
-                                                          true;
+                                            // Non-blocking translucent click-outside listener for overlay drawer(s) (no dark scrim)
+                                            if ((!canDockLeft &&
+                                                    !_sidebarCollapsed) ||
+                                                (!canDockRight &&
+                                                    !_viewPanelCollapsed))
+                                              Positioned.fill(
+                                                child: GestureDetector(
+                                                  behavior:
+                                                      HitTestBehavior.translucent,
+                                                  onTap: () {
+                                                    if (viewState.isPanelPeeking) {
+                                                      context
+                                                          .read<ViewCubit>()
+                                                          .togglePanelPeeking(false);
+                                                      return;
                                                     }
-                                                    if (!canDockRight) {
-                                                      _viewPanelCollapsed =
-                                                          true;
-                                                    }
-                                                  });
-                                                },
-                                                child: Container(
-                                                  color: Colors.black
-                                                      .withValues(
-                                                          alpha: 0.35),
+                                                    setState(() {
+                                                      if (!canDockLeft) {
+                                                        _sidebarCollapsed =
+                                                            true;
+                                                      }
+                                                      if (!canDockRight) {
+                                                        _viewPanelCollapsed =
+                                                            true;
+                                                      }
+                                                    });
+                                                  },
+                                                  child: const SizedBox.expand(),
                                                 ),
                                               ),
-                                            ),
                                           // Left Sidebar Overlay (flush with top bar and screen edges)
                                           if (!canDockLeft &&
                                               !_sidebarCollapsed)

@@ -93,3 +93,18 @@ This document specifies the architecture for preserving user interface state acr
    * In `PrecisionSlider`, `MarginsSettingsGroup`, `StaffSpacingGroup`, and `AdvancedBuilderPanel`:
      * Set `scrollPadding: EdgeInsets.only(bottom: 80.0, top: 40.0)`.
      * Attach a focus node listener triggering `Scrollable.ensureVisible` on focus to ensure the field clears the software keyboard.
+
+---
+
+## 5. Viewport Camera Matrix Preservation & Touch Navigation Parity (v0.12.3)
+
+### 5.1 Viewport Camera Preservation Across Panel Toggles
+* **Decoupling Camera from Sidebar Layout**: In `PointerEditorScreen`, toggling sidebar docking or collapsing previously triggered a reset of the `InteractiveViewer` transformation matrix back to default zoom/centering.
+* **Persistent Matrix Retention**: The transformation matrix (`TransformationController`) now preserves user-chosen pan coordinates and zoom level across panel collapses, expansions, and docking transitions, preventing disorientation during engraving inspection.
+
+### 5.2 Touch Section Spine Navigation Parity
+* **Overcoming Modal Drill-down Friction**: While Pointer Mode exposes all setting sections in a continuous, fast-scrolling column, Touch Mode traditionally forced a multi-step `Back -> Menu -> Category` traversal.
+* **_TouchSectionSpine**: Integrated a persistent 42dp vertical navigation rail along the leading edge of `SettingsPanel`. The spine houses 7 interactive beads representing each major section (`mainMenu`, `profiles`, `pageSetup`, `margins`, `staffSpacing`, `systemHierarchy`, `export`).
+* **Instant 1-Tap Switching**: Users can jump directly between any two sections in a single tap without state loss or menu roundtripping.
+* **Compact Landscape Viewport Resilience**: Wrapped in a vertical `SingleChildScrollView` with bouncing physics, guaranteeing zero layout overflow on constrained landscape screens (tested down to 340dp height).
+

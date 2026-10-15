@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.3] - 2026-10-15
+
+### Added
+- **Touch Section Spine (`_TouchSectionSpine`) (`sarvmd_ui`)**:
+  - Implemented a 42dp vertical navigation spine on the leading edge of `SettingsPanel` in Touch Mode with 7 interactive beads (`mainMenu`, `profiles`, `pageSetup`, `margins`, `staffSpacing`, `systemHierarchy`, `export`).
+  - Enables instant 1-tap switching between any panel section without forcing users through the hierarchical `Back -> Menu -> Category` drill-down loop.
+  - Wrapped with `SingleChildScrollView` and bouncing physics for zero-overflow resilience on compact landscape screens (tested down to 340dp height).
+- **Geometric Canvas Occlusion Detection (`CanvasZoomCalculator.isTargetOccluded`) (`sarvmd_ui`)**:
+  - Added smart geometric occlusion detection that checks whether the settings panel physically overlaps the bounding box of the rendered manuscript paper or active margin guidelines.
+  - Keeps the panel 100% solid and legible when the score sits in clear aperture, and only triggers see-through ghosting (0.18 opacity) when occluding the active target during scrubbing.
+
+### Fixed & Improved
+- **Canvas Viewport State Preservation Across Panel Toggles (`PointerEditorScreen`)**:
+  - Decoupled `InteractiveViewer` pan and zoom matrices from panel collapse and expansion events. Opening, closing, or docking sidebars now strictly preserves user camera position and zoom factor instead of resetting viewport matrix.
+- **Eliminated Duplicate Badges & Glance Controls (`sarvmd_ui`)**:
+  - Removed duplicate floating telemetry badge in pointer mode when the left sidebar header already displays live values.
+  - Removed redundant secondary peek button from touch sub-page section headers.
+- **Touch Header Controls Ergonomics & Squircles (`sarvmd_ui`)**:
+  - Moved `GlanceButton` (peek button) to the rightmost edge in the header row.
+  - Unified `TouchLanguageButton`, `TouchThemeButton`, and `GlanceButton` into comfortable 44×40dp squircles (`BorderRadius.circular(14.0)`) with 144dp total row width, preventing pixel overflow while providing generous finger touch targets.
+  - Updated `TouchThemeButton` to display current accent color choice via dynamic border (`1.8dp`), glow shadow, and mode icon, eliminating the extra horizontal color dot.
+  - Updated `TouchLanguageButton` to stack prominent bold locale typography (`FA` / `EN`) over a translucent 24dp globe watermark for immediate legibility.
+
 ## [0.12.2] - 2026-10-02
 
 ### Fixed

@@ -19,18 +19,18 @@ void main() {
     test('normalizeDirectoryPath strips file:// URI scheme', () {
       expect(
         ExportDirectoryService.normalizeDirectoryPath('file:///home/user/Music'),
-        equals('/home/user/Music'),
+        equals(p.normalize('/home/user/Music')),
       );
     });
 
     test('normalizeDirectoryPath removes redundant and trailing slashes', () {
       expect(
         ExportDirectoryService.normalizeDirectoryPath('/home/user/Documents/'),
-        equals('/home/user/Documents'),
+        equals(p.normalize('/home/user/Documents')),
       );
       expect(
         ExportDirectoryService.normalizeDirectoryPath('/home//user///Scores//'),
-        equals('/home/user/Scores'),
+        equals(p.normalize('/home/user/Scores')),
       );
     });
 
@@ -51,7 +51,7 @@ void main() {
     test('saveExportDirectory stores normalized path in SharedPreferences', () async {
       await ExportDirectoryService.saveExportDirectory('/custom/export/path/');
       final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getString('sarvmd_export_directory'), equals('/custom/export/path'));
+      expect(prefs.getString('sarvmd_export_directory'), equals(p.normalize('/custom/export/path')));
     });
   });
 }
