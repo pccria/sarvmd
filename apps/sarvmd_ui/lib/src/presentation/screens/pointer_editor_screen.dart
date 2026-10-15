@@ -306,7 +306,6 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
     final viewState = context.watch<ViewCubit>().state;
     final isScrubbing = viewState.isScrubbing;
     final isPeeking = viewState.isPanelPeeking;
-    final telemetry = viewState.activeScrubbingTelemetry;
 
     final maxAllowed = screenWidth * 0.85;
     final minAllowed = math.min(minSidebarWidth, maxAllowed);
@@ -371,33 +370,6 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
                     ),
                   ),
                 ),
-                // Scrubbing Telemetry Pill
-                if (isScrubbing && telemetry != null)
-                  Positioned(
-                    top: 14.0,
-                    left: 20.0,
-                    right: 20.0,
-                    child: Center(
-                      child: Material(
-                        elevation: 8,
-                        borderRadius: BorderRadius.circular(20),
-                        color: cs.primary,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0, vertical: 8.0),
-                          child: Text(
-                            telemetry,
-                            style: TextStyle(
-                              color: cs.onPrimary,
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.3,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
                 // Full-Height 56px Edge Restore Strip
                 if (isPeeking)
                   Positioned(

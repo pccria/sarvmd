@@ -631,8 +631,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   ),
                 ),
               ),
-              const SizedBox(width: 8.0),
-              const GlanceButton(showLabel: true, compact: true),
             ],
           ),
         ),
