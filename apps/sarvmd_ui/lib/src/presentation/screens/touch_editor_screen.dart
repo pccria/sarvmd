@@ -129,17 +129,11 @@ class _TouchEditorScreenState extends State<TouchEditorScreen>
     } else {
       _sideSheetController.forward();
     }
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _triggerFitZoom();
-    });
   }
 
   void _closeLandscapeSideSheet() {
     if (!_sideSheetController.isDismissed) {
       _sideSheetController.reverse();
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _triggerFitZoom();
-      });
     }
   }
 

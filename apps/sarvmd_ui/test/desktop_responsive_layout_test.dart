@@ -192,5 +192,45 @@ void main() {
 
       expect(tester.takeException(), isNull);
     });
+
+    testWidgets('Opening and closing sidebars preserves user canvas pan and zoom matrix', (tester) async {
+      tester.view.physicalSize = const Size(1400, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(createTestApp());
+      await tester.pumpAndSettle();
+
+      final interactiveViewerFinder = find.byType(InteractiveViewer);
+      expect(interactiveViewerFinder, findsOneWidget);
+      final interactiveViewer = tester.widget<InteractiveViewer>(interactiveViewerFinder);
+      final controller = interactiveViewer.transformationController!;
+
+      // Simulate user zooming and panning to custom coordinates
+      final customMatrix = Matrix4.identity()
+        ..translateByDouble(150.0, -80.0, 0.0, 1.0)
+        ..scaleByDouble(1.85, 1.85, 1.0, 1.0);
+      controller.value = customMatrix;
+      await tester.pumpAndSettle();
+
+      // Collapse the left sidebar
+      await tester.tap(find.byTooltip('Collapse Left Sidebar'));
+      await tester.pumpAndSettle();
+
+      // Verify custom zoom/pan matrix is preserved!
+      expect(controller.value.row0[0], closeTo(1.85, 0.001));
+      expect(controller.value.storage[12], closeTo(150.0, 0.001));
+      expect(controller.value.storage[13], closeTo(-80.0, 0.001));
+
+      // Re-expand the left sidebar
+      await tester.tap(find.byTooltip('Expand Left Sidebar'));
+      await tester.pumpAndSettle();
+
+      // Verify custom zoom/pan matrix is STILL preserved!
+      expect(controller.value.row0[0], closeTo(1.85, 0.001));
+      expect(controller.value.storage[12], closeTo(150.0, 0.001));
+      expect(controller.value.storage[13], closeTo(-80.0, 0.001));
+    });
   });
 }

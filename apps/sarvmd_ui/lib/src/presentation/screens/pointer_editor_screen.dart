@@ -120,9 +120,6 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
         _viewPanelCollapsed = true;
       }
     });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _applyZoomPreset(_currentPreset, animate: true);
-    });
   }
 
   void _toggleViewPanel(bool canDockLeft, bool canDockRight) {
@@ -131,9 +128,6 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
       if (!_viewPanelCollapsed && !canDockLeft && !canDockRight) {
         _sidebarCollapsed = true;
       }
-    });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _applyZoomPreset(_currentPreset, animate: true);
     });
   }
 
@@ -675,9 +669,6 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
                           tooltip: AppLocalizations.of(context)!.close,
                           onPressed: () {
                             setState(() => _sidebarCollapsed = true);
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              if (mounted) _applyZoomPreset(_currentPreset, animate: true);
-                            });
                           },
                         ),
                       ],
@@ -1071,12 +1062,6 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
 
     final config = context.read<DocumentCubit>().state.config;
     final viewState = context.read<ViewCubit>().state;
-    final canDockLeft = SarvBreakpoints.canDockPrimarySidebar(context);
-    final canDockRight = SarvBreakpoints.canDockBothSidebars(context);
-    final leftInset = (!canDockLeft && !_sidebarCollapsed)
-        ? (viewState.isPanelPeeking ? 48.0 : (_sidebarWidth + 12.0))
-        : 0.0;
-    final rightInset = (!canDockRight && !_viewPanelCollapsed) ? (_viewPanelWidth + 12.0) : 0.0;
 
     final transform = CanvasZoomCalculator.compute(
       preset: preset,
@@ -1084,8 +1069,8 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
       config: config,
       calibrationFactor: viewState.calibrationFactor,
       padding: 40.0,
-      leftInset: leftInset,
-      rightInset: rightInset,
+      leftInset: 0.0,
+      rightInset: 0.0,
     );
 
     if (animate && _hasCentered) {
@@ -1143,15 +1128,6 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
             });
           },
         ),
-        BlocListener<ViewCubit, ViewState>(
-          listenWhen: (previous, current) =>
-              previous.isPanelPeeking != current.isPanelPeeking,
-          listener: (context, state) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) _applyZoomPreset(_currentPreset, animate: true);
-            });
-          },
-        ),
       ],
       child: BlocBuilder<DocumentCubit, DocumentState>(
         builder: (context, docState) {
@@ -1173,9 +1149,6 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
                   setState(() {
                     _viewPanelCollapsed = !_viewPanelCollapsed;
                   });
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (mounted) _applyZoomPreset(_currentPreset, animate: true);
-                  });
                 },
                 onToggleZenMode: () {
                   setState(() {
@@ -1187,9 +1160,6 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
                       _sidebarCollapsed = true;
                       _viewPanelCollapsed = true;
                     }
-                  });
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (mounted) _applyZoomPreset(_currentPreset, animate: true);
                   });
                 },
                 child: Scaffold(
@@ -1244,20 +1214,12 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
                                     color: Theme.of(context).colorScheme.surface,
                                     child: LayoutBuilder(
                                       builder: (context, constraints) {
-                                        final hasSizeChanged = _lastConstraints != null &&
-                                            (_lastConstraints!.maxWidth != constraints.maxWidth ||
-                                             _lastConstraints!.maxHeight != constraints.maxHeight);
                                         _lastConstraints = constraints;
                                         if (!_hasCentered) {
                                           _hasCentered = true;
                                           WidgetsBinding.instance
                                               .addPostFrameCallback((_) {
                                             if (mounted) _applyZoomPreset(_currentPreset, animate: false);
-                                          });
-                                        } else if (hasSizeChanged) {
-                                          WidgetsBinding.instance
-                                              .addPostFrameCallback((_) {
-                                            if (mounted) _applyZoomPreset(_currentPreset, animate: true);
                                           });
                                         }
 
@@ -1401,12 +1363,6 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
                                                       if (!canDockRight) {
                                                         _viewPanelCollapsed =
                                                             true;
-                                                      }
-                                                    });
-                                                    WidgetsBinding.instance
-                                                        .addPostFrameCallback((_) {
-                                                      if (mounted) {
-                                                        _applyZoomPreset(_currentPreset, animate: true);
                                                       }
                                                     });
                                                   },

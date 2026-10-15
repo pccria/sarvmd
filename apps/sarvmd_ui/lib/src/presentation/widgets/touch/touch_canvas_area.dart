@@ -79,17 +79,7 @@ class TouchCanvasAreaState extends State<TouchCanvasArea> with SingleTickerProvi
     );
   }
 
-  @override
-  void didUpdateWidget(TouchCanvasArea oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.leftInset != oldWidget.leftInset) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          applyZoomPreset(_currentPreset, animate: true);
-        }
-      });
-    }
-  }
+
 
   @override
   void dispose() {
