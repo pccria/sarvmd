@@ -75,4 +75,22 @@ When adjusting engraving parameters (margins, line gaps, system spacing, clefs, 
 | **Step 5** | `CanvasZoomCalculator` | Viewport aperture camera centering with `leftInset` / `rightInset`. | ✅ Verified |
 | **Step 6** | `SettingsPanel` & `PointerEditorScreen` | Header Glance Pill with 0ms pointer-down, spring-loaded release, 120ms animation, and zero content obstruction. | ✅ Verified |
 | **Step 7** | `CanvasZoomCalculator`, `SettingsPanel` & `PointerEditorScreen` | Smart Geometric Occlusion Detection: dynamically detects if the panel physically occludes the rendered paper or active margin guideline. Keeps panel 100% solid and crisp when docked or clear of the score; only transparentizes when the panel is actually covering the score. | ✅ Verified |
+| **Step 8** | `PointerEditorScreen` & `InteractiveViewer` | Decoupled canvas camera matrix from sidebar docking/collapse toggles, ensuring pan and zoom scale remain 100% stable without viewport jumps or resets. | ✅ Verified |
+| **Step 9** | `SettingsPanel` (`_TouchSectionSpine`) | Implemented 42dp vertical navigation spine on panel leading edge with 7 interactive beads (`mainMenu`, `profiles`, `pageSetup`, `margins`, `staffSpacing`, `systemHierarchy`, `export`). Zero-overflow landscape scrolling. | ✅ Verified |
+| **Step 10** | `SettingsPanel` (`TouchLanguageButton`, `TouchThemeButton`, `GlanceButton`) | Unified header controls into 44×40dp squircles with 144dp footprint. Stacked locale typography, reactive accent border on theme button, and glance button positioned on the rightmost edge. | ✅ Verified |
+
+---
+
+## 4. Touch Navigation Parity & Ergonomics (Release v0.12.3)
+
+### Pillar 5: Touch Section Spine (`_TouchSectionSpine`)
+- **Direct Section Addressability**: In touch mode, users previously faced a multi-step back-and-forth drill-down loop (`Back -> Menu -> Choose Category`). The Touch Section Spine provides a persistent 42dp rail on the leading edge containing high-contrast beads for all 7 sections.
+- **Landscape Viewport Resilience**: Embedded in a `SingleChildScrollView` with bouncing physics, guaranteeing zero layout overflow even on constrained mobile landscape viewports (down to 340dp height).
+- **Active State Feedback**: Active section bead glows with primary accent color and pill highlight, providing instant visual orientation.
+
+### Pillar 6: Unified Touch Header Squircles
+- **Compact Ergonomics**: Sized at 44×40dp with `BorderRadius.circular(14.0)` to meet mobile touch-target guidelines while maintaining a compact 144dp total width.
+- **Dynamic Accent Reactive Border**: `TouchThemeButton` reflects the current accent color and mode directly in its border and icon, eliminating unnecessary badge clutter.
+- **Stacked Typographic Watermark**: `TouchLanguageButton` overlays bold locale text (`FA` / `EN`) atop a subtle 24dp globe watermark for instant readability in both RTL and LTR contexts.
+
 
