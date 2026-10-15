@@ -50,5 +50,28 @@ void main() {
       expect(result.dx, isNotNull);
       expect(result.dy, isNotNull);
     });
+
+    test('leftInset shifts dx so canvas paper centers in unobstructed aperture', () {
+      final noInset = CanvasZoomCalculator.compute(
+        preset: ZoomPreset.fitScreen,
+        constraints: const BoxConstraints(maxWidth: 1200, maxHeight: 800),
+        config: config,
+        calibrationFactor: 1.0,
+        padding: 40.0,
+      );
+
+      final withInset = CanvasZoomCalculator.compute(
+        preset: ZoomPreset.fitScreen,
+        constraints: const BoxConstraints(maxWidth: 1200, maxHeight: 800),
+        config: config,
+        calibrationFactor: 1.0,
+        padding: 40.0,
+        leftInset: 320.0,
+      );
+
+      // dx with 320px left inset must be displaced to the right compared to no inset
+      expect(withInset.dx, greaterThan(noInset.dx));
+      expect(withInset.dx, greaterThanOrEqualTo(320.0));
+    });
   });
 }

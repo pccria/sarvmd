@@ -1251,4 +1251,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noShortcutsFound => 'No matching shortcuts found';
+
+  @override
+  String get peekCanvas => 'Peek Canvas';
+
+  @override
+  String get restorePanel => 'Restore Settings Panel';
 }

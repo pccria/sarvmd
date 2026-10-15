@@ -177,12 +177,39 @@ class ViewCubit extends Cubit<ViewState> {
     emit(state.copyWith(activeGuides: newGuides));
   }
 
+  void startScrubbing({String? marginSide, String? telemetry}) {
+    emit(state.copyWith(
+      isScrubbing: true,
+      activeScrubbingMargin: marginSide,
+      activeScrubbingTelemetry: telemetry,
+    ));
+  }
+
+  void updateScrubbingTelemetry(String telemetry) {
+    if (state.isScrubbing && state.activeScrubbingTelemetry != telemetry) {
+      emit(state.copyWith(activeScrubbingTelemetry: telemetry));
+    }
+  }
+
+  void endScrubbing() {
+    emit(state.copyWith(
+      isScrubbing: false,
+      clearScrubbingMargin: true,
+      clearScrubbingTelemetry: true,
+    ));
+  }
+
   void setActiveScrubbingMargin(String? side) {
     if (side == null) {
-      emit(state.copyWith(clearScrubbingMargin: true));
+      endScrubbing();
     } else {
-      emit(state.copyWith(activeScrubbingMargin: side));
+      startScrubbing(marginSide: side);
     }
+  }
+
+  void togglePanelPeeking([bool? peek]) {
+    final next = peek ?? !state.isPanelPeeking;
+    emit(state.copyWith(isPanelPeeking: next));
   }
 
 

@@ -7,6 +7,7 @@ import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/layout_policy.dart';
 import '../../../logic/document/document_cubit.dart';
 import '../../../logic/view/view_cubit.dart';
+import '../../../logic/view/view_state.dart';
 import '../canvas/canvas_zoom_calculator.dart';
 import '../canvas/preview_canvas.dart';
 import '../canvas/ruler_box.dart';
@@ -21,6 +22,7 @@ class TouchCanvasArea extends StatefulWidget {
     this.bottomPadding = 0,
     this.topSafeArea = 0.0,
     this.leftSafeArea = 0.0,
+    this.leftInset = 0.0,
     this.onLongPressCanvas,
     this.onLongPressStartCanvas,
     this.onLongPressMoveCanvas,
@@ -34,6 +36,7 @@ class TouchCanvasArea extends StatefulWidget {
   final double bottomPadding;
   final double topSafeArea;
   final double leftSafeArea;
+  final double leftInset;
   final void Function(Offset localPosition)? onLongPressCanvas;
   final void Function(Offset localPosition)? onLongPressStartCanvas;
   final void Function(Offset localPosition)? onLongPressMoveCanvas;
@@ -45,25 +48,71 @@ class TouchCanvasArea extends StatefulWidget {
   State<TouchCanvasArea> createState() => TouchCanvasAreaState();
 }
 
-class TouchCanvasAreaState extends State<TouchCanvasArea> {
+class TouchCanvasAreaState extends State<TouchCanvasArea> with SingleTickerProviderStateMixin {
   BoxConstraints? _lastConstraints;
   bool _hasCentered = false;
   ZoomPreset _currentPreset = ZoomPreset.fitWidth;
+  late final AnimationController _cameraAnimationController;
+  Animation<double>? _cameraCurveAnimation;
+  Matrix4? _startMatrix;
+  Matrix4? _targetMatrix;
+
+  @override
+  void initState() {
+    super.initState();
+    _cameraAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 120),
+    )..addListener(() {
+        if (_startMatrix == null || _targetMatrix == null) return;
+        final t = _cameraCurveAnimation?.value ?? _cameraAnimationController.value;
+        final lerped = Matrix4.zero();
+        for (int i = 0; i < 16; i++) {
+          lerped.storage[i] = _startMatrix!.storage[i] +
+              (_targetMatrix!.storage[i] - _startMatrix!.storage[i]) * t;
+        }
+        widget.transformationController.value = lerped;
+      });
+    _cameraCurveAnimation = CurvedAnimation(
+      parent: _cameraAnimationController,
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  @override
+  void didUpdateWidget(TouchCanvasArea oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.leftInset != oldWidget.leftInset) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          applyZoomPreset(_currentPreset, animate: true);
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _cameraAnimationController.dispose();
+    super.dispose();
+  }
 
   void toggleFitZoom() {
     final next = _currentPreset == ZoomPreset.fitWidth
         ? ZoomPreset.fitScreen
         : ZoomPreset.fitWidth;
-    applyZoomPreset(next);
+    applyZoomPreset(next, animate: true);
   }
 
-  void applyZoomPreset(ZoomPreset preset) {
+  void applyZoomPreset(ZoomPreset preset, {bool animate = false}) {
     _currentPreset = preset;
     final constraints = _lastConstraints;
     if (constraints == null) return;
 
     final config = context.read<DocumentCubit>().state.config;
     final viewState = context.read<ViewCubit>().state;
+
+    final effectiveLeftInset = viewState.isPanelPeeking ? 48.0 : widget.leftInset;
 
     final transform = CanvasZoomCalculator.compute(
       preset: preset,
@@ -74,9 +123,22 @@ class TouchCanvasAreaState extends State<TouchCanvasArea> {
       topSafeArea: widget.topSafeArea,
       leftSafeArea: widget.leftSafeArea,
       bottomPadding: widget.bottomPadding,
+      leftInset: effectiveLeftInset,
     );
 
-    widget.transformationController.value = transform.matrix;
+    if (animate && _hasCentered) {
+      _animateMatrixTo(transform.matrix);
+    } else {
+      widget.transformationController.value = transform.matrix;
+    }
+  }
+
+  void _animateMatrixTo(Matrix4 target) {
+    _startMatrix = widget.transformationController.value.clone();
+    _targetMatrix = target;
+    _cameraAnimationController.stop();
+    _cameraAnimationController.reset();
+    _cameraAnimationController.forward();
   }
 
   @override
@@ -86,20 +148,38 @@ class TouchCanvasAreaState extends State<TouchCanvasArea> {
     final configState = docState.config;
     final viewState = context.watch<ViewCubit>().state;
 
-    return Container(
-      color: Theme.of(context).colorScheme.surface,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          _lastConstraints = constraints;
-          if (!_hasCentered) {
-            _hasCentered = true;
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) {
-                final isPortrait = MediaQuery.orientationOf(context) == Orientation.portrait;
-                applyZoomPreset(isPortrait ? ZoomPreset.fitWidth : ZoomPreset.fitScreen);
-              }
-            });
+    return BlocListener<ViewCubit, ViewState>(
+      listenWhen: (prev, curr) => prev.isPanelPeeking != curr.isPanelPeeking,
+      listener: (context, state) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            applyZoomPreset(_currentPreset, animate: true);
           }
+        });
+      },
+      child: Container(
+        color: Theme.of(context).colorScheme.surface,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final hasSizeChanged = _lastConstraints != null &&
+                (_lastConstraints!.maxWidth != constraints.maxWidth ||
+                 _lastConstraints!.maxHeight != constraints.maxHeight);
+            _lastConstraints = constraints;
+            if (!_hasCentered) {
+              _hasCentered = true;
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  final isPortrait = MediaQuery.orientationOf(context) == Orientation.portrait;
+                  applyZoomPreset(isPortrait ? ZoomPreset.fitWidth : ZoomPreset.fitScreen);
+                }
+              });
+            } else if (hasSizeChanged) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  applyZoomPreset(_currentPreset, animate: true);
+                }
+              });
+            }
 
           return CanvasStrictScope(
             child: RulerBox(
@@ -153,9 +233,10 @@ class TouchCanvasAreaState extends State<TouchCanvasArea> {
                     ),
                   ],
                 ),
-            ),
-          );
-        },
+              ),
+            );
+          },
+        ),
       ),
     );
   }

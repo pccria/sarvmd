@@ -2,11 +2,13 @@
 // Licensed under the Business Source License 1.1 (BUSL-1.1).
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sarvmd_core/sarvmd_core.dart' as core;
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/utils/unit_formatter.dart';
-import '../common/section_header.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../logic/view/view_cubit.dart';
+import '../common/section_header.dart';
 
 /// A professional, highly elegant page margin control widget that adapts fluidly
 /// to resizable sidebars using 2x2 quad layouts, capsule fields, and direction-specific icons.
@@ -256,7 +258,7 @@ class _ScrubbableField extends StatefulWidget {
 class _ScrubbableFieldState extends State<_ScrubbableField> {
   late final TextEditingController _controller;
   double _dragStartValue = 0.0;
-  Offset? _dragStartPos;
+  double _cumulativeDelta = 0.0;
   bool _isDragging = false;
   bool _isHovering = false;
 
@@ -293,124 +295,125 @@ class _ScrubbableFieldState extends State<_ScrubbableField> {
     }
   }
 
-  void _onPointerDown(PointerDownEvent event) {
-    _dragStartPos = event.position;
+  void _startScrubbing() {
     _dragStartValue = widget.value;
-    _isDragging = false;
+    _cumulativeDelta = 0.0;
+    _isDragging = true;
+    FocusManager.instance.primaryFocus?.unfocus();
+    widget.onScrubStart();
+    context.read<ViewCubit?>()?.startScrubbing(
+      telemetry: '${widget.label}: ${widget.value.toStringAsFixed(1)} mm',
+    );
   }
 
-  void _onPointerMove(PointerMoveEvent event) {
-    if (_dragStartPos == null) return;
-    final totalDelta = event.position.dx - _dragStartPos!.dx;
-    if (!_isDragging && totalDelta.abs() > 3.0) {
-      _isDragging = true;
-      FocusManager.instance.primaryFocus?.unfocus();
-      widget.onScrubStart();
-    }
-    if (_isDragging) {
-      final effectiveDelta = totalDelta - (totalDelta.sign * 3.0);
-      final double newValue = (_dragStartValue + effectiveDelta * 0.1)
-          .clamp(widget.min, widget.max);
-      final rounded = double.parse(newValue.toStringAsFixed(1));
-      if (rounded != widget.value) {
-        widget.onChanged(rounded);
-        _controller.text =
-            UnitFormatter.formatMm(rounded, includeUnit: false);
-      }
+  void _updateScrubbing(double delta) {
+    if (!_isDragging) return;
+    _cumulativeDelta += delta;
+    final range = widget.max - widget.min;
+    final sensitivity = (range / 200.0).clamp(0.05, 0.25);
+    final double newValue = (_dragStartValue + _cumulativeDelta * sensitivity)
+        .clamp(widget.min, widget.max);
+    final rounded = double.parse(newValue.toStringAsFixed(1));
+    if (rounded != widget.value) {
+      widget.onChanged(rounded);
+      _controller.text =
+          UnitFormatter.formatMm(rounded, includeUnit: false);
+      context.read<ViewCubit?>()?.updateScrubbingTelemetry(
+        '${widget.label}: ${rounded.toStringAsFixed(1)} mm',
+      );
     }
   }
 
-  void _onPointerUp(PointerUpEvent event) {
+  void _endScrubbing() {
     if (_isDragging) {
       _isDragging = false;
       _controller.text =
           UnitFormatter.formatMm(widget.value, includeUnit: false);
       widget.onScrubEnd();
+      context.read<ViewCubit?>()?.endScrubbing();
     }
-    _dragStartPos = null;
-  }
-
-  void _onPointerCancel(PointerCancelEvent event) {
-    if (_isDragging) {
-      _isDragging = false;
-      _controller.text =
-          UnitFormatter.formatMm(widget.value, includeUnit: false);
-      widget.onScrubEnd();
-    }
-    _dragStartPos = null;
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Container(
-      height: 32,
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: _isHovering
-            ? colorScheme.primary.withValues(alpha: 0.08)
-            : colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: _isHovering
-              ? colorScheme.primary
-              : colorScheme.outlineVariant.withValues(alpha: 0.3),
-          width: _isHovering ? 1.5 : 1.0,
-        ),
-      ),
-      child: Row(
-        children: [
-          // Label and icon (clean display)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 2),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (widget.icon != null) ...[
-                  Icon(
-                    widget.icon,
-                    size: 14,
-                    color: _isHovering
-                        ? colorScheme.primary
-                        : colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                  ),
-                  const SizedBox(width: 4),
-                ],
-                Text(
-                  widget.shortLabel ?? widget.label,
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.5,
-                    color: _isHovering
-                        ? colorScheme.primary
-                        : colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
-                  ),
-                ),
-              ],
+    return MouseRegion(
+      cursor: SystemMouseCursors.resizeLeftRight,
+      onEnter: (_) => setState(() => _isHovering = true),
+      onExit: (_) => setState(() => _isHovering = false),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onHorizontalDragStart: (_) => _startScrubbing(),
+        onHorizontalDragUpdate: (details) => _updateScrubbing(details.delta.dx),
+        onHorizontalDragEnd: (_) => _endScrubbing(),
+        onHorizontalDragCancel: () => _endScrubbing(),
+        child: Container(
+          height: 32,
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration: BoxDecoration(
+            color: _isDragging
+                ? colorScheme.primary.withValues(alpha: 0.16)
+                : (_isHovering
+                    ? colorScheme.primary.withValues(alpha: 0.08)
+                    : colorScheme.surfaceContainerHighest.withValues(alpha: 0.35)),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: (_isDragging || _isHovering)
+                  ? colorScheme.primary
+                  : colorScheme.outlineVariant.withValues(alpha: 0.3),
+              width: (_isDragging || _isHovering) ? 1.5 : 1.0,
             ),
           ),
-          const SizedBox(width: 4),
-          Container(
-            width: 1,
-            height: 14,
-            color: colorScheme.outlineVariant.withValues(alpha: 0.25),
-          ),
-          const SizedBox(width: 4),
-          // Scrubbable textfield input box
-          Expanded(
-            child: Listener(
-              onPointerDown: _onPointerDown,
-              onPointerMove: _onPointerMove,
-              onPointerUp: _onPointerUp,
-              onPointerCancel: _onPointerCancel,
-              child: MouseRegion(
-                cursor: SystemMouseCursors.resizeLeftRight,
-                onEnter: (_) => setState(() => _isHovering = true),
-                onExit: (_) => setState(() => _isHovering = false),
+          child: Row(
+            children: [
+              // Dedicated Drag Handle Capsule
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                decoration: BoxDecoration(
+                  color: _isDragging
+                      ? colorScheme.primary.withValues(alpha: 0.20)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (widget.icon != null) ...[
+                      Icon(
+                        widget.icon,
+                        size: 14,
+                        color: (_isDragging || _isHovering)
+                            ? colorScheme.primary
+                            : colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                      ),
+                      const SizedBox(width: 4),
+                    ],
+                    Text(
+                      widget.shortLabel ?? widget.label,
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.5,
+                        color: (_isDragging || _isHovering)
+                            ? colorScheme.primary
+                            : colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 4),
+              Container(
+                width: 1,
+                height: 14,
+                color: colorScheme.outlineVariant.withValues(alpha: 0.25),
+              ),
+              const SizedBox(width: 4),
+              // Numeric textfield input box (double-click/tap to edit, drag to scrub)
+              Expanded(
                 child: Tooltip(
-                  message: '${widget.label}: drag left/right to scrub',
+                  message: '${widget.label}: drag horizontally to scrub',
                   child: TextField(
                     controller: _controller,
                     enableInteractiveSelection: false,
@@ -419,7 +422,9 @@ class _ScrubbableFieldState extends State<_ScrubbableField> {
                     scrollPadding: AppSpacing.keyboardScrollPadding,
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: _isHovering ? colorScheme.primary : colorScheme.onSurface,
+                      color: (_isDragging || _isHovering)
+                          ? colorScheme.primary
+                          : colorScheme.onSurface,
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                     ),
@@ -444,9 +449,9 @@ class _ScrubbableFieldState extends State<_ScrubbableField> {
                   ),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

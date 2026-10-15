@@ -2,6 +2,7 @@
 // Licensed under the Business Source License 1.1 (BUSL-1.1).
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/app_version.dart';
 import '../../../l10n/app_localizations.dart';
@@ -59,8 +60,12 @@ class _SettingsPanelState extends State<SettingsPanel> {
     final sectionTextDir = isFa ? TextDirection.rtl : TextDirection.ltr;
     final drawerWidth = MediaQuery.sizeOf(context).width * 0.85;
 
-    final currentSection =
-        context.watch<ViewCubit>().state.activeTouchSection;
+    final viewState = context.watch<ViewCubit>().state;
+    final isScrubbing = viewState.isScrubbing;
+    final isPeeking = viewState.isPanelPeeking;
+    final telemetry = viewState.activeScrubbingTelemetry;
+
+    final currentSection = viewState.activeTouchSection;
 
     final viewInsets = MediaQuery.viewInsetsOf(context);
 
@@ -72,106 +77,264 @@ class _SettingsPanelState extends State<SettingsPanel> {
         top: !widget.isPanelDocked,
         bottom: viewInsets.bottom == 0,
         child: Column(
-        children: [
-          // Drawer Header
-          Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: 14.0,
-              vertical: widget.isPanelDocked ? 8.0 : 12.0,
-            ),
-            decoration: BoxDecoration(
-              color: cs.surfaceContainerHigh,
-              border: Border(
-                bottom: BorderSide(
-                  color: cs.outlineVariant.withValues(alpha: 0.4),
-                  width: 1.0,
+          children: [
+            // Drawer Header with Swipe-Left to Peek & Double-Tap to Peek
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onHorizontalDragUpdate: (details) {
+                if (details.primaryDelta != null && details.primaryDelta! < -8) {
+                  context.read<ViewCubit>().togglePanelPeeking(true);
+                }
+              },
+              onHorizontalDragEnd: (details) {
+                if (details.primaryVelocity != null && details.primaryVelocity! < -50) {
+                  context.read<ViewCubit>().togglePanelPeeking(true);
+                }
+              },
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 14.0,
+                  vertical: widget.isPanelDocked ? 8.0 : 12.0,
                 ),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Brand Logo + Version
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
+                decoration: BoxDecoration(
+                  color: isScrubbing
+                      ? Colors.transparent
+                      : cs.surfaceContainerHigh,
+                  border: isScrubbing
+                      ? null
+                      : Border(
+                          bottom: BorderSide(
+                            color: cs.outlineVariant.withValues(alpha: 0.4),
+                            width: 1.0,
+                          ),
+                        ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const SarvReactiveBrandLogo(
-                      logoHeight: 20.0,
-                      enableExpandAnimation: false,
-                    ),
-                    const SizedBox(height: 2.0),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 4.0),
-                      child: Text(
-                        'v${AppVersion.version}',
-                        style: TextStyle(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w600,
-                          color: cs.onSurfaceVariant.withValues(alpha: 0.7),
-                          letterSpacing: 0.4,
+                    // Brand Logo + Version (Double-tap to peek/restore)
+                    Expanded(
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onDoubleTap: () =>
+                            context.read<ViewCubit>().togglePanelPeeking(),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const SarvReactiveBrandLogo(
+                              logoHeight: 20.0,
+                              enableExpandAnimation: false,
+                            ),
+                            const SizedBox(height: 2.0),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 4.0),
+                              child: Text(
+                                'v${AppVersion.version}',
+                                style: TextStyle(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: cs.onSurfaceVariant.withValues(alpha: 0.7),
+                                  letterSpacing: 0.4,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
+
+                    // Controls (Glance, Language & Theme)
+                    const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        GlanceButton(showLabel: false, compact: true),
+                        SizedBox(width: 6.0),
+                        TouchLanguageButton(),
+                        SizedBox(width: 4.0),
+                        TouchThemeButton(),
+                      ],
+                    ),
                   ],
                 ),
-
-                // Controls (Language & Theme)
-                const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TouchLanguageButton(),
-                    SizedBox(width: 4.0),
-                    TouchThemeButton(),
-                  ],
-                ),
-              ],
+              ),
             ),
-          ),
 
-          // Drawer Body Content (AnimatedSwitcher for smooth navigation)
-          Expanded(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 220),
-              switchInCurve: Curves.easeOut,
-              switchOutCurve: Curves.easeIn,
-              child: currentSection == SettingsSection.mainMenu
-                  ? _buildMainMenu(context, cs, l10n)
-                  : _buildSectionContent(
-                      context, cs, l10n, sectionTextDir, currentSection),
+            // Drawer Body Content
+            Expanded(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 220),
+                switchInCurve: Curves.easeOut,
+                switchOutCurve: Curves.easeIn,
+                child: currentSection == SettingsSection.mainMenu
+                    ? _buildMainMenu(context, cs, l10n)
+                    : _buildSectionContent(
+                        context, cs, l10n, sectionTextDir, currentSection),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
+    );
+
+    final inner = Stack(
+      children: [
+        Positioned.fill(
+          child: AnimatedOpacity(
+            duration: const Duration(milliseconds: 150),
+            curve: Curves.easeOutCubic,
+            opacity: isScrubbing ? 0.18 : 1.0,
+            child: content,
+          ),
+        ),
+        if (isScrubbing && telemetry != null)
+          Positioned(
+            top: 14.0,
+            left: 20.0,
+            right: 20.0,
+            child: Center(
+              child: Material(
+                elevation: 8,
+                borderRadius: BorderRadius.circular(20),
+                color: cs.primary,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0, vertical: 8.0),
+                  child: Text(
+                    telemetry,
+                    style: TextStyle(
+                      color: cs.onPrimary,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        if (isPeeking)
+          Positioned(
+            top: 0,
+            bottom: 0,
+            right: 0,
+            width: 56.0,
+            child: Listener(
+              onPointerDown: (_) {
+                HapticFeedback.selectionClick();
+                context.read<ViewCubit>().togglePanelPeeking(false);
+              },
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () =>
+                    context.read<ViewCubit>().togglePanelPeeking(false),
+              onHorizontalDragUpdate: (details) {
+                if (details.primaryDelta != null && details.primaryDelta! > 6) {
+                  context.read<ViewCubit>().togglePanelPeeking(false);
+                }
+              },
+              onHorizontalDragEnd: (details) {
+                if (details.primaryVelocity != null &&
+                    details.primaryVelocity! > 60) {
+                  context.read<ViewCubit>().togglePanelPeeking(false);
+                }
+              },
+              child: Tooltip(
+                message: l10n.restorePanel,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: cs.primary.withValues(alpha: 0.15),
+                    border: Border(
+                      left: BorderSide(
+                        color: cs.primary.withValues(alpha: 0.5),
+                        width: 2.0,
+                      ),
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      FloatingActionButton.small(
+                        heroTag: 'restore_panel_peek',
+                        onPressed: () =>
+                            context.read<ViewCubit>().togglePanelPeeking(false),
+                        backgroundColor: cs.primary,
+                        foregroundColor: cs.onPrimary,
+                        elevation: 4,
+                        child: const Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      RotatedBox(
+                        quarterTurns: 3,
+                        child: Text(
+                          l10n.restorePanel.toUpperCase(),
+                          style: TextStyle(
+                            color: cs.primary,
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          ),
+      ],
+    );
+
+    final actualWidth = widget.isPanelDocked ? 320.0 : drawerWidth.clamp(280.0, 420.0);
+    final peekSlideFraction = (actualWidth - 56.0) / actualWidth;
 
     if (widget.isPanelDocked) {
-      return Directionality(
-        textDirection: TextDirection.ltr,
-        child: Material(
-          color: cs.surfaceContainerLow,
-          elevation: 6.0,
-          shadowColor: Colors.black.withValues(alpha: 0.35),
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.only(
-              topRight: Radius.circular(16.0),
-              bottomRight: Radius.circular(16.0),
+      return AnimatedSlide(
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOutCubic,
+        offset: isPeeking ? Offset(-peekSlideFraction, 0) : Offset.zero,
+        child: Directionality(
+          textDirection: TextDirection.ltr,
+          child: Material(
+            color: isScrubbing
+                ? Colors.transparent
+                : cs.surfaceContainerLow,
+            elevation: (isScrubbing || isPeeking) ? 0.0 : 6.0,
+            shadowColor: isScrubbing
+                ? Colors.transparent
+                : Colors.black.withValues(alpha: 0.35),
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.only(
+                topRight: Radius.circular(16.0),
+                bottomRight: Radius.circular(16.0),
+              ),
             ),
+            clipBehavior: Clip.antiAlias,
+            child: inner,
           ),
-          clipBehavior: Clip.antiAlias,
-          child: content,
         ),
       );
     }
 
-    return Directionality(
-      textDirection: TextDirection.ltr,
-      child: SizedBox(
-        width: drawerWidth.clamp(280.0, 420.0),
-        child: Drawer(
-          backgroundColor: cs.surfaceContainerLow,
-          child: content,
+    return AnimatedSlide(
+      duration: const Duration(milliseconds: 120),
+      curve: Curves.easeOutCubic,
+      offset: isPeeking ? Offset(-peekSlideFraction, 0) : Offset.zero,
+      child: Directionality(
+        textDirection: TextDirection.ltr,
+        child: SizedBox(
+          width: actualWidth,
+          child: Drawer(
+            backgroundColor: isScrubbing
+                ? Colors.transparent
+                : cs.surfaceContainerLow,
+            elevation: (isScrubbing || isPeeking) ? 0.0 : 6.0,
+            child: inner,
+          ),
         ),
       ),
     );
@@ -304,6 +467,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
     final docState = context.watch<DocumentCubit>().state;
     final cubit = context.read<DocumentCubit>();
     final config = docState.config;
+    final isScrubbing = context.watch<ViewCubit>().state.isScrubbing;
 
     switch (currentSection) {
       case SettingsSection.profiles:
@@ -394,12 +558,16 @@ class _SettingsPanelState extends State<SettingsPanel> {
             vertical: widget.isPanelDocked ? 4.0 : 8.0,
           ),
           decoration: BoxDecoration(
-            color: cs.surfaceContainerHigh.withValues(alpha: 0.5),
-            border: Border(
-              bottom: BorderSide(
-                color: cs.outlineVariant.withValues(alpha: 0.3),
-              ),
-            ),
+            color: isScrubbing
+                ? Colors.transparent
+                : cs.surfaceContainerHigh.withValues(alpha: 0.5),
+            border: isScrubbing
+                ? null
+                : Border(
+                    bottom: BorderSide(
+                      color: cs.outlineVariant.withValues(alpha: 0.3),
+                    ),
+                  ),
           ),
           child: Row(
             children: [
@@ -419,6 +587,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   ),
                 ),
               ),
+              const SizedBox(width: 8.0),
+              const GlanceButton(showLabel: true, compact: true),
             ],
           ),
         ),
@@ -507,6 +677,120 @@ class _DrawerCategoryTile extends StatelessWidget {
             size: isDense ? 18 : 20,
           ),
           onTap: onTap,
+        ),
+      ),
+    );
+  }
+}
+
+/// Spring-loaded, zero-latency glance button for score inspection.
+/// Touch/click down instantly folds the panel into peek mode (0ms delay).
+/// Holding down peeks for the duration of the touch and restores immediately on release.
+/// Quick tap (< 180ms) toggles peek mode.
+class GlanceButton extends StatefulWidget {
+  const GlanceButton({
+    super.key,
+    this.showLabel = false,
+    this.compact = false,
+  });
+
+  final bool showLabel;
+  final bool compact;
+
+  @override
+  State<GlanceButton> createState() => _GlanceButtonState();
+}
+
+class _GlanceButtonState extends State<GlanceButton> {
+  DateTime? _pointerDownTime;
+  bool _isHeld = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
+    final isPeeking = context.watch<ViewCubit>().state.isPanelPeeking;
+
+    return Listener(
+      onPointerDown: (_) {
+        _pointerDownTime = DateTime.now();
+        _isHeld = true;
+        HapticFeedback.selectionClick();
+        if (isPeeking) {
+          context.read<ViewCubit>().togglePanelPeeking(false);
+        } else {
+          context.read<ViewCubit>().togglePanelPeeking(true);
+        }
+      },
+      onPointerUp: (_) {
+        final downTime = _pointerDownTime;
+        _pointerDownTime = null;
+        if (_isHeld && downTime != null) {
+          final heldDuration = DateTime.now().difference(downTime);
+          if (heldDuration.inMilliseconds >= 180) {
+            _isHeld = false;
+            HapticFeedback.lightImpact();
+            context.read<ViewCubit>().togglePanelPeeking(false);
+          } else {
+            _isHeld = false;
+          }
+        }
+      },
+      onPointerCancel: (_) {
+        if (_isHeld) {
+          _isHeld = false;
+          context.read<ViewCubit>().togglePanelPeeking(false);
+        }
+      },
+      child: Tooltip(
+        message: l10n.peekCanvas,
+        child: Material(
+          color: isPeeking
+              ? cs.primary
+              : cs.primary.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(16.0),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16.0),
+            onTap: () {}, // Handled by Listener for 0ms latency
+            child: Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: widget.showLabel ? 10.0 : 8.0,
+                vertical: widget.compact ? 4.0 : 6.0,
+              ),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16.0),
+                border: Border.all(
+                  color: isPeeking
+                      ? cs.primary
+                      : cs.primary.withValues(alpha: 0.35),
+                  width: 1.0,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    isPeeking
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
+                    size: 15.0,
+                    color: isPeeking ? cs.onPrimary : cs.primary,
+                  ),
+                  if (widget.showLabel) ...[
+                    const SizedBox(width: 5.0),
+                    Text(
+                      l10n.peekCanvas,
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                        color: isPeeking ? cs.onPrimary : cs.primary,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );

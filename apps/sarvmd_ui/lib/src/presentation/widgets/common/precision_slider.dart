@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/layout_policy.dart';
+import '../../../logic/view/view_cubit.dart';
 import 'property_row.dart';
 
 class PrecisionSlider extends StatefulWidget {
@@ -117,9 +119,22 @@ class _PrecisionSliderState extends State<PrecisionSlider> {
             value: widget.value,
             min: widget.min,
             max: widget.max,
-            onChanged: widget.onChanged,
-            onChangeStart: widget.onChangeStart,
-            onChangeEnd: widget.onChangeEnd,
+            onChanged: (v) {
+              widget.onChanged(v);
+              context.read<ViewCubit?>()?.updateScrubbingTelemetry(
+                '${widget.label}: ${v.toStringAsFixed(1)}',
+              );
+            },
+            onChangeStart: (v) {
+              widget.onChangeStart?.call(v);
+              context.read<ViewCubit?>()?.startScrubbing(
+                telemetry: '${widget.label}: ${v.toStringAsFixed(1)}',
+              );
+            },
+            onChangeEnd: (v) {
+              widget.onChangeEnd?.call(v);
+              context.read<ViewCubit?>()?.endScrubbing();
+            },
             activeColor: Theme.of(context).colorScheme.primary,
             inactiveColor:
                 Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),

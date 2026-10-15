@@ -79,7 +79,6 @@ class _TouchEditorScreenState extends State<TouchEditorScreen>
 
   late final AnimationController _sideSheetController;
   late final Animation<Offset> _sideSheetSlideAnimation;
-  late final Animation<double> _scrimOpacityAnimation;
 
   @override
   void initState() {
@@ -96,11 +95,6 @@ class _TouchEditorScreenState extends State<TouchEditorScreen>
       curve: Curves.easeOutCubic,
       reverseCurve: Curves.easeInCubic,
     ));
-    _scrimOpacityAnimation = CurvedAnimation(
-      parent: _sideSheetController,
-      curve: Curves.easeOut,
-      reverseCurve: Curves.easeIn,
-    );
   }
 
   @override
@@ -135,11 +129,17 @@ class _TouchEditorScreenState extends State<TouchEditorScreen>
     } else {
       _sideSheetController.forward();
     }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _triggerFitZoom();
+    });
   }
 
   void _closeLandscapeSideSheet() {
     if (!_sideSheetController.isDismissed) {
       _sideSheetController.reverse();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _triggerFitZoom();
+      });
     }
   }
 
@@ -393,6 +393,7 @@ class _TouchEditorScreenState extends State<TouchEditorScreen>
             }
           },
           child: Scaffold(
+            drawerScrimColor: Colors.transparent,
             drawerEdgeDragWidth: isLandscape ? 0.0 : 24.0,
             drawer: isLandscape
                 ? null
@@ -409,18 +410,27 @@ class _TouchEditorScreenState extends State<TouchEditorScreen>
                   left: 0.0,
                   right: 0.0,
                   bottom: 0.0,
-                  child: TouchCanvasArea(
-                    key: _canvasKey,
-                    transformationController: _transformationController,
-                    cursorNotifier: _cursorNotifier,
-                    bottomPadding: 0.0,
-                    topSafeArea: topSafeArea,
-                    leftSafeArea: leftSafeArea,
-                    onLongPressStartCanvas: _handleLongPressStart,
-                    onLongPressMoveCanvas: _handleLongPressMove,
-                    onLongPressEndCanvas: _handleLongPressEnd,
-                    onInteractionStart: _onInteractionStart,
-                    onInteractionEnd: _onInteractionEnd,
+                  child: AnimatedBuilder(
+                    animation: _sideSheetController,
+                    builder: (context, _) {
+                      final screenWidth = MediaQuery.sizeOf(context).width;
+                      final sideSheetWidth = 320.0.clamp(280.0, screenWidth * 0.85);
+                      final isSheetOpen = isLandscape && !_sideSheetController.isDismissed;
+                      return TouchCanvasArea(
+                        key: _canvasKey,
+                        transformationController: _transformationController,
+                        cursorNotifier: _cursorNotifier,
+                        bottomPadding: 0.0,
+                        topSafeArea: topSafeArea,
+                        leftSafeArea: leftSafeArea,
+                        leftInset: isSheetOpen ? sideSheetWidth : 0.0,
+                        onLongPressStartCanvas: _handleLongPressStart,
+                        onLongPressMoveCanvas: _handleLongPressMove,
+                        onLongPressEndCanvas: _handleLongPressEnd,
+                        onInteractionStart: _onInteractionStart,
+                        onInteractionEnd: _onInteractionEnd,
+                      );
+                    },
                   ),
                 ),
 
@@ -533,17 +543,11 @@ class _TouchEditorScreenState extends State<TouchEditorScreen>
                         return Stack(
                           fit: StackFit.expand,
                           children: [
-                            // Scrim
+                            // Non-blocking transparent click-outside listener (no dark scrim)
                             Positioned.fill(
-                              child: FadeTransition(
-                                opacity: _scrimOpacityAnimation,
-                                child: GestureDetector(
-                                  onTap: _closeLandscapeSideSheet,
-                                  behavior: HitTestBehavior.opaque,
-                                  child: Container(
-                                    color: Colors.black.withValues(alpha: 0.35),
-                                  ),
-                                ),
+                              child: GestureDetector(
+                                onTap: _closeLandscapeSideSheet,
+                                behavior: HitTestBehavior.opaque,
                               ),
                             ),
 

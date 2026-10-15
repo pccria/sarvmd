@@ -40,14 +40,16 @@ abstract final class CanvasZoomCalculator {
     double topSafeArea = 0.0,
     double leftSafeArea = 0.0,
     double bottomPadding = 0.0,
+    double leftInset = 0.0,
+    double rightInset = 0.0,
   }) {
     final paperWidth = config.effectiveWidth * lpmm;
     final paperHeight = config.effectiveHeight * lpmm;
 
     final totalRulerWidth = rulerSize + leftSafeArea;
     final totalRulerHeight = rulerSize + topSafeArea;
-    final canvasWidth = constraints.maxWidth - totalRulerWidth;
-    final canvasHeight = constraints.maxHeight - totalRulerHeight - bottomPadding;
+    final canvasWidth = (constraints.maxWidth - totalRulerWidth - leftInset - rightInset).clamp(1.0, double.infinity);
+    final canvasHeight = (constraints.maxHeight - totalRulerHeight - bottomPadding).clamp(1.0, double.infinity);
     final availableWidth = (canvasWidth - padding * 2).clamp(1.0, double.infinity);
     final availableHeight = (canvasHeight - padding * 2).clamp(1.0, double.infinity);
 
@@ -67,7 +69,7 @@ abstract final class CanvasZoomCalculator {
         break;
     }
 
-    final double dx = (canvasWidth - paperWidth * fitScale) / 2;
+    final double dx = leftInset + (canvasWidth - paperWidth * fitScale) / 2;
     double dy;
 
     if (preset == ZoomPreset.fitScreen) {
