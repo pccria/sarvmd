@@ -73,5 +73,53 @@ void main() {
       expect(withInset.dx, greaterThan(noInset.dx));
       expect(withInset.dx, greaterThanOrEqualTo(320.0));
     });
+
+    test('isPanelOccludingPaper returns true when paper overlaps left panel', () {
+      // Paper starts at translationX = 0, with ruler 25.0 -> screen left = 25.0
+      // Panel width = 320 -> screen left (25) < 320 -> occluded!
+      final matrix = Matrix4.identity();
+      final occluded = CanvasZoomCalculator.isPanelOccludingPaper(
+        matrix: matrix,
+        config: config,
+        panelWidth: 320.0,
+      );
+      expect(occluded, isTrue);
+    });
+
+    test('isPanelOccludingPaper returns false when paper is shifted past panel', () {
+      // Paper shifted past 320px panel -> translationX = 350.0 -> screen left = 375.0 > 320.0
+      final matrix = Matrix4.translationValues(350.0, 0.0, 0.0);
+      final occluded = CanvasZoomCalculator.isPanelOccludingPaper(
+        matrix: matrix,
+        config: config,
+        panelWidth: 320.0,
+      );
+      expect(occluded, isFalse);
+    });
+
+    test('isTargetOccluded checks margin-specific guidelines', () {
+      // Paper at translationX = 100.0, scale = 1.0, ruler = 25.0 -> paperScreenLeft = 125.0
+      // Paper width for A4 = 210mm * 3.7795 ~ 793.7px -> paperScreenRight ~ 918.7px
+      // Panel width = 320.0 (span [0 .. 320])
+      final matrix = Matrix4.translationValues(100.0, 0.0, 0.0);
+
+      // Left margin (15mm ~ 56.7px) -> leftMarginX = 125 + 56.7 = 181.7px < 320px -> OCCLUDED
+      final leftOccluded = CanvasZoomCalculator.isTargetOccluded(
+        matrix: matrix,
+        config: config,
+        panelWidth: 320.0,
+        activeScrubbingMargin: 'left',
+      );
+      expect(leftOccluded, isTrue);
+
+      // Right margin (15mm ~ 56.7px) -> rightMarginX = 918.7 - 56.7 = 862px > 320px -> NOT OCCLUDED
+      final rightOccluded = CanvasZoomCalculator.isTargetOccluded(
+        matrix: matrix,
+        config: config,
+        panelWidth: 320.0,
+        activeScrubbingMargin: 'right',
+      );
+      expect(rightOccluded, isFalse);
+    });
   });
 }

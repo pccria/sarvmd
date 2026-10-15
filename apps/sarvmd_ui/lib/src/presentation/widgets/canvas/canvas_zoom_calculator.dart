@@ -93,4 +93,101 @@ abstract final class CanvasZoomCalculator {
       matrix: matrix,
     );
   }
+
+  /// Evaluates whether a panel (occupying screen interval [panelLeft, panelLeft + panelWidth])
+  /// geometrically occludes the rendered manuscript paper.
+  ///
+  /// [matrix] is the current canvas transform [TransformationController.value].
+  /// [config] is the document page configuration (determining dimensions in mm).
+  /// [panelWidth] is the horizontal width of the panel.
+  /// [panelLeft] is the left coordinate of the panel in global screen space (defaults to 0.0 for left-side panels).
+  /// [canvasLeft] is the left coordinate of the canvas viewport in global screen space (defaults to 0.0).
+  /// [rulerSize] is the physical ruler strip width (defaults to [defaultRulerSize]).
+  /// [leftSafeArea] is the device left safe-area insets.
+  static bool isPanelOccludingPaper({
+    required Matrix4 matrix,
+    required core.PageConfig config,
+    required double panelWidth,
+    double panelLeft = 0.0,
+    double canvasLeft = 0.0,
+    double rulerSize = defaultRulerSize,
+    double leftSafeArea = 0.0,
+  }) {
+    if (panelWidth <= 0) return false;
+
+    final scale = matrix.getMaxScaleOnAxis();
+    if (scale <= 0) return false;
+
+    final translationX = matrix.storage[12];
+    final paperPixelWidth = config.effectiveWidth * lpmm;
+
+    final paperScreenLeft = canvasLeft + rulerSize + leftSafeArea + translationX;
+    final paperScreenRight = paperScreenLeft + (paperPixelWidth * scale);
+
+    final panelRight = panelLeft + panelWidth;
+
+    return paperScreenLeft < panelRight && paperScreenRight > panelLeft;
+  }
+
+  /// Evaluates whether the active target (either a specific margin guideline or the paper generally)
+  /// is physically occluded by the panel.
+  static bool isTargetOccluded({
+    required Matrix4 matrix,
+    required core.PageConfig config,
+    required double panelWidth,
+    String? activeScrubbingMargin,
+    double panelLeft = 0.0,
+    double canvasLeft = 0.0,
+    double rulerSize = defaultRulerSize,
+    double leftSafeArea = 0.0,
+  }) {
+    // If the paper does not overlap the panel at all, the target is definitely not occluded.
+    if (!isPanelOccludingPaper(
+      matrix: matrix,
+      config: config,
+      panelWidth: panelWidth,
+      panelLeft: panelLeft,
+      canvasLeft: canvasLeft,
+      rulerSize: rulerSize,
+      leftSafeArea: leftSafeArea,
+    )) {
+      return false;
+    }
+
+    // General scrubbing (staff spacing, document page setup, etc.) - paper is occluded.
+    if (activeScrubbingMargin == null) {
+      return true;
+    }
+
+    final scale = matrix.getMaxScaleOnAxis();
+    final translationX = matrix.storage[12];
+    final paperPixelWidth = config.effectiveWidth * lpmm;
+    final paperScreenLeft = canvasLeft + rulerSize + leftSafeArea + translationX;
+    final paperScreenRight = paperScreenLeft + (paperPixelWidth * scale);
+    final panelRight = panelLeft + panelWidth;
+
+    switch (activeScrubbingMargin) {
+      case 'left':
+        final leftMarginX = paperScreenLeft + (config.margins.left * lpmm * scale);
+        // Occluded if the left margin guideline or paper margin area is under the panel
+        return leftMarginX > panelLeft && paperScreenLeft < panelRight;
+
+      case 'right':
+        final rightMarginX = paperScreenRight - (config.margins.right * lpmm * scale);
+        // Occluded if the right margin guideline or paper margin area is under the panel
+        return paperScreenRight > panelLeft && rightMarginX < panelRight;
+
+      case 'horizontal':
+        final leftMarginX = paperScreenLeft + (config.margins.left * lpmm * scale);
+        final rightMarginX = paperScreenRight - (config.margins.right * lpmm * scale);
+        final leftOccluded = leftMarginX > panelLeft && paperScreenLeft < panelRight;
+        final rightOccluded = paperScreenRight > panelLeft && rightMarginX < panelRight;
+        return leftOccluded || rightOccluded;
+
+      default:
+        // For vertical margins (top/bottom) or other properties, since the paper
+        // is horizontally occluded by the panel, return true.
+        return true;
+    }
+  }
 }

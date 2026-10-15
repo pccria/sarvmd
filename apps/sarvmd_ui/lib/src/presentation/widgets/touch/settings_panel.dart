@@ -20,6 +20,7 @@ import '../staff/margins_settings_group.dart';
 import '../staff/profile_picker.dart';
 import '../staff/staff_spacing_group.dart';
 import '../../../logic/view/view_state.dart';
+import '../canvas/canvas_zoom_calculator.dart';
 import 'touch_language_button.dart';
 import 'touch_theme_button.dart';
 
@@ -44,6 +45,31 @@ class SettingsPanel extends StatefulWidget {
 }
 
 class _SettingsPanelState extends State<SettingsPanel> {
+  @override
+  void initState() {
+    super.initState();
+    widget.transformationController.addListener(_onTransformChanged);
+  }
+
+  @override
+  void didUpdateWidget(SettingsPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.transformationController != widget.transformationController) {
+      oldWidget.transformationController.removeListener(_onTransformChanged);
+      widget.transformationController.addListener(_onTransformChanged);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.transformationController.removeListener(_onTransformChanged);
+    super.dispose();
+  }
+
+  void _onTransformChanged() {
+    if (mounted) setState(() {});
+  }
+
   void _navigateTo(BuildContext context, SettingsSection section) {
     context.read<ViewCubit>().setTouchSection(section);
   }
@@ -64,6 +90,19 @@ class _SettingsPanelState extends State<SettingsPanel> {
     final isScrubbing = viewState.isScrubbing;
     final isPeeking = viewState.isPanelPeeking;
     final telemetry = viewState.activeScrubbingTelemetry;
+
+    final docState = context.watch<DocumentCubit>().state;
+    final actualWidth = widget.isPanelDocked ? 320.0 : drawerWidth.clamp(280.0, 420.0);
+
+    final isCovering = CanvasZoomCalculator.isTargetOccluded(
+      matrix: widget.transformationController.value,
+      config: docState.config,
+      panelWidth: actualWidth,
+      panelLeft: 0.0,
+      canvasLeft: 0.0,
+      activeScrubbingMargin: viewState.activeScrubbingMargin,
+    );
+    final shouldTransparentize = isScrubbing && isCovering;
 
     final currentSection = viewState.activeTouchSection;
 
@@ -97,10 +136,10 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   vertical: widget.isPanelDocked ? 8.0 : 12.0,
                 ),
                 decoration: BoxDecoration(
-                  color: isScrubbing
+                  color: shouldTransparentize
                       ? Colors.transparent
                       : cs.surfaceContainerHigh,
-                  border: isScrubbing
+                  border: shouldTransparentize
                       ? null
                       : Border(
                           bottom: BorderSide(
@@ -169,7 +208,13 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 child: currentSection == SettingsSection.mainMenu
                     ? _buildMainMenu(context, cs, l10n)
                     : _buildSectionContent(
-                        context, cs, l10n, sectionTextDir, currentSection),
+                        context,
+                        cs,
+                        l10n,
+                        sectionTextDir,
+                        currentSection,
+                        shouldTransparentize: shouldTransparentize,
+                      ),
               ),
             ),
           ],
@@ -183,7 +228,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
           child: AnimatedOpacity(
             duration: const Duration(milliseconds: 150),
             curve: Curves.easeOutCubic,
-            opacity: isScrubbing ? 0.18 : 1.0,
+            opacity: shouldTransparentize ? 0.18 : 1.0,
             child: content,
           ),
         ),
@@ -289,7 +334,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
       ],
     );
 
-    final actualWidth = widget.isPanelDocked ? 320.0 : drawerWidth.clamp(280.0, 420.0);
     final peekSlideFraction = (actualWidth - 56.0) / actualWidth;
 
     if (widget.isPanelDocked) {
@@ -300,11 +344,11 @@ class _SettingsPanelState extends State<SettingsPanel> {
         child: Directionality(
           textDirection: TextDirection.ltr,
           child: Material(
-            color: isScrubbing
+            color: shouldTransparentize
                 ? Colors.transparent
                 : cs.surfaceContainerLow,
-            elevation: (isScrubbing || isPeeking) ? 0.0 : 6.0,
-            shadowColor: isScrubbing
+            elevation: (shouldTransparentize || isPeeking) ? 0.0 : 6.0,
+            shadowColor: shouldTransparentize
                 ? Colors.transparent
                 : Colors.black.withValues(alpha: 0.35),
             shape: const RoundedRectangleBorder(
@@ -329,10 +373,10 @@ class _SettingsPanelState extends State<SettingsPanel> {
         child: SizedBox(
           width: actualWidth,
           child: Drawer(
-            backgroundColor: isScrubbing
+            backgroundColor: shouldTransparentize
                 ? Colors.transparent
                 : cs.surfaceContainerLow,
-            elevation: (isScrubbing || isPeeking) ? 0.0 : 6.0,
+            elevation: (shouldTransparentize || isPeeking) ? 0.0 : 6.0,
             child: inner,
           ),
         ),
@@ -459,15 +503,15 @@ class _SettingsPanelState extends State<SettingsPanel> {
     ColorScheme cs,
     AppLocalizations l10n,
     TextDirection sectionTextDir,
-    SettingsSection currentSection,
-  ) {
+    SettingsSection currentSection, {
+    bool shouldTransparentize = false,
+  }) {
     String title = '';
     Widget body = const SizedBox.shrink();
 
     final docState = context.watch<DocumentCubit>().state;
     final cubit = context.read<DocumentCubit>();
     final config = docState.config;
-    final isScrubbing = context.watch<ViewCubit>().state.isScrubbing;
 
     switch (currentSection) {
       case SettingsSection.profiles:
@@ -558,10 +602,10 @@ class _SettingsPanelState extends State<SettingsPanel> {
             vertical: widget.isPanelDocked ? 4.0 : 8.0,
           ),
           decoration: BoxDecoration(
-            color: isScrubbing
+            color: shouldTransparentize
                 ? Colors.transparent
                 : cs.surfaceContainerHigh.withValues(alpha: 0.5),
-            border: isScrubbing
+            border: shouldTransparentize
                 ? null
                 : Border(
                     bottom: BorderSide(

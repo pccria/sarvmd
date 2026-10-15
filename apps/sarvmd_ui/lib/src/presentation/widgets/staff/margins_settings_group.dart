@@ -258,7 +258,7 @@ class _ScrubbableField extends StatefulWidget {
 class _ScrubbableFieldState extends State<_ScrubbableField> {
   late final TextEditingController _controller;
   double _dragStartValue = 0.0;
-  double _cumulativeDelta = 0.0;
+  Offset? _dragStartPos;
   bool _isDragging = false;
   bool _isHovering = false;
 
@@ -295,43 +295,64 @@ class _ScrubbableFieldState extends State<_ScrubbableField> {
     }
   }
 
-  void _startScrubbing() {
+  void _onPointerDown(PointerDownEvent event) {
+    _dragStartPos = event.position;
     _dragStartValue = widget.value;
-    _cumulativeDelta = 0.0;
-    _isDragging = true;
-    FocusManager.instance.primaryFocus?.unfocus();
-    widget.onScrubStart();
-    context.read<ViewCubit?>()?.startScrubbing(
-      telemetry: '${widget.label}: ${widget.value.toStringAsFixed(1)} mm',
-    );
+    _isDragging = false;
   }
 
-  void _updateScrubbing(double delta) {
-    if (!_isDragging) return;
-    _cumulativeDelta += delta;
-    final range = widget.max - widget.min;
-    final sensitivity = (range / 200.0).clamp(0.05, 0.25);
-    final double newValue = (_dragStartValue + _cumulativeDelta * sensitivity)
-        .clamp(widget.min, widget.max);
-    final rounded = double.parse(newValue.toStringAsFixed(1));
-    if (rounded != widget.value) {
-      widget.onChanged(rounded);
-      _controller.text =
-          UnitFormatter.formatMm(rounded, includeUnit: false);
-      context.read<ViewCubit?>()?.updateScrubbingTelemetry(
-        '${widget.label}: ${rounded.toStringAsFixed(1)} mm',
+  void _onPointerMove(PointerMoveEvent event) {
+    if (_dragStartPos == null) return;
+    final totalDelta = event.position.dx - _dragStartPos!.dx;
+    if (!_isDragging && totalDelta.abs() > 3.0) {
+      _isDragging = true;
+      FocusManager.instance.primaryFocus?.unfocus();
+      setState(() {});
+      widget.onScrubStart();
+      context.read<ViewCubit?>()?.startScrubbing(
+        telemetry: '${widget.label}: ${widget.value.toStringAsFixed(1)} mm',
       );
+    }
+    if (_isDragging) {
+      final range = widget.max - widget.min;
+      final sensitivity = (range / 200.0).clamp(0.05, 0.25);
+      final effectiveDelta = totalDelta - (totalDelta.sign * 3.0);
+      final double newValue = (_dragStartValue + effectiveDelta * sensitivity)
+          .clamp(widget.min, widget.max);
+      final rounded = double.parse(newValue.toStringAsFixed(1));
+      if (rounded != widget.value) {
+        widget.onChanged(rounded);
+        _controller.text =
+            UnitFormatter.formatMm(rounded, includeUnit: false);
+        context.read<ViewCubit?>()?.updateScrubbingTelemetry(
+          '${widget.label}: ${rounded.toStringAsFixed(1)} mm',
+        );
+      }
     }
   }
 
-  void _endScrubbing() {
+  void _onPointerUp(PointerUpEvent event) {
     if (_isDragging) {
       _isDragging = false;
+      setState(() {});
       _controller.text =
           UnitFormatter.formatMm(widget.value, includeUnit: false);
       widget.onScrubEnd();
       context.read<ViewCubit?>()?.endScrubbing();
     }
+    _dragStartPos = null;
+  }
+
+  void _onPointerCancel(PointerCancelEvent event) {
+    if (_isDragging) {
+      _isDragging = false;
+      setState(() {});
+      _controller.text =
+          UnitFormatter.formatMm(widget.value, includeUnit: false);
+      widget.onScrubEnd();
+      context.read<ViewCubit?>()?.endScrubbing();
+    }
+    _dragStartPos = null;
   }
 
   @override
@@ -342,12 +363,12 @@ class _ScrubbableFieldState extends State<_ScrubbableField> {
       cursor: SystemMouseCursors.resizeLeftRight,
       onEnter: (_) => setState(() => _isHovering = true),
       onExit: (_) => setState(() => _isHovering = false),
-      child: GestureDetector(
+      child: Listener(
         behavior: HitTestBehavior.opaque,
-        onHorizontalDragStart: (_) => _startScrubbing(),
-        onHorizontalDragUpdate: (details) => _updateScrubbing(details.delta.dx),
-        onHorizontalDragEnd: (_) => _endScrubbing(),
-        onHorizontalDragCancel: () => _endScrubbing(),
+        onPointerDown: _onPointerDown,
+        onPointerMove: _onPointerMove,
+        onPointerUp: _onPointerUp,
+        onPointerCancel: _onPointerCancel,
         child: Container(
           height: 32,
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),

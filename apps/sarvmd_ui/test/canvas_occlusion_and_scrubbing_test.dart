@@ -128,6 +128,51 @@ void main() {
       expect(find.text('Line Gap: 1.75 mm'), findsNothing);
     });
 
+    testWidgets('SettingsPanel stays solid (does NOT transparentize) when paper is in clear aperture',
+        (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 900));
+
+      final clearTransform = TransformationController(
+        Matrix4.translationValues(400.0, 0.0, 0.0),
+      );
+
+      await tester.pumpWidget(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider.value(value: localeCubit),
+            BlocProvider.value(value: viewCubit),
+            BlocProvider.value(value: documentCubit),
+          ],
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: SettingsPanel(
+                transformationController: clearTransform,
+                onZoomPreset: (_) {},
+                isPanelDocked: true,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Trigger scrubbing with telemetry
+      viewCubit.startScrubbing(telemetry: 'Line Gap: 1.75 mm');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+
+      // Panel is NOT occluding paper -> stays solid 1.0 opacity, NOT ghosted!
+      expect(find.byWidgetPredicate(
+        (w) => w is AnimatedOpacity && w.opacity == 0.18,
+      ), findsNothing);
+
+      expect(find.byWidgetPredicate(
+        (w) => w is AnimatedOpacity && w.opacity == 1.0,
+      ), findsWidgets);
+    });
+
     testWidgets('SettingsPanel peek button triggers peeking and restore button restores panel',
         (tester) async {
       await tester.binding.setSurfaceSize(const Size(800, 900));

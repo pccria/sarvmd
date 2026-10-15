@@ -74,3 +74,5 @@ When adjusting engraving parameters (margins, line gaps, system spacing, clefs, 
 | **Step 4** | `PointerEditorScreen` & `TouchEditorScreen` | Removed scrim overlays. Canvas remains live and paper-white. | ✅ Verified |
 | **Step 5** | `CanvasZoomCalculator` | Viewport aperture camera centering with `leftInset` / `rightInset`. | ✅ Verified |
 | **Step 6** | `SettingsPanel` & `PointerEditorScreen` | Header Glance Pill with 0ms pointer-down, spring-loaded release, 120ms animation, and zero content obstruction. | ✅ Verified |
+| **Step 7** | `CanvasZoomCalculator`, `SettingsPanel` & `PointerEditorScreen` | Smart Geometric Occlusion Detection: dynamically detects if the panel physically occludes the rendered paper or active margin guideline. Keeps panel 100% solid and crisp when docked or clear of the score; only transparentizes when the panel is actually covering the score. | ✅ Verified |
+

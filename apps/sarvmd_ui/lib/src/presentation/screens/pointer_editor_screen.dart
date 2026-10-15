@@ -314,6 +314,16 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
     final totalWidth = overlayWidth + 12;
     final peekSlideFraction = (totalWidth - 56.0) / totalWidth;
 
+    final isCovering = CanvasZoomCalculator.isTargetOccluded(
+      matrix: _transformationController.value,
+      config: configState,
+      panelWidth: totalWidth,
+      panelLeft: 0.0,
+      canvasLeft: 0.0,
+      activeScrubbingMargin: viewState.activeScrubbingMargin,
+    );
+    final shouldTransparentize = isScrubbing && isCovering;
+
     return Positioned(
       top: 0,
       bottom: 0,
@@ -324,10 +334,10 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
         curve: Curves.easeOutCubic,
         offset: isPeeking ? Offset(-peekSlideFraction, 0) : Offset.zero,
         child: Material(
-          elevation: (isScrubbing || isPeeking) ? 0.0 : 16.0,
+          elevation: (shouldTransparentize || isPeeking) ? 0.0 : 16.0,
           shadowColor:
-              (isScrubbing || isPeeking) ? Colors.transparent : Colors.black54,
-          color: isScrubbing
+              (shouldTransparentize || isPeeking) ? Colors.transparent : Colors.black54,
+          color: shouldTransparentize
               ? Colors.transparent
               : cs.surfaceContainer,
           child: Stack(
@@ -337,7 +347,7 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
                   decoration: BoxDecoration(
                     border: Border(
                       right: BorderSide(
-                        color: isScrubbing
+                        color: shouldTransparentize
                             ? Colors.transparent
                             : cs.outlineVariant.withValues(alpha: 0.5),
                         width: 1,
@@ -573,6 +583,18 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
     required TextDirection sidebarTextDir,
     bool isOverlay = false,
   }) {
+    final viewState = context.watch<ViewCubit>().state;
+    final isCovering = isOverlay &&
+        CanvasZoomCalculator.isTargetOccluded(
+          matrix: _transformationController.value,
+          config: configState,
+          panelWidth: _sidebarWidth + 12,
+          panelLeft: 0.0,
+          canvasLeft: 0.0,
+          activeScrubbingMargin: viewState.activeScrubbingMargin,
+        );
+    final shouldTransparentize = isCovering && viewState.isScrubbing;
+
     return Column(
       children: [
         if (isOverlay)
@@ -596,10 +618,10 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
                   vertical: AppSpacing.paddingSmall,
                 ),
                 decoration: BoxDecoration(
-                  color: context.watch<ViewCubit>().state.isScrubbing
+                  color: shouldTransparentize
                       ? Colors.transparent
                       : Theme.of(context).colorScheme.surfaceContainerHigh,
-                  border: context.watch<ViewCubit>().state.isScrubbing
+                  border: shouldTransparentize
                       ? null
                       : Border(
                           bottom: BorderSide(
@@ -710,7 +732,7 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
                       child: AnimatedOpacity(
                         duration: const Duration(milliseconds: 150),
                         curve: Curves.easeOutCubic,
-                        opacity: viewState.isScrubbing ? 0.10 : 1.0,
+                        opacity: shouldTransparentize ? 0.10 : 1.0,
                         child: ScrollConfiguration(
                           behavior: ScrollConfiguration.of(context).copyWith(
                             scrollbars: false,
@@ -1217,14 +1239,9 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
                                       : const Duration(milliseconds: 300),
                                   curve: Curves.easeOutCubic,
                                   width: _sidebarCollapsed ? 0 : _sidebarWidth,
-                                  color: viewState.isScrubbing
-                                      ? Theme.of(context)
-                                          .colorScheme
-                                          .surfaceContainer
-                                          .withValues(alpha: 0.10)
-                                      : Theme.of(context)
-                                          .colorScheme
-                                          .surfaceContainer,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .surfaceContainer,
                                   child: ClipRect(
                                     child: OverflowBox(
                                       minWidth: 0,
