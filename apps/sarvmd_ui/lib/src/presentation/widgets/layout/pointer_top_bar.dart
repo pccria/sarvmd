@@ -37,6 +37,9 @@ class PointerTopBar extends StatelessWidget implements PreferredSizeWidget {
         final topPadding = MediaQuery.paddingOf(context).top;
         final totalHeight = 52.0 + topPadding;
 
+        final screenWidth = MediaQuery.sizeOf(context).width;
+        final horizontalPadding = screenWidth < 400.0 ? 8.0 : 12.0;
+
         return Directionality(
           textDirection: TextDirection.ltr,
           child: Container(
@@ -44,8 +47,8 @@ class PointerTopBar extends StatelessWidget implements PreferredSizeWidget {
             width: double.infinity,
             padding: EdgeInsets.only(
               top: topPadding,
-              left: 12.0,
-              right: 12.0,
+              left: horizontalPadding,
+              right: horizontalPadding,
             ),
             decoration: BoxDecoration(
               color: cs.surfaceContainerHigh,
@@ -71,6 +74,7 @@ class PointerTopBar extends StatelessWidget implements PreferredSizeWidget {
                     documentState: documentState,
                     configState: configState,
                     undoRedoCluster: undoRedoCluster,
+                    maxWidth: constraints.maxWidth,
                   );
                 }
 
@@ -97,11 +101,13 @@ class _CompactLayout extends StatefulWidget {
   final DocumentState documentState;
   final core.PageConfig configState;
   final Widget undoRedoCluster;
+  final double maxWidth;
 
   const _CompactLayout({
     required this.documentState,
     required this.configState,
     required this.undoRedoCluster,
+    required this.maxWidth,
   });
 
   @override
