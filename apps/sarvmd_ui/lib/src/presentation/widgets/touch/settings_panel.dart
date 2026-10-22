@@ -353,8 +353,9 @@ class _SettingsPanelState extends State<SettingsPanel> {
 
     final peekSlideFraction = (actualWidth - 56.0) / actualWidth;
 
+    final Widget panelBody;
     if (widget.isPanelDocked) {
-      return AnimatedSlide(
+      panelBody = AnimatedSlide(
         duration: const Duration(milliseconds: 120),
         curve: Curves.easeOutCubic,
         offset: isPeeking ? Offset(-peekSlideFraction, 0) : Offset.zero,
@@ -379,26 +380,28 @@ class _SettingsPanelState extends State<SettingsPanel> {
           ),
         ),
       );
-    }
-
-    return AnimatedSlide(
-      duration: const Duration(milliseconds: 120),
-      curve: Curves.easeOutCubic,
-      offset: isPeeking ? Offset(-peekSlideFraction, 0) : Offset.zero,
-      child: Directionality(
-        textDirection: TextDirection.ltr,
-        child: SizedBox(
-          width: actualWidth,
-          child: Drawer(
-            backgroundColor: shouldTransparentize
-                ? Colors.transparent
-                : cs.surfaceContainerLow,
-            elevation: (shouldTransparentize || isPeeking) ? 0.0 : 6.0,
-            child: inner,
+    } else {
+      panelBody = AnimatedSlide(
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOutCubic,
+        offset: isPeeking ? Offset(-peekSlideFraction, 0) : Offset.zero,
+        child: Directionality(
+          textDirection: TextDirection.ltr,
+          child: SizedBox(
+            width: actualWidth,
+            child: Drawer(
+              backgroundColor: shouldTransparentize
+                  ? Colors.transparent
+                  : cs.surfaceContainerLow,
+              elevation: (shouldTransparentize || isPeeking) ? 0.0 : 6.0,
+              child: inner,
+            ),
           ),
         ),
-      ),
-    );
+      );
+    }
+
+    return panelBody;
   }
 
   Widget _buildFooterContent(BuildContext context, ColorScheme cs, AppLocalizations l10n) {

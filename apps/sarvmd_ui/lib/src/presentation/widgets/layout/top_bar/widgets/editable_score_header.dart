@@ -232,7 +232,10 @@ class EditableScoreHeaderState extends State<EditableScoreHeader> {
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 180),
                       height: 28.0,
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: availableWidth < 100.0 ? 4.0 : 8.0,
+                        vertical: 2.0,
+                      ),
                       decoration: BoxDecoration(
                         color: _isHovered
                             ? cs.primary.withValues(alpha: 0.08)
@@ -264,8 +267,8 @@ class EditableScoreHeaderState extends State<EditableScoreHeader> {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          if (isDirty) ...[
-                            const SizedBox(width: 5.0),
+                          if (isDirty && availableWidth >= 50.0) ...[
+                            const SizedBox(width: 4.0),
                             Tooltip(
                               message: l10n.unsavedChangesTitle,
                               waitDuration: const Duration(milliseconds: 300),
@@ -287,16 +290,18 @@ class EditableScoreHeaderState extends State<EditableScoreHeader> {
                               ),
                             ),
                           ],
-                          const SizedBox(width: 5.0),
-                          AnimatedOpacity(
-                            duration: const Duration(milliseconds: 150),
-                            opacity: _isHovered ? 1.0 : 0.45,
-                            child: Icon(
-                              Icons.edit_note_rounded,
-                              size: 15.0,
-                              color: _isHovered ? cs.primary : cs.onSurfaceVariant,
+                          if (availableWidth >= 100.0) ...[
+                            const SizedBox(width: 4.0),
+                            AnimatedOpacity(
+                              duration: const Duration(milliseconds: 150),
+                              opacity: _isHovered ? 1.0 : 0.45,
+                              child: Icon(
+                                Icons.edit_note_rounded,
+                                size: 15.0,
+                                color: _isHovered ? cs.primary : cs.onSurfaceVariant,
+                              ),
                             ),
-                          ),
+                          ],
                         ],
                       ),
                     ),
@@ -305,14 +310,15 @@ class EditableScoreHeaderState extends State<EditableScoreHeader> {
               );
 
         if (widget.isCompact || shouldExpand) {
-          return Row(
-            mainAxisSize: shouldExpand ? MainAxisSize.max : MainAxisSize.min,
-            children: [
-              if (shouldExpand)
-                Expanded(child: titleWidget)
-              else
-                Flexible(child: titleWidget),
-            ],
+          if (shouldExpand) {
+            return titleWidget;
+          }
+          if (availableWidth < 24.0) {
+            return const SizedBox.shrink();
+          }
+          return Align(
+            alignment: isCentered ? Alignment.center : Alignment.centerLeft,
+            child: titleWidget,
           );
         }
 

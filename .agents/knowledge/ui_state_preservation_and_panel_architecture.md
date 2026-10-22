@@ -108,3 +108,38 @@ This document specifies the architecture for preserving user interface state acr
 * **Instant 1-Tap Switching**: Users can jump directly between any two sections in a single tap without state loss or menu roundtripping.
 * **Compact Landscape Viewport Resilience**: Wrapped in a vertical `SingleChildScrollView` with bouncing physics, guaranteeing zero layout overflow on constrained landscape screens (tested down to 340dp height).
 
+---
+
+## 6. Handheld Back Navigation & Exit Ergonomics Architecture
+
+```
+[Level 1: Focused Input / Keyboard]
+       ↓ (Back unfocuses keyboard / commits inline edit)
+[Level 2: Ephemeral Overlays & HUDs]
+       ↓ (Back dismisses long-press coordinate HUD or collapses expanded Zen top bar)
+[Level 3: Deep Sub-Page in Settings] (e.g. Margins, Staff Spacing, Hierarchy)
+       ↓ (Back steps up to Main Menu via Model A hierarchical unwinding)
+[Level 4: Settings Drawer / Side-Sheet] (Main Menu / Peek Mode)
+       ↓ (Back restores panel if peeking, or pops drawer/sheet to reveal canvas)
+[Level 5: Root Canvas Exit Guard]
+       ↓ (Guarded by showUnsavedChangesDialog if dirty; Double-Back with 2s floating SnackBar if clean)
+```
+
+### 6.1 Model A Hierarchical Sub-Page Unwinding
+* **Nested PopScope in SettingsPanel**: In `SettingsPanel`, wrapped `panelBody` with `PopScope(canPop: currentSection == SettingsSection.mainMenu && !isPeeking)`.
+* **Sub-Page Interception**: When the user is within a sub-page (`margins`, `staffSpacing`, `systemHierarchy`, etc.), Back intercepts the event and resets `activeTouchSection` to `mainMenu`, preserving the open drawer/sheet rather than abruptly destroying it.
+* **Peek Restoration**: When `isPeeking` is active, Back immediately restores the settings panel.
+
+### 6.2 Contextual Transient Overlay Dismissal
+* In `TouchEditorScreen._handleBackNavigation()`, Back systematically prioritizes:
+  1. Unfocusing active text fields (`_isEditingScoreTitle = false`).
+  2. Dismissing active long-press coordinate HUDs (`_longPressPos = null`, `_cursorNotifier.value = null`).
+  3. Collapsing the expanded Zen top bar on compact viewports (`_isTopBarExpanded = false`).
+
+### 6.3 Root Canvas Protection & Unsaved Changes Guard
+* **Accidental Edge Gesture Prevention**: Edge swipes near the screen boundary while panning canvas no longer eject the user from the application.
+* **Unsaved Changes Dialog**: When `DocumentCubit.state.isDirty` or `WorkspaceCubit.state.hasDirtyTabs` is true, Back triggers `showUnsavedChangesDialog(context, documentName)` offering Save, Discard, or Cancel.
+* **Double-Back to Exit (Clean Score)**: When the document is clean, the first Back press presents a floating, localized `SnackBar` (*"Press back again to exit"* / *"برای خروج دوباره بازگشت را بزنید"*). Pressing Back a second time within 2000ms safely terminates the app.
+* **Canvas Zoom Invariance**: Canvas pan and zoom coordinates are completely decoupled and preserved across Back button actions.
+
+

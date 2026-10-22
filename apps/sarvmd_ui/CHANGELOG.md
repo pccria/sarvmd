@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.4] - 2026-10-22
+
+### Added
+- **Hierarchical Back Navigation & Exit Ergonomics (`TouchEditorScreen` & `SettingsPanel`) (`sarvmd_ui`)**:
+  - **Model A Hierarchical Sub-Page Unwinding**: Integrated nested back interception in `TouchEditorScreen` and `SettingsPanel` ensuring that pressing Back from any settings sub-page (*Margins*, *Staff Spacing*, *Page Setup*, *Profiles*, *Hierarchy*, *Export*) cleanly navigates back to the Main Menu rather than abruptly popping and destroying the drawer.
+  - **Peek Restoration on Back**: Pressing Back while the settings panel is in Peek mode seamlessly restores the panel to full view.
+  - **Double-Back to Exit Guard**: Implemented double-back to exit protection on the root canvas for clean documents, displaying a localized floating SnackBar (*"Press back again to exit"* / *"برای خروج دوباره بازگشت را بزنید"*) with a 2-second timeout to prevent accidental exits caused by canvas edge-panning gestures.
+  - **Unsaved Changes Guard on Root Back**: Intercepts Back on dirty documents and prompts the user via `showUnsavedChangesDialog` (*Save*, *Discard*, *Cancel*), preventing accidental data loss.
+  - **Transient Overlay Dismissal**: Prioritizes unfocusing active title edits, dismissing the glassmorphic coordinate HUD, and collapsing the expanded Zen top bar before triggering root navigation.
+  - **Canvas Camera Preservation**: Preserves canvas zoom scale and pan coordinates throughout all Back actions.
+
+### Fixed & Improved
+- **Portrait Pointer Mode Top Bar Overflow (`PointerTopBar` & `EditableScoreHeader`) (`sarvmd_ui`)**:
+  - Resolved `RenderFlex overflowed by X pixels on the right` in the top bar on narrow mobile viewports (< 480dp) in Pointer Mode while preserving direct 1-tap Undo and Redo access.
+  - Replaced nested single-child `Row` inside `EditableScoreHeader` with `Align`, tightened compact bar padding on narrow viewports, and dynamically hid decorative trailing edit icons (`< 100dp`) and dirty status dots (`< 50dp`) so that the title ellipsizes cleanly within available space without overflowing the flex layout.
+- **Peek Barrier Interaction Resilience (`TouchEditorScreen`) (`sarvmd_ui`)**:
+  - Configured `drawerBarrierDismissible: !isPanelPeeking` on the root `Scaffold`, preventing the modal barrier from prematurely intercepting taps or back gestures and dismissing the drawer while in peek mode.
+
 ## [0.12.3] - 2026-10-15
 
 ### Added
