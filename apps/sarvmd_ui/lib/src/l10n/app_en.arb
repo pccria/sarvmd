@@ -539,5 +539,6 @@
   "shortcutCloseDialog": "Close dialog / dismiss",
   "noShortcutsFound": "No matching shortcuts found",
   "peekCanvas": "Peek Canvas",
-  "restorePanel": "Restore Settings Panel"
+  "restorePanel": "Restore Settings Panel",
+  "pressBackAgainToExit": "Press back again to exit"
 }

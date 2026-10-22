@@ -1257,4 +1257,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get restorePanel => 'Restore Settings Panel';
+
+  @override
+  String get pressBackAgainToExit => 'Press back again to exit';
 }
