@@ -396,5 +396,6 @@
   "shortcutCloseDialog": "بستن پنجره / انصراف",
   "noShortcutsFound": "میانبری با این عبارت یافت نشد",
   "peekCanvas": "مشاهده بوم",
-  "restorePanel": "نمایش پنل تنظیمات"
+  "restorePanel": "نمایش پنل تنظیمات",
+  "pressBackAgainToExit": "برای خروج، دوباره بازگشت را بزنید"
 }

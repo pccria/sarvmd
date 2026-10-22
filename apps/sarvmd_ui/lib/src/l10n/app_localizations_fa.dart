@@ -1250,4 +1250,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get restorePanel => 'نمایش پنل تنظیمات';
+
+  @override
+  String get pressBackAgainToExit => 'برای خروج، دوباره بازگشت را بزنید';
 }

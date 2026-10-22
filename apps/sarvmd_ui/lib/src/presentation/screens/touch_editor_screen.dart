@@ -14,6 +14,11 @@ import '../widgets/touch/settings_panel.dart';
 import '../widgets/touch/floating_hud.dart';
 import '../widgets/touch/touch_canvas_area.dart';
 import '../widgets/touch/touch_top_bar.dart';
+import '../widgets/dialogs/unsaved_changes_dialog.dart';
+import '../../l10n/app_localizations.dart';
+import '../../logic/view/view_cubit.dart';
+import '../../logic/view/view_state.dart';
+import '../../logic/workspace/workspace_cubit.dart';
 
 /// Touch-optimized Editor Screen with gestural HUDs and adaptive settings drawer/sheet.
 /// Features a full-bleed light canvas, 40px ultra-minimal header, floating frosted glass baton toolbar,
@@ -31,6 +36,8 @@ class _TouchEditorScreenState extends State<TouchEditorScreen>
       TransformationController();
   final ValueNotifier<Offset?> _cursorNotifier = ValueNotifier(null);
   final GlobalKey<TouchCanvasAreaState> _canvasKey = GlobalKey();
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  DateTime? _lastBackPressTime;
 
   Offset? _longPressPos;
   Timer? _longPressDismissTimer;
@@ -125,7 +132,7 @@ class _TouchEditorScreenState extends State<TouchEditorScreen>
 
   void _toggleLandscapeSideSheet() {
     if (_sideSheetController.isCompleted || _sideSheetController.velocity > 0) {
-      _sideSheetController.reverse();
+      _closeLandscapeSideSheet();
     } else {
       _sideSheetController.forward();
     }
@@ -349,6 +356,125 @@ class _TouchEditorScreenState extends State<TouchEditorScreen>
       );
   }
 
+  Future<void> _handleBackNavigation(BuildContext context) async {
+    // 1. In-place text editing focus dismissal
+    if (_isEditingScoreTitle) {
+      FocusManager.instance.primaryFocus?.unfocus();
+      setState(() {
+        _isEditingScoreTitle = false;
+      });
+      return;
+    }
+
+    // 2. Ephemeral HUDs and expanded headers
+    if (_longPressPos != null) {
+      _longPressDismissTimer?.cancel();
+      setState(() {
+        _longPressPos = null;
+        _cursorNotifier.value = null;
+      });
+      return;
+    }
+
+    if (_isTopBarExpanded) {
+      _topBarIdleTimer?.cancel();
+      setState(() {
+        _isTopBarExpanded = false;
+      });
+      return;
+    }
+
+    // 3. Settings Panel Handling (Both Portrait Drawer & Landscape Side Sheet)
+    final isLandscape = MediaQuery.orientationOf(context) == Orientation.landscape;
+    final isDrawerOpen = _scaffoldKey.currentState?.isDrawerOpen ?? false;
+    final isSheetOpen = isLandscape && !_sideSheetController.isDismissed;
+    final isPanelOpen = isDrawerOpen || isSheetOpen;
+
+    if (isPanelOpen) {
+      final viewCubit = context.read<ViewCubit>();
+      final viewState = viewCubit.state;
+
+      // 3A. If the panel is in Peek mode: restore the panel to full view and STOP!
+      if (viewState.isPanelPeeking) {
+        viewCubit.togglePanelPeeking(false);
+        return;
+      }
+
+      // 3B. If drilled into a sub-page: step back to Main Menu and STOP!
+      if (viewState.activeTouchSection != SettingsSection.mainMenu) {
+        viewCubit.setTouchSection(SettingsSection.mainMenu);
+        return;
+      }
+
+      // 3C. If at Main Menu: close the panel
+      if (isSheetOpen) {
+        _closeLandscapeSideSheet();
+      } else if (isDrawerOpen) {
+        _scaffoldKey.currentState?.closeDrawer();
+      }
+      return;
+    }
+
+    // 5. Canvas Root Exit Check: Unsaved Changes Guard
+    final docCubit = context.read<DocumentCubit>();
+    final workspace = context.read<WorkspaceCubit?>();
+    final isDirty = workspace != null ? workspace.state.hasDirtyTabs : docCubit.state.isDirty;
+
+    if (isDirty) {
+      final action = await showUnsavedChangesDialog(
+        context,
+        documentName: docCubit.state.displayName,
+      );
+      if (!mounted) return;
+      if (action == UnsavedChangesAction.cancel) {
+        return;
+      }
+      if (action == UnsavedChangesAction.save) {
+        final saved = await docCubit.save();
+        if (!saved || !mounted) return;
+      }
+      // If discarded or saved successfully: exit
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      } else {
+        await SystemNavigator.pop();
+      }
+      return;
+    }
+
+    // 6. Clean Document: Double-Back to Exit within 2 seconds
+    final now = DateTime.now();
+    if (_lastBackPressTime == null || now.difference(_lastBackPressTime!) > const Duration(seconds: 2)) {
+      _lastBackPressTime = now;
+      final l10n = AppLocalizations.of(context);
+      final msg = l10n?.pressBackAgainToExit ?? 'Press back again to exit';
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.arrow_back, size: 16, color: Colors.white70),
+              const SizedBox(width: 8),
+              Text(msg),
+            ],
+          ),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          margin: const EdgeInsets.only(bottom: 24, left: 32, right: 32),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      } else {
+        await SystemNavigator.pop();
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isLandscape =
@@ -375,19 +501,15 @@ class _TouchEditorScreenState extends State<TouchEditorScreen>
       child: Directionality(
         textDirection: TextDirection.ltr,
         child: PopScope(
-          canPop: (!isLandscape || _sideSheetController.isDismissed) && !_isEditingScoreTitle,
+          canPop: false,
           onPopInvokedWithResult: (didPop, result) {
             if (didPop) return;
-            if (_isEditingScoreTitle) {
-              FocusManager.instance.primaryFocus?.unfocus();
-              return;
-            }
-            if (isLandscape && !_sideSheetController.isDismissed) {
-              _closeLandscapeSideSheet();
-            }
+            _handleBackNavigation(context);
           },
           child: Scaffold(
+            key: _scaffoldKey,
             drawerScrimColor: Colors.transparent,
+            drawerBarrierDismissible: !context.watch<ViewCubit>().state.isPanelPeeking,
             drawerEdgeDragWidth: isLandscape ? 0.0 : 24.0,
             drawer: isLandscape
                 ? null
