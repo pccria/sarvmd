@@ -802,6 +802,30 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get bookletImpositionHeader => 'Saddle-Stitch Booklet (Imposition)';
+
+  @override
+  String get bookletToggleLabel => 'Impose as Foldable Booklet';
+
+  @override
+  String get bookletToggleSubtitle =>
+      'Pairs pages 2-up per sheet side for folded, stapled sheet music.';
+
+  @override
+  String get bookletSheetModeDouble => 'Double Sheet (1:1, e.g. A3)';
+
+  @override
+  String get bookletSheetModeScaled => 'Same Sheet (Scaled 2-up, e.g. A4)';
+
+  @override
+  String get bookletSpineTicks => 'Spine fold tick marks';
+
+  @override
+  String bookletSignatureBadge(int pages, int sheets, int sides) {
+    return '$pages pages imposed on $sheets sheet(s) ($sides sides)';
+  }
+
+  @override
   String get displayCalibrationTitle => 'Display Calibration';
 
   @override

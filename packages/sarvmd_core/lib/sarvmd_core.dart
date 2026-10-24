@@ -24,6 +24,7 @@ export 'src/domain/clef.dart';
 export 'src/domain/score.dart';
 export 'src/domain/smufl.dart';
 export 'src/domain/svg_layering_mode.dart';
+export 'src/domain/booklet_imposition.dart';
 
 // Layout policy
 export 'src/layout/layout_policy.dart';

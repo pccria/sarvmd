@@ -5,6 +5,7 @@ import 'dart:typed_data';
 
 import '../compiler.dart' as pdflatex;
 import '../config.dart';
+import '../domain/booklet_imposition.dart';
 import '../domain/metadata.dart';
 import '../domain/score.dart';
 import '../domain/svg_layering_mode.dart';
@@ -128,6 +129,25 @@ abstract final class ScoreCompiler {
       layout,
       layeringMode: layeringMode,
       metadata: metadata,
+    );
+  }
+
+  /// Compiles the manuscript layout directly into a saddle-stitch booklet PDF document.
+  ///
+  /// Pairs pages 2-up per sheet side according to saddle-stitch imposition signatures.
+  static Future<Uint8List> compileToBookletPdf(
+    PageConfig config,
+    PageLayout layout, {
+    int pageCount = 1,
+    DocumentMetadata? metadata,
+    BookletConfig bookletConfig = const BookletConfig(),
+  }) {
+    return pdf_emitter.emitBookletPdf(
+      config,
+      layout,
+      pageCount: pageCount,
+      metadata: metadata,
+      bookletConfig: bookletConfig,
     );
   }
 

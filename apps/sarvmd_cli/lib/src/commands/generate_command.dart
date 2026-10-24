@@ -97,6 +97,18 @@ class GenerateCommand extends Command<int> {
         negatable: false,
         help:
             'Compile PDF using external pdflatex binary instead of native vector PDF.',
+      )
+      ..addFlag(
+        'booklet',
+        negatable: false,
+        help:
+            'Impose pages into a saddle-stitch booklet (2-up per sheet side).',
+      )
+      ..addOption(
+        'booklet-sheet',
+        help: 'Sheet size strategy for booklet (double, scaled).',
+        allowed: ['double', 'scaled'],
+        defaultsTo: 'double',
       );
   }
 
@@ -222,8 +234,25 @@ class GenerateCommand extends Command<int> {
     // 7. Emit output according to format
     try {
       if (format == 'pdf') {
+        final isBooklet = argResults?['booklet'] as bool? ?? false;
         final useLatex = argResults?['use-pdflatex'] as bool? ?? false;
-        if (useLatex) {
+
+        if (isBooklet) {
+          final sheetModeStr = argResults?['booklet-sheet'] as String? ?? 'double';
+          final sheetMode = sheetModeStr == 'scaled'
+              ? core.BookletSheetMode.sameSizeScaled
+              : core.BookletSheetMode.doubleSize;
+          final bytes = await core.ScoreCompiler.compileToBookletPdf(
+            config,
+            layout,
+            pageCount: pageCount,
+            metadata: metadata,
+            bookletConfig: core.BookletConfig(sheetMode: sheetMode),
+          );
+          File(finalPath).writeAsBytesSync(bytes);
+          stdout.writeln(
+              'Generated saddle-stitch booklet PDF: $finalPath (${bytes.length} bytes)');
+        } else if (useLatex) {
           final texPath = p.setExtension(finalPath, '.tex');
           final texContent = core.ScoreCompiler.compileToTex(
             config,

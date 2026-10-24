@@ -26,6 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Page 2+ reclaims vertical stave space (0mm headroom, staves flush with top margin), displays running header page numbers (`- 2 -`), and renders abbreviated instrument names.
 - **Multi-Page SVG Compilation**:
   - Added `ScoreCompiler.compilePageToSvg` and `ScoreCompiler.compileAllPagesToSvg` returning complete SVG documents per page with accurate page index and running page headers.
+- **Saddle-Stitch Booklet Imposition Engine (`BookletImpositionCalculator`)**:
+  - Added `BookletImpositionCalculator` computing 2-up front/back spreads honoring classic printing signature geometry (Left + Right = Total + 1) with automatic blank page padding.
+  - Added `BookletConfig`, `BookletSheetMode` (`doubleSize` 1:1 scale vs `sameSizeScaled` 2-up), and `BookletSpread`.
+  - Implemented `pdf_emitter.emitBookletPdf` and `ScoreCompiler.compileToBookletPdf` rendering imposed sheet spreads with hairline spine fold tick marks.
 - **Developer Documentation & Recipes (`packages/sarvmd_core/README.md`)**:
   - Published comprehensive API Reference covering domain models (`PageConfig`, `StaffConfig`, `SystemLayout`, `StaffNodeGroup`, `Clef`, `ScoreCompiler`, `SarvDocument`).
   - Added copy-paste code recipes for constructing layouts, programmatic `.sarv` mutation, vector PDF/SVG emission, and layout calculation queries.

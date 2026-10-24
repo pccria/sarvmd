@@ -799,6 +799,31 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
+  String get bookletImpositionHeader => 'چاپ کتابچه‌ای سه‌لایی (صفحه‌آرایی)';
+
+  @override
+  String get bookletToggleLabel => 'صفحه‌آرایی به صورت کتابچه تا شونده';
+
+  @override
+  String get bookletToggleSubtitle =>
+      'تنظیم جفت‌صفحه‌ای (۲تایی) در هر روی برگه برای تا کردن و منگنه کردن نت موسیقی.';
+
+  @override
+  String get bookletSheetModeDouble => 'برگه اندازه دوبل (۱:۱، مانند A3)';
+
+  @override
+  String get bookletSheetModeScaled =>
+      'همان اندازه برگه (مقیاس‌شده ۲تایی، مانند A4)';
+
+  @override
+  String get bookletSpineTicks => 'نشانه‌های تا شدن عطف';
+
+  @override
+  String bookletSignatureBadge(int pages, int sheets, int sides) {
+    return '$pages صفحه در قالب $sheets برگه ($sides رو)';
+  }
+
+  @override
   String get displayCalibrationTitle => 'کالیبراسیون صفحه نمایش';
 
   @override

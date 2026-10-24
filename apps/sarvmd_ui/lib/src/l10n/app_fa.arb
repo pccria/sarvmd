@@ -255,6 +255,13 @@
   "exportingState": "در حال دریافت خروجی...",
   "exportButtonLabel": "دریافت خروجی {format}",
   "exportButtonWithPagesLabel": "دریافت خروجی {format} ({pages} صفحه)",
+  "bookletImpositionHeader": "چاپ کتابچه‌ای سه‌لایی (صفحه‌آرایی)",
+  "bookletToggleLabel": "صفحه‌آرایی به صورت کتابچه تا شونده",
+  "bookletToggleSubtitle": "تنظیم جفت‌صفحه‌ای (۲تایی) در هر روی برگه برای تا کردن و منگنه کردن نت موسیقی.",
+  "bookletSheetModeDouble": "برگه اندازه دوبل (۱:۱، مانند A3)",
+  "bookletSheetModeScaled": "همان اندازه برگه (مقیاس‌شده ۲تایی، مانند A4)",
+  "bookletSpineTicks": "نشانه‌های تا شدن عطف",
+  "bookletSignatureBadge": "{pages} صفحه در قالب {sheets} برگه ({sides} رو)",
 
   "displayCalibrationTitle": "کالیبراسیون صفحه نمایش",
   "displayCalibrationSubtitle": "کالیبره کردن اندازه واقعی روی نمایشگر فیزیکی شما.",

@@ -1586,6 +1586,48 @@ abstract class AppLocalizations {
   /// **'Export {format} ({pages} Pages)'**
   String exportButtonWithPagesLabel(String format, int pages);
 
+  /// No description provided for @bookletImpositionHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Saddle-Stitch Booklet (Imposition)'**
+  String get bookletImpositionHeader;
+
+  /// No description provided for @bookletToggleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Impose as Foldable Booklet'**
+  String get bookletToggleLabel;
+
+  /// No description provided for @bookletToggleSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pairs pages 2-up per sheet side for folded, stapled sheet music.'**
+  String get bookletToggleSubtitle;
+
+  /// No description provided for @bookletSheetModeDouble.
+  ///
+  /// In en, this message translates to:
+  /// **'Double Sheet (1:1, e.g. A3)'**
+  String get bookletSheetModeDouble;
+
+  /// No description provided for @bookletSheetModeScaled.
+  ///
+  /// In en, this message translates to:
+  /// **'Same Sheet (Scaled 2-up, e.g. A4)'**
+  String get bookletSheetModeScaled;
+
+  /// No description provided for @bookletSpineTicks.
+  ///
+  /// In en, this message translates to:
+  /// **'Spine fold tick marks'**
+  String get bookletSpineTicks;
+
+  /// No description provided for @bookletSignatureBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'{pages} pages imposed on {sheets} sheet(s) ({sides} sides)'**
+  String bookletSignatureBadge(int pages, int sheets, int sides);
+
   /// No description provided for @displayCalibrationTitle.
   ///
   /// In en, this message translates to:

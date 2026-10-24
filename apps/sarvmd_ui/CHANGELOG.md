@@ -18,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Multi-Page SVG Export Support in `ExportDialog`**:
   - Added export options when saving SVG format with multi-page scores: users can choose between exporting all pages as a batch of numbered files (`score_p1.svg`, `score_p2.svg`…) or exporting only the currently active page.
   - Added `ExportService.exportAllPagesToSvg` and `ExportService.exportSinglePageToSvg`.
+- **Saddle-Stitch Booklet Imposition in `ExportDialog` & `ExportService`**:
+  - Added "Impose as Foldable Booklet" toggle in `ExportDialog` when PDF format is selected.
+  - Interactive signature badge dynamically calculating total padded pages, physical sheets, and sides (e.g. "4 pages imposed on 1 sheet(s) (2 sides)").
+  - Support for `BookletSheetMode.doubleSize` (1:1 scale onto double sheet, e.g. A3) and `BookletSheetMode.sameSizeScaled` (scaled 2-up onto standard sheet, e.g. A4).
+  - Subtle hairline spine fold ticks at top and bottom edges for precise manual and mechanical folding.
+  - Full bilingual English and Persian localization.
 - **Multi-Page Canvas Arrangement Modes (Single, Facing Spread, Continuous Flow, Grid)**:
   - Created top-level `ScoreArrangementCanvas` supporting 5 distinct Gouldian and workflow-optimized layout arrangement modes:
     - `single`: Focused, single-page presentation centered on the canvas.

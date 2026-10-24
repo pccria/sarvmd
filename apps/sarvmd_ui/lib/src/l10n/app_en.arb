@@ -318,6 +318,27 @@
     }
   },
 
+  "bookletImpositionHeader": "Saddle-Stitch Booklet (Imposition)",
+  "bookletToggleLabel": "Impose as Foldable Booklet",
+  "bookletToggleSubtitle": "Pairs pages 2-up per sheet side for folded, stapled sheet music.",
+  "bookletSheetModeDouble": "Double Sheet (1:1, e.g. A3)",
+  "bookletSheetModeScaled": "Same Sheet (Scaled 2-up, e.g. A4)",
+  "bookletSpineTicks": "Spine fold tick marks",
+  "bookletSignatureBadge": "{pages} pages imposed on {sheets} sheet(s) ({sides} sides)",
+  "@bookletSignatureBadge": {
+    "placeholders": {
+      "pages": {
+        "type": "int"
+      },
+      "sheets": {
+        "type": "int"
+      },
+      "sides": {
+        "type": "int"
+      }
+    }
+  },
+
   "displayCalibrationTitle": "Display Calibration",
   "displayCalibrationSubtitle": "Calibrate \"Actual Size\" to your physical display.",
   "calibrationStep1": "Hold a physical ruler flat against your screen.",

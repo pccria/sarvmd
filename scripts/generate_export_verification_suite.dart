@@ -205,5 +205,50 @@ void main() async {
     File(p.join(outDir.path, '06_tab_and_percussion_letter_portrait.svg')).writeAsStringSync(svg);
   }
 
+  // ── Scenario 7: Saddle-Stitch Booklet Imposition ──────────────────────
+  print('Generating Scenario 7: Saddle-Stitch Imposed Booklets...');
+  {
+    // 7A: String Quartet (4 pages imposed on 1 sheet A3 Landscape, 1:1 scale)
+    final configA4 = StaffProfiles.stringQuartet.applyTo(const PageConfig(
+      pageSize: PageSize.a4,
+      orientation: PageOrientation.portrait,
+    ));
+    final meta = const DocumentMetadata(
+      title: 'String Quartet in F Major',
+      subtitle: 'Op. 18 No. 1 — Booklet Edition',
+      composer: 'Ludwig van Beethoven',
+      showTitleBlock: true,
+      showPageNumbers: true,
+    );
+    final layoutA4 = computeLayout(configA4, pageIndex: 0, metadata: meta);
+
+    final bookletDoubleBytes = await ScoreCompiler.compileToBookletPdf(
+      configA4,
+      layoutA4,
+      pageCount: 4,
+      metadata: meta,
+      bookletConfig: const BookletConfig(
+        sheetMode: BookletSheetMode.doubleSize,
+        drawSpineTicks: true,
+      ),
+    );
+    File(p.join(outDir.path, '07_booklet_string_quartet_4pages_a3_double.pdf'))
+        .writeAsBytesSync(bookletDoubleBytes);
+
+    // 7B: String Quartet (3 pages with blank back cover, scaled 2-up onto A4 Landscape)
+    final bookletScaledBytes = await ScoreCompiler.compileToBookletPdf(
+      configA4,
+      layoutA4,
+      pageCount: 3,
+      metadata: meta,
+      bookletConfig: const BookletConfig(
+        sheetMode: BookletSheetMode.sameSizeScaled,
+        drawSpineTicks: true,
+      ),
+    );
+    File(p.join(outDir.path, '07_booklet_string_quartet_3pages_a4_scaled.pdf'))
+        .writeAsBytesSync(bookletScaledBytes);
+  }
+
   print('\n✓ All visual verification scenarios successfully generated in ${outDir.path}!');
 }

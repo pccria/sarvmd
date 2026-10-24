@@ -187,6 +187,24 @@ void main() {
       expect(texContent, contains('Nocturne in C-sharp Minor'));
       expect(texContent, contains(r'\textbf{\normalsize Frédéric Chopin}'));
     });
+
+    test('generates saddle-stitch booklet PDF with --booklet flag', () async {
+      final outBooklet = p.join(tempDir.path, 'quartet_booklet.pdf');
+      final exitCode = await runner.run([
+        'generate',
+        '--profile',
+        'stringQuartet',
+        '--page-count',
+        '4',
+        '--booklet',
+        '--output',
+        outBooklet,
+      ]);
+
+      expect(exitCode, equals(0));
+      expect(File(outBooklet).existsSync(), isTrue);
+      expect(File(outBooklet).lengthSync(), greaterThan(1000));
+    });
   });
 }
 

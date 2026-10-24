@@ -62,6 +62,9 @@ class _ExportDialogState extends State<ExportDialog> {
   bool _isCustomName = false;
   bool _exportAllSvgPages = true;
   String _outputDir = ExportDirectoryService.getDefaultDirectory();
+  bool _isBooklet = false;
+  core.BookletSheetMode _bookletSheetMode = core.BookletSheetMode.doubleSize;
+  bool _drawSpineTicks = true;
 
   bool _isExporting = false;
   ExportResult? _lastResult;
@@ -176,6 +179,11 @@ class _ExportDialogState extends State<ExportDialog> {
             fileName: effectiveExportName,
             pageCount: _pageCount,
             outputDir: _outputDir,
+            isBooklet: _isBooklet,
+            bookletConfig: core.BookletConfig(
+              sheetMode: _bookletSheetMode,
+              drawSpineTicks: _drawSpineTicks,
+            ),
           );
         case ExportFormat.svg:
           result = await ExportService.exportSvg(
@@ -408,12 +416,143 @@ class _ExportDialogState extends State<ExportDialog> {
 
                   // Section 3: Format Specific Configuration
                   if (_selectedFormat == ExportFormat.pdf ||
-                      _selectedFormat == ExportFormat.tex)
+                      _selectedFormat == ExportFormat.tex) ...[
                     ExportPageCountSection(
                       pageCount: _pageCount,
                       pageController: _pageController,
                       onPageCountChanged: _updatePageCount,
-                    )
+                    ),
+                    if (_selectedFormat == ExportFormat.pdf) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: cs.surfaceContainerHighest.withValues(alpha: 0.25),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: _isBooklet
+                                ? cs.primary.withValues(alpha: 0.5)
+                                : cs.outline.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.menu_book_outlined,
+                                  size: 16,
+                                  color: _isBooklet ? cs.primary : cs.onSurfaceVariant,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        l10n.bookletToggleLabel,
+                                        style: TextStyle(
+                                          fontSize: 12.5,
+                                          fontWeight: FontWeight.bold,
+                                          color: cs.onSurface,
+                                        ),
+                                      ),
+                                      Text(
+                                        l10n.bookletToggleSubtitle,
+                                        style: TextStyle(
+                                          fontSize: 10.5,
+                                          color: cs.onSurfaceVariant.withValues(alpha: 0.8),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Switch.adaptive(
+                                  value: _isBooklet,
+                                  onChanged: (val) => setState(() => _isBooklet = val),
+                                ),
+                              ],
+                            ),
+                            if (_isBooklet) ...[
+                              const SizedBox(height: 10),
+                              Divider(height: 1, color: cs.outline.withValues(alpha: 0.15)),
+                              const SizedBox(height: 10),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: cs.primary.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.auto_stories_outlined, size: 14, color: cs.primary),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        l10n.bookletSignatureBadge(
+                                          core.BookletImpositionCalculator.calculateTotalBookletPages(_pageCount),
+                                          core.BookletImpositionCalculator.calculateSheetCount(_pageCount),
+                                          core.BookletImpositionCalculator.calculateSheetCount(_pageCount) * 2,
+                                        ),
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                          color: cs.primary,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              SizedBox(
+                                width: double.infinity,
+                                child: SegmentedButton<core.BookletSheetMode>(
+                                  segments: [
+                                    ButtonSegment(
+                                      value: core.BookletSheetMode.doubleSize,
+                                      label: Text(l10n.bookletSheetModeDouble, style: const TextStyle(fontSize: 11)),
+                                    ),
+                                    ButtonSegment(
+                                      value: core.BookletSheetMode.sameSizeScaled,
+                                      label: Text(l10n.bookletSheetModeScaled, style: const TextStyle(fontSize: 11)),
+                                    ),
+                                  ],
+                                  selected: {_bookletSheetMode},
+                                  onSelectionChanged: (newSel) {
+                                    setState(() => _bookletSheetMode = newSel.first);
+                                  },
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              InkWell(
+                                onTap: () => setState(() => _drawSpineTicks = !_drawSpineTicks),
+                                borderRadius: BorderRadius.circular(4),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 4),
+                                  child: Row(
+                                    children: [
+                                      Checkbox(
+                                        value: _drawSpineTicks,
+                                        onChanged: (val) => setState(() => _drawSpineTicks = val ?? true),
+                                        visualDensity: VisualDensity.compact,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        l10n.bookletSpineTicks,
+                                        style: TextStyle(fontSize: 11, color: cs.onSurface),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
+                  ]
                   else if (_selectedFormat == ExportFormat.svg) ...[
                     if (_pageCount > 1)
                       Container(

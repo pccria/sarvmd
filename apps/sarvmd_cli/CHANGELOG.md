@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Replaced mandatory external `pdflatex` compilation with native vector PDF and SVG emission via `sarvmd_core`'s `ScoreCompiler`.
   - Maintained `--use-pdflatex` as an optional fallback flag.
   - Added batch multi-page SVG emission (`<name>_p1.svg`, `<name>_p2.svg`, etc.) in the `generate` command when `--page-count > 1`.
+  - Added `--booklet` flag and `--booklet-sheet` option (`double` or `scaled`) to `generate` and `compile` commands for saddle-stitch booklet PDF creation.
 - **Automated Test Suite (`test/`)**:
   - Added 29 automated tests verifying command execution, single-character shortcuts, non-redundancy rejection (exit code `64`), and file generation.
 - **User Documentation & Manual (`apps/sarvmd_cli/README.md`)**:

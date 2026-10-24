@@ -177,12 +177,15 @@ class ExportService {
     String? outputDir,
     bool useLatexCompiler = false,
     core.DocumentMetadata? metadata,
+    bool isBooklet = false,
+    core.BookletConfig bookletConfig = const core.BookletConfig(),
   }) async {
     _log.info('Exporting PDF', context: {
       'pageSize': config.pageSize.name,
       'staffCount': config.staffCount,
       'pageCount': pageCount,
       'useLatexCompiler': useLatexCompiler,
+      'isBooklet': isBooklet,
     });
     final sw = Stopwatch()..start();
     try {
@@ -190,12 +193,20 @@ class ExportService {
       final effectiveMeta = metadata ?? layout.metadata;
 
       if (kIsWeb || !useLatexCompiler) {
-        final pdfBytes = await core.ScoreCompiler.compileToPdf(
-          config,
-          layout,
-          pageCount: pageCount,
-          metadata: effectiveMeta,
-        );
+        final pdfBytes = isBooklet
+            ? await core.ScoreCompiler.compileToBookletPdf(
+                config,
+                layout,
+                pageCount: pageCount,
+                metadata: effectiveMeta,
+                bookletConfig: bookletConfig,
+              )
+            : await core.ScoreCompiler.compileToPdf(
+                config,
+                layout,
+                pageCount: pageCount,
+                metadata: effectiveMeta,
+              );
 
         if (kIsWeb) {
           downloadFileWeb('$name.pdf', pdfBytes, 'application/pdf');
@@ -376,17 +387,28 @@ class ExportService {
     core.PageLayout layout, {
     int pageCount = 1,
     core.DocumentMetadata? metadata,
+    bool isBooklet = false,
+    core.BookletConfig bookletConfig = const core.BookletConfig(),
   }) async {
     _log.info('Initiating score print', context: {
       'pageCount': pageCount,
+      'isBooklet': isBooklet,
     });
     final effectiveMeta = metadata ?? layout.metadata;
-    final pdfBytes = await core.ScoreCompiler.compileToPdf(
-      config,
-      layout,
-      pageCount: pageCount,
-      metadata: effectiveMeta,
-    );
+    final pdfBytes = isBooklet
+        ? await core.ScoreCompiler.compileToBookletPdf(
+            config,
+            layout,
+            pageCount: pageCount,
+            metadata: effectiveMeta,
+            bookletConfig: bookletConfig,
+          )
+        : await core.ScoreCompiler.compileToPdf(
+            config,
+            layout,
+            pageCount: pageCount,
+            metadata: effectiveMeta,
+          );
 
     if (kIsWeb) {
       final name = _cleanFileName('', config);

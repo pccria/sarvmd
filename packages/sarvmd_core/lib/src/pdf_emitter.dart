@@ -7,10 +7,13 @@
 /// Generates vector PDF document byte streams directly from manuscript layouts,
 /// running 100% in memory on Web, Desktop, and Mobile without requiring pdflatex.
 
+import 'dart:typed_data';
+
 import 'package:pdf/pdf.dart' as pdf;
 import 'package:pdf/widgets.dart' as pw;
 
 import 'config.dart';
+import 'domain/booklet_imposition.dart';
 import 'domain/clef.dart';
 import 'domain/metadata.dart';
 import 'engraving_config.dart';
@@ -19,7 +22,7 @@ import 'layout.dart';
 const double _mmToPt = 72.0 / 25.4;
 
 /// Emit a complete PDF document byte stream for a manuscript layout.
-Future<List<int>> emitPdf(
+Future<Uint8List> emitPdf(
   PageConfig config,
   PageLayout layout, {
   int pageCount = 1,
@@ -48,7 +51,7 @@ Future<List<int>> emitPdf(
           return pw.CustomPaint(
             size: pdf.PdfPoint(wPt, hPt),
             painter: (pdf.PdfGraphics canvas, pdf.PdfPoint size) {
-              _drawScoreTypography(
+              _renderSinglePageToCanvas(
                 canvas,
                 config,
                 pageLayout,
@@ -57,12 +60,10 @@ Future<List<int>> emitPdf(
                 p,
                 leftX,
                 rightX,
+                gap,
+                strokeMm,
                 effectiveMetadata,
               );
-              _drawSystemConnectors(canvas, config, pageLayout.systems, hPt);
-              _drawStaffLines(canvas, pageLayout.systems, leftX, rightX, gap, strokeMm, hPt);
-              _drawClefs(canvas, pageLayout.systems, leftX, gap, config.engraving, hPt);
-              _drawStaffLabels(canvas, pageLayout.systems, leftX, hPt, pdfDoc.document, gap, p);
             },
           );
         },
@@ -71,6 +72,166 @@ Future<List<int>> emitPdf(
   }
 
   return pdfDoc.save();
+}
+
+/// Emit a complete saddle-stitch booklet PDF document byte stream.
+///
+/// Pairs pages 2-up per sheet side according to saddle-stitch imposition signatures.
+Future<Uint8List> emitBookletPdf(
+  PageConfig config,
+  PageLayout layout, {
+  int pageCount = 1,
+  DocumentMetadata? metadata,
+  BookletConfig bookletConfig = const BookletConfig(),
+}) async {
+  final effectiveMetadata = metadata ?? layout.metadata;
+  final pdfDoc = pw.Document();
+
+  final wPt = config.effectiveWidth * _mmToPt;
+  final hPt = config.effectiveHeight * _mmToPt;
+
+  final gap = config.staffConfig.lineGapMm;
+  final strokeMm = config.staffConfig.lineThicknessPt * 25.4 / 72.0;
+  final leftX = config.margins.left;
+  final rightX = config.effectiveWidth - config.margins.right;
+
+  // Determine physical sheet dimensions in Pt
+  final double sheetWidthPt;
+  final double sheetHeightPt;
+  if (bookletConfig.sheetMode == BookletSheetMode.doubleSize) {
+    sheetWidthPt = wPt * 2.0;
+    sheetHeightPt = hPt;
+  } else {
+    // sameSizeScaled: landscape sheet of the same paper size
+    if (config.orientation == PageOrientation.portrait) {
+      sheetWidthPt = hPt;
+      sheetHeightPt = wPt;
+    } else {
+      sheetWidthPt = wPt * 2.0;
+      sheetHeightPt = hPt;
+    }
+  }
+
+  final sheetFormat = pdf.PdfPageFormat(sheetWidthPt, sheetHeightPt, marginAll: 0);
+  final halfSheetWidthPt = sheetWidthPt / 2.0;
+
+  final spreads = BookletImpositionCalculator.computeSpreads(pageCount);
+
+  // Pre-cache layouts for referenced pages
+  final pageLayouts = <int, PageLayout>{};
+  PageLayout getLayoutForPage(int p) {
+    return pageLayouts.putIfAbsent(p, () {
+      return (p == layout.pageIndex)
+          ? layout
+          : computeLayout(config, pageIndex: p, metadata: effectiveMetadata);
+    });
+  }
+
+  pw.Widget buildPageSlot(int? pageIndex) {
+    if (pageIndex == null) {
+      return pw.Container(width: halfSheetWidthPt, height: sheetHeightPt);
+    }
+    final pageLayout = getLayoutForPage(pageIndex);
+    return pw.Container(
+      width: halfSheetWidthPt,
+      height: sheetHeightPt,
+      child: pw.Center(
+        child: pw.FittedBox(
+          fit: pw.BoxFit.contain,
+          child: pw.CustomPaint(
+            size: pdf.PdfPoint(wPt, hPt),
+            painter: (pdf.PdfGraphics canvas, pdf.PdfPoint size) {
+              _renderSinglePageToCanvas(
+                canvas,
+                config,
+                pageLayout,
+                hPt,
+                pdfDoc.document,
+                pageIndex,
+                leftX,
+                rightX,
+                gap,
+                strokeMm,
+                effectiveMetadata,
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  for (final spread in spreads) {
+    pdfDoc.addPage(
+      pw.Page(
+        pageFormat: sheetFormat,
+        build: (pw.Context context) {
+          return pw.Stack(
+            children: [
+              pw.Row(
+                children: [
+                  buildPageSlot(spread.leftPageIndex),
+                  buildPageSlot(spread.rightPageIndex),
+                ],
+              ),
+              if (bookletConfig.drawSpineTicks)
+                pw.CustomPaint(
+                  size: pdf.PdfPoint(sheetWidthPt, sheetHeightPt),
+                  painter: (pdf.PdfGraphics canvas, pdf.PdfPoint size) {
+                    canvas.saveContext();
+                    canvas.setStrokeColor(pdf.PdfColors.grey400);
+                    canvas.setLineWidth(0.5);
+
+                    final midX = halfSheetWidthPt;
+                    final tickPt = 3.0 * _mmToPt;
+
+                    // Top spine tick mark (3mm)
+                    canvas.drawLine(midX, sheetHeightPt, midX, sheetHeightPt - tickPt);
+                    // Bottom spine tick mark (3mm)
+                    canvas.drawLine(midX, 0, midX, tickPt);
+                    canvas.strokePath();
+
+                    canvas.restoreContext();
+                  },
+                ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  return pdfDoc.save();
+}
+
+void _renderSinglePageToCanvas(
+  pdf.PdfGraphics canvas,
+  PageConfig config,
+  PageLayout pageLayout,
+  double hPt,
+  pdf.PdfDocument document,
+  int pageIndex,
+  double leftX,
+  double rightX,
+  double gap,
+  double strokeMm,
+  DocumentMetadata? metadata,
+) {
+  _drawScoreTypography(
+    canvas,
+    config,
+    pageLayout,
+    hPt,
+    document,
+    pageIndex,
+    leftX,
+    rightX,
+    metadata,
+  );
+  _drawSystemConnectors(canvas, config, pageLayout.systems, hPt);
+  _drawStaffLines(canvas, pageLayout.systems, leftX, rightX, gap, strokeMm, hPt);
+  _drawClefs(canvas, pageLayout.systems, leftX, gap, config.engraving, hPt);
+  _drawStaffLabels(canvas, pageLayout.systems, leftX, hPt, document, gap, pageIndex);
 }
 
 
