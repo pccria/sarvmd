@@ -20,6 +20,8 @@ class CanvasPageNavigator extends StatelessWidget {
     required this.onRemovePage,
     this.arrangementMode = PageArrangementMode.single,
     this.onArrangementModeChanged,
+    this.autoFocusOnPageChange = true,
+    this.onAutoFocusChanged,
   });
 
   final int currentPageIndex;
@@ -29,6 +31,8 @@ class CanvasPageNavigator extends StatelessWidget {
   final VoidCallback onRemovePage;
   final PageArrangementMode arrangementMode;
   final ValueChanged<PageArrangementMode>? onArrangementModeChanged;
+  final bool autoFocusOnPageChange;
+  final ValueChanged<bool>? onAutoFocusChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -133,13 +137,18 @@ class CanvasPageNavigator extends StatelessWidget {
                   margin: const EdgeInsets.symmetric(horizontal: 2.0),
                   color: cs.outlineVariant.withValues(alpha: 0.4),
                 ),
-                PopupMenuButton<PageArrangementMode>(
+                PopupMenuButton<dynamic>(
                   tooltip: l10n.pageArrangementSection,
                   icon: Icon(_arrangementIcon(arrangementMode), size: 18.0),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(minWidth: 220),
-                  initialValue: arrangementMode,
-                  onSelected: onArrangementModeChanged,
+                  onSelected: (val) {
+                    if (val is PageArrangementMode) {
+                      onArrangementModeChanged?.call(val);
+                    } else if (val == 'toggle_auto_focus') {
+                      onAutoFocusChanged?.call(!autoFocusOnPageChange);
+                    }
+                  },
                   itemBuilder: (context) => [
                     _buildArrangementItem(
                       context,
@@ -171,6 +180,43 @@ class CanvasPageNavigator extends StatelessWidget {
                       Icons.grid_view_rounded,
                       l10n.pageArrangementGrid,
                     ),
+                    if (onAutoFocusChanged != null) ...[
+                      const PopupMenuDivider(),
+                      PopupMenuItem<dynamic>(
+                        value: 'toggle_auto_focus',
+                        child: Row(
+                          children: [
+                            Icon(
+                              autoFocusOnPageChange
+                                  ? Icons.center_focus_strong_rounded
+                                  : Icons.center_focus_weak_rounded,
+                              size: 18.0,
+                              color: autoFocusOnPageChange
+                                  ? cs.primary
+                                  : cs.onSurfaceVariant,
+                            ),
+                            const SizedBox(width: 10.0),
+                            Expanded(
+                              child: Text(
+                                l10n.autoFocusOnPageChange,
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: autoFocusOnPageChange
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                  color: autoFocusOnPageChange
+                                      ? cs.primary
+                                      : cs.onSurface,
+                                ),
+                              ),
+                            ),
+                            if (autoFocusOnPageChange)
+                              Icon(Icons.check_rounded,
+                                  size: 16.0, color: cs.primary),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ],

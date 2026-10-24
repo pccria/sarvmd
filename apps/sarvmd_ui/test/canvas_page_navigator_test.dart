@@ -112,6 +112,45 @@ void main() {
       await tester.pump();
       expect(removedPage, isTrue);
     });
+
+    testWidgets('opens page arrangement menu and toggles auto focus', (tester) async {
+      bool? autoFocusVal;
+
+      await tester.pumpWidget(
+        _buildTestApp(
+          child: CanvasPageNavigator(
+            currentPageIndex: 0,
+            pageCount: 3,
+            arrangementMode: PageArrangementMode.single,
+            onArrangementModeChanged: (_) {},
+            autoFocusOnPageChange: true,
+            onAutoFocusChanged: (val) => autoFocusVal = val,
+            onPageChanged: (_) {},
+            onAddPage: () {},
+            onRemovePage: () {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Find arrangement menu button
+      await tester.tap(find.byType(PopupMenuButton<dynamic>));
+      await tester.pumpAndSettle();
+
+      // Verify arrangement items and auto focus item exist
+      expect(find.text('Single Page'), findsOneWidget);
+      expect(find.text('Facing Pages'), findsOneWidget);
+      expect(find.text('Vertical Flow'), findsOneWidget);
+      expect(find.text('Horizontal Ribbon'), findsOneWidget);
+      expect(find.text('Grid Overview'), findsOneWidget);
+      expect(find.text('Auto-Focus Active Page'), findsOneWidget);
+
+      // Tap auto-focus item to toggle it off
+      await tester.tap(find.text('Auto-Focus Active Page'));
+      await tester.pumpAndSettle();
+
+      expect(autoFocusVal, isFalse);
+    });
   });
 
   group('PreviewCanvas Multi-Page Layout Tests', () {

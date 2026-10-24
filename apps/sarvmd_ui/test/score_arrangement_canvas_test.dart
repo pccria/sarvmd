@@ -465,7 +465,7 @@ void main() {
     });
 
     test('computePageFocusMatrix computes centering translation at given scale', () {
-      final config = core.PageConfig(
+      const config = core.PageConfig(
         pageSize: core.PageSize.a4,
         orientation: core.PageOrientation.portrait,
       );

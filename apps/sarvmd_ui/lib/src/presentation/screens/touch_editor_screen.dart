@@ -608,6 +608,10 @@ class _TouchEditorScreenState extends State<TouchEditorScreen>
                           onArrangementModeChanged: (mode) => context
                               .read<ViewCubit>()
                               .setPageArrangement(mode),
+                          autoFocusOnPageChange: viewState.autoFocusOnPageChange,
+                          onAutoFocusChanged: (val) => context
+                              .read<ViewCubit>()
+                              .setAutoFocusOnPageChange(val),
                           onPageChanged: (idx) => context
                               .read<ViewCubit>()
                               .setPageIndex(idx, maxPages: pageCount),
