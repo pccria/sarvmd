@@ -2689,6 +2689,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 Column} other{{count} Columns}}'**
   String pageArrangementColumnsCount(int count);
+
+  /// No description provided for @autoFocusOnPageChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-Focus Active Page'**
+  String get autoFocusOnPageChange;
+
+  /// No description provided for @autoFocusOnPageChangeTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatically centers the camera on the active page during navigation'**
+  String get autoFocusOnPageChangeTooltip;
 }
 
 class _AppLocalizationsDelegate

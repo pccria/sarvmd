@@ -566,6 +566,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
           onArrangementModeChanged: viewCubit.setPageArrangement,
           gridColumns: viewState.gridColumns,
           onGridColumnsChanged: viewCubit.setGridColumns,
+          autoFocusOnPageChange: viewState.autoFocusOnPageChange,
+          onAutoFocusChanged: viewCubit.setAutoFocusOnPageChange,
         );
         break;
 

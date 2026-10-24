@@ -606,5 +606,7 @@
         "type": "int"
       }
     }
-  }
+  },
+  "autoFocusOnPageChange": "Auto-Focus Active Page",
+  "autoFocusOnPageChangeTooltip": "Automatically centers the camera on the active page during navigation"
 }

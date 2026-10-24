@@ -19,6 +19,8 @@ class DocumentSettingsGroup extends StatelessWidget {
     this.onArrangementModeChanged,
     this.gridColumns = 2,
     this.onGridColumnsChanged,
+    this.autoFocusOnPageChange = true,
+    this.onAutoFocusChanged,
   });
 
   final core.PageSize pageSize;
@@ -31,6 +33,8 @@ class DocumentSettingsGroup extends StatelessWidget {
   final ValueChanged<PageArrangementMode>? onArrangementModeChanged;
   final int gridColumns;
   final ValueChanged<int>? onGridColumnsChanged;
+  final bool autoFocusOnPageChange;
+  final ValueChanged<bool>? onAutoFocusChanged;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -62,6 +66,8 @@ class DocumentSettingsGroup extends StatelessWidget {
               onArrangementModeChanged: onArrangementModeChanged!,
               gridColumns: gridColumns,
               onGridColumnsChanged: onGridColumnsChanged,
+              autoFocusOnPageChange: autoFocusOnPageChange,
+              onAutoFocusChanged: onAutoFocusChanged,
             ),
         ],
       );
@@ -377,12 +383,16 @@ class _PageArrangementGroup extends StatelessWidget {
     required this.onArrangementModeChanged,
     required this.gridColumns,
     this.onGridColumnsChanged,
+    this.autoFocusOnPageChange = true,
+    this.onAutoFocusChanged,
   });
 
   final PageArrangementMode arrangementMode;
   final ValueChanged<PageArrangementMode> onArrangementModeChanged;
   final int gridColumns;
   final ValueChanged<int>? onGridColumnsChanged;
+  final bool autoFocusOnPageChange;
+  final ValueChanged<bool>? onAutoFocusChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -483,6 +493,30 @@ class _PageArrangementGroup extends StatelessWidget {
                   splashRadius: 16.0,
                 ),
               ],
+            ),
+          if (onAutoFocusChanged != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 4.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Tooltip(
+                      message: l10n.autoFocusOnPageChangeTooltip,
+                      child: Text(
+                        l10n.autoFocusOnPageChange,
+                        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                  ),
+                  Transform.scale(
+                    scale: 0.8,
+                    child: Switch(
+                      value: autoFocusOnPageChange,
+                      onChanged: onAutoFocusChanged,
+                    ),
+                  ),
+                ],
+              ),
             ),
         ],
       ),

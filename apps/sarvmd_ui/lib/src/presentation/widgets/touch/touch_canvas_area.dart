@@ -117,9 +117,47 @@ class TouchCanvasAreaState extends State<TouchCanvasArea> with SingleTickerProvi
     );
 
     if (animate && _hasCentered) {
+      _cameraAnimationController.duration = const Duration(milliseconds: 150);
       _animateMatrixTo(transform.matrix);
     } else {
       widget.transformationController.value = transform.matrix;
+    }
+  }
+
+  int? _lastObservedPageIndex;
+  PageArrangementMode? _lastObservedArrangement;
+
+  void focusPage(int pageIndex, {bool animate = true}) {
+    final constraints = _lastConstraints;
+    if (constraints == null) return;
+
+    final docCubit = context.read<DocumentCubit>();
+    final viewState = context.read<ViewCubit>().state;
+    final config = docCubit.state.config;
+    final effectiveLeftInset = viewState.isPanelPeeking ? 48.0 : widget.leftInset;
+
+    final currentMatrix = widget.transformationController.value;
+    final currentScale = currentMatrix.row0[0];
+
+    final targetMatrix = CanvasZoomCalculator.computePageFocusMatrix(
+      arrangement: viewState.pageArrangement,
+      pageIndex: pageIndex,
+      constraints: constraints,
+      config: config,
+      currentScale: currentScale,
+      gridColumns: viewState.gridColumns,
+      topSafeArea: widget.topSafeArea,
+      leftSafeArea: widget.leftSafeArea,
+      bottomPadding: widget.bottomPadding,
+      leftInset: effectiveLeftInset,
+      padding: 24.0,
+    );
+
+    if (animate && _hasCentered) {
+      _cameraAnimationController.duration = const Duration(milliseconds: 250);
+      _animateMatrixTo(targetMatrix);
+    } else {
+      widget.transformationController.value = targetMatrix;
     }
   }
 
@@ -139,10 +177,24 @@ class TouchCanvasAreaState extends State<TouchCanvasArea> with SingleTickerProvi
     final viewState = context.watch<ViewCubit>().state;
 
     return BlocListener<ViewCubit, ViewState>(
-      listenWhen: (prev, curr) => prev.isPanelPeeking != curr.isPanelPeeking,
+      listenWhen: (prev, curr) =>
+          prev.isPanelPeeking != curr.isPanelPeeking ||
+          prev.currentPageIndex != curr.currentPageIndex ||
+          prev.pageArrangement != curr.pageArrangement,
       listener: (context, state) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
+          if (!mounted) return;
+          final pageChanged = _lastObservedPageIndex != null &&
+              _lastObservedPageIndex != state.currentPageIndex;
+          final arrangementChanged = _lastObservedArrangement != null &&
+              _lastObservedArrangement != state.pageArrangement;
+          _lastObservedPageIndex = state.currentPageIndex;
+          _lastObservedArrangement = state.pageArrangement;
+
+          if ((pageChanged || arrangementChanged) &&
+              state.autoFocusOnPageChange) {
+            focusPage(state.currentPageIndex, animate: true);
+          } else {
             applyZoomPreset(_currentPreset, animate: true);
           }
         });

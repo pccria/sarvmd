@@ -68,6 +68,7 @@ class ViewState {
   final int currentPageIndex;
   final PageArrangementMode pageArrangement;
   final int gridColumns;
+  final bool autoFocusOnPageChange;
 
   const ViewState({
     this.themeMode = ThemeMode.system,
@@ -94,6 +95,7 @@ class ViewState {
     this.currentPageIndex = 0,
     this.pageArrangement = PageArrangementMode.single,
     this.gridColumns = 2,
+    this.autoFocusOnPageChange = true,
   });
 
   ViewState copyWith({
@@ -117,6 +119,7 @@ class ViewState {
     int? currentPageIndex,
     PageArrangementMode? pageArrangement,
     int? gridColumns,
+    bool? autoFocusOnPageChange,
   }) {
     return ViewState(
       themeMode: themeMode ?? this.themeMode,
@@ -145,6 +148,8 @@ class ViewState {
       currentPageIndex: currentPageIndex ?? this.currentPageIndex,
       pageArrangement: pageArrangement ?? this.pageArrangement,
       gridColumns: gridColumns ?? this.gridColumns,
+      autoFocusOnPageChange:
+          autoFocusOnPageChange ?? this.autoFocusOnPageChange,
     );
   }
 

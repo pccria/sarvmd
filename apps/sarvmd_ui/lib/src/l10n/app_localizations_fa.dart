@@ -1398,4 +1398,11 @@ class AppLocalizationsFa extends AppLocalizations {
   String pageArrangementColumnsCount(int count) {
     return '$count ستون';
   }
+
+  @override
+  String get autoFocusOnPageChange => 'تمرکز خودکار روی صفحه فعال';
+
+  @override
+  String get autoFocusOnPageChangeTooltip =>
+      'مرکزسازی خودکار بوم بر روی صفحه فعال هنگام پیمایش';
 }

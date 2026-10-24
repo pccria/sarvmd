@@ -756,6 +756,8 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
                                 onArrangementModeChanged: viewCubit.setPageArrangement,
                                 gridColumns: viewState.gridColumns,
                                 onGridColumnsChanged: viewCubit.setGridColumns,
+                                autoFocusOnPageChange: viewState.autoFocusOnPageChange,
+                                onAutoFocusChanged: viewCubit.setAutoFocusOnPageChange,
                               ),
                             ),
                             CollapsibleSectionCard(
@@ -1104,9 +1106,39 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
     );
 
     if (animate && _hasCentered) {
+      _cameraAnimationController.duration = const Duration(milliseconds: 150);
       _animateMatrixTo(transform.matrix);
     } else {
       _transformationController.value = transform.matrix;
+    }
+  }
+
+  void _focusPage(int pageIndex, {bool animate = true}) {
+    final constraints = _lastConstraints;
+    if (constraints == null) return;
+
+    final docCubit = context.read<DocumentCubit>();
+    final viewState = context.read<ViewCubit>().state;
+    final config = docCubit.state.config;
+
+    final currentMatrix = _transformationController.value;
+    final currentScale = currentMatrix.row0[0];
+
+    final targetMatrix = CanvasZoomCalculator.computePageFocusMatrix(
+      arrangement: viewState.pageArrangement,
+      pageIndex: pageIndex,
+      constraints: constraints,
+      config: config,
+      currentScale: currentScale,
+      gridColumns: viewState.gridColumns,
+      padding: 40.0,
+    );
+
+    if (animate && _hasCentered) {
+      _cameraAnimationController.duration = const Duration(milliseconds: 250);
+      _animateMatrixTo(targetMatrix);
+    } else {
+      _transformationController.value = targetMatrix;
     }
   }
 
@@ -1156,6 +1188,18 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (mounted) _applyZoomPreset(_currentPreset, animate: true);
             });
+          },
+        ),
+        BlocListener<ViewCubit, ViewState>(
+          listenWhen: (previous, current) =>
+              previous.currentPageIndex != current.currentPageIndex ||
+              previous.pageArrangement != current.pageArrangement,
+          listener: (context, state) {
+            if (state.autoFocusOnPageChange) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) _focusPage(state.currentPageIndex, animate: true);
+              });
+            }
           },
         ),
       ],

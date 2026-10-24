@@ -55,8 +55,10 @@ class ViewPanel extends StatelessWidget {
                 _PageArrangementControl(
                   current: viewState.pageArrangement,
                   gridColumns: viewState.gridColumns,
+                  autoFocusOnPageChange: viewState.autoFocusOnPageChange,
                   onArrangementChanged: viewCubit.setPageArrangement,
                   onGridColumnsChanged: viewCubit.setGridColumns,
+                  onAutoFocusChanged: viewCubit.setAutoFocusOnPageChange,
                 ),
               ],
             );
@@ -122,8 +124,10 @@ class ViewPanel extends StatelessWidget {
                         child: _PageArrangementControl(
                           current: viewState.pageArrangement,
                           gridColumns: viewState.gridColumns,
+                          autoFocusOnPageChange: viewState.autoFocusOnPageChange,
                           onArrangementChanged: viewCubit.setPageArrangement,
                           onGridColumnsChanged: viewCubit.setGridColumns,
+                          onAutoFocusChanged: viewCubit.setAutoFocusOnPageChange,
                         ),
                       ),
                       const FadeInSlide(
@@ -457,14 +461,18 @@ class _PageArrangementControl extends StatelessWidget {
   const _PageArrangementControl({
     required this.current,
     required this.gridColumns,
+    this.autoFocusOnPageChange = true,
     required this.onArrangementChanged,
     required this.onGridColumnsChanged,
+    this.onAutoFocusChanged,
   });
 
   final PageArrangementMode current;
   final int gridColumns;
+  final bool autoFocusOnPageChange;
   final ValueChanged<PageArrangementMode> onArrangementChanged;
   final ValueChanged<int> onGridColumnsChanged;
+  final ValueChanged<bool>? onAutoFocusChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -630,6 +638,39 @@ class _PageArrangementControl extends StatelessWidget {
                       : null,
                   visualDensity: VisualDensity.compact,
                   splashRadius: 16,
+                ),
+              ],
+            ),
+          ),
+        ],
+        if (onAutoFocusChanged != null) ...[
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: cs.surfaceContainerHighest.withValues(alpha: 0.25),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: cs.outlineVariant.withValues(alpha: 0.25),
+              ),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Tooltip(
+                    message: l10n.autoFocusOnPageChangeTooltip,
+                    child: Text(
+                      l10n.autoFocusOnPageChange,
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ),
+                Transform.scale(
+                  scale: 0.8,
+                  child: Switch(
+                    value: autoFocusOnPageChange,
+                    onChanged: onAutoFocusChanged,
+                  ),
                 ),
               ],
             ),

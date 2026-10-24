@@ -1410,4 +1410,11 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get autoFocusOnPageChange => 'Auto-Focus Active Page';
+
+  @override
+  String get autoFocusOnPageChangeTooltip =>
+      'Automatically centers the camera on the active page during navigation';
 }

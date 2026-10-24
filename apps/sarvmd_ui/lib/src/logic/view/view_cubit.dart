@@ -25,6 +25,8 @@ class ViewCubit extends Cubit<ViewState> {
       'view_expanded_pointer_sections';
   static const String _keyPageArrangement = 'view_page_arrangement';
   static const String _keyGridColumns = 'view_grid_columns';
+  static const String _keyAutoFocusOnPageChange =
+      'view_auto_focus_on_page_change';
 
   Future<void> _loadFromPrefs() async {
     final prefs = await SharedPreferences.getInstance();
@@ -126,6 +128,12 @@ class ViewCubit extends Cubit<ViewState> {
       gridColumns = savedGridColumns.clamp(1, 6);
     }
 
+    bool autoFocusOnPageChange = state.autoFocusOnPageChange;
+    final savedAutoFocus = prefs.getBool(_keyAutoFocusOnPageChange);
+    if (savedAutoFocus != null) {
+      autoFocusOnPageChange = savedAutoFocus;
+    }
+
     if (isClosed) return;
     emit(state.copyWith(
       themeMode: themeMode,
@@ -135,6 +143,7 @@ class ViewCubit extends Cubit<ViewState> {
       expandedPointerSections: expandedPointerSections,
       pageArrangement: pageArrangement,
       gridColumns: gridColumns,
+      autoFocusOnPageChange: autoFocusOnPageChange,
     ));
     _log.debug('View state restored from SharedPreferences', context: {
       'themeMode': themeMode.name,
@@ -143,6 +152,7 @@ class ViewCubit extends Cubit<ViewState> {
       'inputMode': inputMode.name,
       'pageArrangement': pageArrangement.name,
       'gridColumns': gridColumns,
+      'autoFocusOnPageChange': autoFocusOnPageChange,
     });
   }
 
@@ -424,5 +434,13 @@ class ViewCubit extends Cubit<ViewState> {
     _log.debug('Grid columns changed', context: {'columns': clamped});
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_keyGridColumns, clamped);
+  }
+
+  Future<void> setAutoFocusOnPageChange(bool enabled) async {
+    if (state.autoFocusOnPageChange == enabled) return;
+    emit(state.copyWith(autoFocusOnPageChange: enabled));
+    _log.debug('Auto-focus on page change toggled', context: {'enabled': enabled});
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyAutoFocusOnPageChange, enabled);
   }
 }

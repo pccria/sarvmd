@@ -439,5 +439,7 @@
   "pageArrangementGrid": "نمای شبکه‌ای",
   "pageArrangementGridDesc": "نمای کلی و شبکه‌ای تمام صفحات در چند ستون",
   "pageArrangementColumnsLabel": "تعداد ستون‌های شبکه",
-  "pageArrangementColumnsCount": "{count} ستون"
+  "pageArrangementColumnsCount": "{count} ستون",
+  "autoFocusOnPageChange": "تمرکز خودکار روی صفحه فعال",
+  "autoFocusOnPageChangeTooltip": "مرکزسازی خودکار بوم بر روی صفحه فعال هنگام پیمایش"
 }

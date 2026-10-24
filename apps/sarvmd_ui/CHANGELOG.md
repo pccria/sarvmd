@@ -22,6 +22,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Desktop ViewPanel & Mobile Page Setup Integration**:
     - Added dedicated `Page Arrangement` section with sliding animated segmented buttons and grid column stepper in `ViewPanel`.
     - Added responsive arrangement chip selector directly within `DocumentSettingsGroup` (Page Setup) in `SettingsPanel` (touch drawer) and pointer sidebar.
+  - **Auto-Focus Active Page on Navigation**:
+    - Implemented mathematical camera centering in `CanvasZoomCalculator.computePageCenter` and `computePageFocusMatrix`, calculating canvas-space bounding centers across all 5 arrangement modes while preserving user zoom level.
+    - Added buttery smooth 250 ms `CurvedAnimation(curve: Curves.easeOutCubic)` camera panning in `PointerEditorScreen` and `TouchCanvasArea` triggered whenever the active page changes (via `CanvasPageNavigator`, keyboard shortcuts `PageDown`/`PageUp`, or tapping page badges).
+    - Added configurable `autoFocusOnPageChange` toggle in `ViewState`/`ViewCubit` with SharedPreferences persistence, surfaced in both `ViewPanel` and `DocumentSettingsGroup`.
+    - Added bilingual English (`Auto-Focus Active Page`) and Persian (`تمرکز خودکار روی صفحه فعال`) localization strings.
   - **State & SharedPreferences Persistence**: Extended `ViewState` and `ViewCubit` with `pageArrangement` and `gridColumns` properties with instant local persistence.
   - **Bilingual Localization**: Added full English (`app_en.arb`) and Persian (`app_fa.arb`) localization keys for all 5 modes, section descriptions, and grid column counters.
 - **Multi-Page Canvas Navigation & Interactive Pagination**:

@@ -12,7 +12,9 @@ import 'package:sarvmd_ui/src/logic/locale/locale_cubit.dart';
 import 'package:sarvmd_ui/src/logic/locale/locale_state.dart';
 import 'package:sarvmd_ui/src/logic/view/view_cubit.dart';
 import 'package:sarvmd_ui/src/logic/view/view_state.dart';
+import 'package:sarvmd_ui/src/presentation/screens/pointer_editor_screen.dart';
 import 'package:sarvmd_ui/src/presentation/widgets/canvas/canvas_page_navigator.dart';
+import 'package:sarvmd_ui/src/presentation/widgets/canvas/canvas_zoom_calculator.dart';
 import 'package:sarvmd_ui/src/presentation/widgets/canvas/preview_canvas.dart';
 import 'package:sarvmd_ui/src/presentation/widgets/canvas/score_arrangement_canvas.dart';
 import 'package:sarvmd_ui/src/presentation/widgets/panels/view_panel.dart';
@@ -390,6 +392,263 @@ void main() {
 
       expect(viewCubit.state.pageArrangement, equals(PageArrangementMode.continuousVertical));
       expect(find.text('Vertical Flow'), findsOneWidget);
+
+      viewCubit.close();
+      localeCubit.close();
+      docCubit.close();
+    });
+  });
+
+  group('CanvasZoomCalculator Page Focus & Auto-Focus Geometry Tests', () {
+    const pageWidth = 210.0 * (96.0 / 25.4);
+    const pageHeight = 297.0 * (96.0 / 25.4);
+
+    test('computePageCenter calculates proper centers across all modes', () {
+      // Single mode
+      final singleCenter = CanvasZoomCalculator.computePageCenter(
+        arrangement: PageArrangementMode.single,
+        pageIndex: 0,
+        pageWidth: pageWidth,
+        pageHeight: pageHeight,
+      );
+      expect(singleCenter, equals(const Offset(pageWidth / 2.0, pageHeight / 2.0)));
+
+      // Continuous vertical mode
+      final vertPage0 = CanvasZoomCalculator.computePageCenter(
+        arrangement: PageArrangementMode.continuousVertical,
+        pageIndex: 0,
+        pageWidth: pageWidth,
+        pageHeight: pageHeight,
+        spacing: 32.0,
+      );
+      expect(vertPage0, equals(const Offset(pageWidth / 2.0, pageHeight / 2.0)));
+
+      final vertPage1 = CanvasZoomCalculator.computePageCenter(
+        arrangement: PageArrangementMode.continuousVertical,
+        pageIndex: 1,
+        pageWidth: pageWidth,
+        pageHeight: pageHeight,
+        spacing: 32.0,
+      );
+      expect(vertPage1, equals(const Offset(pageWidth / 2.0, pageHeight + 32.0 + pageHeight / 2.0)));
+
+      // Continuous horizontal mode
+      final horizPage1 = CanvasZoomCalculator.computePageCenter(
+        arrangement: PageArrangementMode.continuousHorizontal,
+        pageIndex: 1,
+        pageWidth: pageWidth,
+        pageHeight: pageHeight,
+        spacing: 32.0,
+      );
+      expect(horizPage1, equals(const Offset(pageWidth + 32.0 + pageWidth / 2.0, pageHeight / 2.0)));
+
+      // Grid mode (2 columns)
+      final gridPage2 = CanvasZoomCalculator.computePageCenter(
+        arrangement: PageArrangementMode.grid,
+        pageIndex: 2, // row 1, col 0
+        pageWidth: pageWidth,
+        pageHeight: pageHeight,
+        gridColumns: 2,
+        spacing: 32.0,
+      );
+      expect(gridPage2, equals(const Offset(pageWidth / 2.0, pageHeight + 32.0 + pageHeight / 2.0)));
+
+      final gridPage3 = CanvasZoomCalculator.computePageCenter(
+        arrangement: PageArrangementMode.grid,
+        pageIndex: 3, // row 1, col 1
+        pageWidth: pageWidth,
+        pageHeight: pageHeight,
+        gridColumns: 2,
+        spacing: 32.0,
+      );
+      expect(gridPage3, equals(const Offset(pageWidth + 32.0 + pageWidth / 2.0, pageHeight + 32.0 + pageHeight / 2.0)));
+    });
+
+    test('computePageFocusMatrix computes centering translation at given scale', () {
+      final config = core.PageConfig(
+        pageSize: core.PageSize.a4,
+        orientation: core.PageOrientation.portrait,
+      );
+      const constraints = BoxConstraints(maxWidth: 1920, maxHeight: 1080);
+      const scale = 1.5;
+
+      final matrix = CanvasZoomCalculator.computePageFocusMatrix(
+        arrangement: PageArrangementMode.continuousVertical,
+        pageIndex: 1,
+        constraints: constraints,
+        config: config,
+        currentScale: scale,
+        rulerSize: 0,
+      );
+
+      final translation = matrix.getTranslation();
+      final page1Center = CanvasZoomCalculator.computePageCenter(
+        arrangement: PageArrangementMode.continuousVertical,
+        pageIndex: 1,
+        pageWidth: config.effectiveWidth * (96.0 / 25.4),
+        pageHeight: config.effectiveHeight * (96.0 / 25.4),
+      );
+
+      // (translation.x + page1Center.dx * scale) must match viewport center (1920 / 2 = 960)
+      expect(translation.x + page1Center.dx * scale, closeTo(960.0, 0.001));
+      // (translation.y + page1Center.dy * scale) must match viewport center (1080 / 2 = 540)
+      expect(translation.y + page1Center.dy * scale, closeTo(540.0, 0.001));
+    });
+  });
+
+  group('ViewCubit Auto-Focus State & Preferences Tests', () {
+    test('setAutoFocusOnPageChange updates state and persists', () async {
+      final cubit = ViewCubit();
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      expect(cubit.state.autoFocusOnPageChange, isTrue);
+
+      await cubit.setAutoFocusOnPageChange(false);
+      expect(cubit.state.autoFocusOnPageChange, isFalse);
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getBool('view_auto_focus_on_page_change'), isFalse);
+
+      await cubit.setAutoFocusOnPageChange(true);
+      expect(cubit.state.autoFocusOnPageChange, isTrue);
+
+      cubit.close();
+    });
+  });
+
+  group('Auto-Focus Toggle in ViewPanel & DocumentSettingsGroup Tests', () {
+    testWidgets('toggling auto-focus switch in ViewPanel calls onAutoFocusChanged', (tester) async {
+      final viewCubit = ViewCubit();
+      final localeCubit = LocaleCubit(const LocaleState());
+      final docCubit = DocumentCubit();
+      final tc = TransformationController();
+
+      await tester.pumpWidget(
+        _buildTestApp(
+          localeCubit: localeCubit,
+          viewCubit: viewCubit,
+          docCubit: docCubit,
+          child: SizedBox(
+            width: 320,
+            height: 900,
+            child: ViewPanel(
+              transformationController: tc,
+              onZoomPreset: (_) {},
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Auto-Focus Active Page'), findsOneWidget);
+      final autoFocusRow = find.ancestor(
+        of: find.text('Auto-Focus Active Page'),
+        matching: find.byType(Row),
+      );
+      final switchFinder = find.descendant(
+        of: autoFocusRow,
+        matching: find.byType(Switch),
+      );
+      expect(switchFinder, findsOneWidget);
+
+      final switchWidget = tester.widget<Switch>(switchFinder);
+      expect(switchWidget.value, isTrue);
+
+      await tester.tap(switchFinder);
+      await tester.pumpAndSettle();
+
+      expect(viewCubit.state.autoFocusOnPageChange, isFalse);
+
+      viewCubit.close();
+      localeCubit.close();
+      docCubit.close();
+    });
+
+    testWidgets('toggling auto-focus switch in DocumentSettingsGroup updates state', (tester) async {
+      bool autoFocus = true;
+
+      await tester.pumpWidget(
+        _buildTestApp(
+          child: DocumentSettingsGroup(
+            pageSize: core.PageSize.a4,
+            onPageSizeChanged: (_) {},
+            orientation: core.PageOrientation.portrait,
+            onOrientationChanged: (_) {},
+            arrangementMode: PageArrangementMode.grid,
+            onArrangementModeChanged: (_) {},
+            autoFocusOnPageChange: autoFocus,
+            onAutoFocusChanged: (val) => autoFocus = val,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Auto-Focus Active Page'), findsOneWidget);
+      final switchFinder = find.byType(Switch);
+      expect(switchFinder, findsOneWidget);
+
+      await tester.tap(switchFinder);
+      expect(autoFocus, isFalse);
+    });
+  });
+
+  group('PointerEditorScreen Auto-Focus Integration Tests', () {
+    testWidgets('advancing page in continuousVertical mode translates camera to center page 2', (tester) async {
+      tester.view.physicalSize = const Size(1920, 1080);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final docCubit = DocumentCubit();
+      docCubit.setPageCount(3);
+      final viewCubit = ViewCubit();
+      final localeCubit = LocaleCubit(const LocaleState());
+
+      await tester.pumpWidget(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider.value(value: localeCubit),
+            BlocProvider.value(value: viewCubit),
+            BlocProvider.value(value: docCubit),
+          ],
+          child: const MaterialApp(
+            localizationsDelegates: [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: PointerEditorScreen(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Switch to continuous vertical
+      await viewCubit.setPageArrangement(PageArrangementMode.continuousVertical);
+      await tester.pumpAndSettle();
+
+      // Find InteractiveViewer and get initial translation
+      final ivFinder = find.byType(InteractiveViewer);
+      expect(ivFinder, findsOneWidget);
+      final ivWidget = tester.widget<InteractiveViewer>(ivFinder);
+      final initialTy = ivWidget.transformationController!.value.getTranslation().y;
+
+      // Click next page button on CanvasPageNavigator
+      final nextBtn = find.widgetWithIcon(IconButton, Icons.chevron_right_rounded);
+      expect(nextBtn, findsOneWidget);
+      await tester.tap(nextBtn);
+
+      // Pump through animation
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pumpAndSettle();
+
+      expect(viewCubit.state.currentPageIndex, equals(1));
+      final newTy = ivWidget.transformationController!.value.getTranslation().y;
+
+      // Because page 1 is below page 0 in vertical flow, the camera must pan down (Ty becomes more negative)
+      expect(newTy, lessThan(initialTy));
 
       viewCubit.close();
       localeCubit.close();
