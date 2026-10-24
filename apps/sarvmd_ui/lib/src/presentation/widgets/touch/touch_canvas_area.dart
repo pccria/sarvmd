@@ -1,10 +1,14 @@
 // Copyright (c) 2026 Pooria Askari Moqaddam. All rights reserved.
 // Licensed under the Business Source License 1.1 (BUSL-1.1).
 
+import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/layout_policy.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../logic/document/document_cubit.dart';
 import '../../../logic/view/view_cubit.dart';
 import '../../../logic/view/view_state.dart';
@@ -57,6 +61,18 @@ class TouchCanvasAreaState extends State<TouchCanvasArea> with SingleTickerProvi
   Matrix4? _startMatrix;
   Matrix4? _targetMatrix;
 
+  // Page Swipe Gesture Tracking
+  Offset? _touchStartFocalPoint;
+  double _swipeDeltaX = 0.0;
+  double _swipeDeltaY = 0.0;
+  int _maxTouchPointers = 0;
+  bool _swipeHandledInCurrentGesture = false;
+
+  // Visual Page Turn HUD State
+  String? _swipeToastMessage;
+  IconData? _swipeToastIcon;
+  Timer? _swipeToastDismissTimer;
+
   @override
   void initState() {
     super.initState();
@@ -83,6 +99,7 @@ class TouchCanvasAreaState extends State<TouchCanvasArea> with SingleTickerProvi
 
   @override
   void dispose() {
+    _swipeToastDismissTimer?.cancel();
     _cameraAnimationController.dispose();
     super.dispose();
   }
@@ -169,6 +186,184 @@ class TouchCanvasAreaState extends State<TouchCanvasArea> with SingleTickerProvi
     _cameraAnimationController.forward();
   }
 
+  void _handleInteractionStart(ScaleStartDetails details) {
+    _touchStartFocalPoint = details.localFocalPoint;
+    _swipeDeltaX = 0.0;
+    _swipeDeltaY = 0.0;
+    _maxTouchPointers = details.pointerCount;
+    _swipeHandledInCurrentGesture = false;
+    widget.onInteractionStart?.call(details);
+  }
+
+  void _handleInteractionUpdate(ScaleUpdateDetails details) {
+    if (details.pointerCount > _maxTouchPointers) {
+      _maxTouchPointers = details.pointerCount;
+    }
+    _swipeDeltaX += details.focalPointDelta.dx;
+    _swipeDeltaY += details.focalPointDelta.dy;
+
+    final viewState = context.read<ViewCubit>().state;
+    if (viewState.pageSwipeGestures &&
+        !_swipeHandledInCurrentGesture &&
+        _maxTouchPointers >= 2 &&
+        (details.scale - 1.0).abs() < 0.20) {
+      const double twoFingerDisplacementThreshold = 80.0;
+      if (_swipeDeltaX < -twoFingerDisplacementThreshold &&
+          _swipeDeltaX.abs() > _swipeDeltaY.abs() * 1.5) {
+        _triggerSwipeNavigation(isNext: true);
+        _swipeHandledInCurrentGesture = true;
+      } else if (_swipeDeltaX > twoFingerDisplacementThreshold &&
+          _swipeDeltaX.abs() > _swipeDeltaY.abs() * 1.5) {
+        _triggerSwipeNavigation(isNext: false);
+        _swipeHandledInCurrentGesture = true;
+      }
+    }
+  }
+
+  void _handleInteractionEnd(ScaleEndDetails details) {
+    widget.onInteractionEnd?.call(details);
+
+    final viewState = context.read<ViewCubit>().state;
+    if (!viewState.pageSwipeGestures || _swipeHandledInCurrentGesture) return;
+
+    final vx = details.velocity.pixelsPerSecond.dx;
+    final vy = details.velocity.pixelsPerSecond.dy;
+
+    final bool isHorizFling = vx.abs() > 350.0 && vx.abs() > vy.abs() * 1.3;
+    final bool isDisplacementSwipe =
+        _swipeDeltaX.abs() > 45.0 && _swipeDeltaX.abs() > _swipeDeltaY.abs() * 1.3;
+
+    // A. Two-finger horizontal swipe/fling
+    if (_maxTouchPointers >= 2) {
+      if (isHorizFling || isDisplacementSwipe) {
+        final bool isNext = (vx != 0) ? (vx < 0) : (_swipeDeltaX < 0);
+        _triggerSwipeNavigation(isNext: isNext);
+        _swipeHandledInCurrentGesture = true;
+        return;
+      }
+    }
+
+    // B. Edge swipe (started within 36dp of left or right canvas boundaries)
+    final constraints = _lastConstraints;
+    if (_touchStartFocalPoint != null && constraints != null && _maxTouchPointers == 1) {
+      final startX = _touchStartFocalPoint!.dx;
+      final canvasWidth = constraints.maxWidth;
+      const edgeThreshold = 36.0;
+
+      // Swipe inward from right edge
+      if (startX >= canvasWidth - edgeThreshold &&
+          (_swipeDeltaX < -25.0 || vx < -250.0)) {
+        _triggerSwipeNavigation(isNext: true);
+        _swipeHandledInCurrentGesture = true;
+        return;
+      }
+
+      // Swipe inward from left edge
+      if (startX <= edgeThreshold &&
+          (_swipeDeltaX > 25.0 || vx > 250.0)) {
+        _triggerSwipeNavigation(isNext: false);
+        _swipeHandledInCurrentGesture = true;
+        return;
+      }
+    }
+
+    // C. Single-finger horizontal swipe in single or facingSpread modes
+    if (_maxTouchPointers == 1 &&
+        (viewState.pageArrangement == PageArrangementMode.single ||
+         viewState.pageArrangement == PageArrangementMode.facingSpread)) {
+      if ((isHorizFling || isDisplacementSwipe) && _swipeDeltaX.abs() > 30.0) {
+        final bool isNext = (vx != 0) ? (vx < 0) : (_swipeDeltaX < 0);
+        _triggerSwipeNavigation(isNext: isNext);
+        _swipeHandledInCurrentGesture = true;
+        return;
+      }
+    }
+  }
+
+  @visibleForTesting
+  void handleInteractionStart(ScaleStartDetails details) => _handleInteractionStart(details);
+
+  @visibleForTesting
+  void handleInteractionUpdate(ScaleUpdateDetails details) => _handleInteractionUpdate(details);
+
+  @visibleForTesting
+  void handleInteractionEnd(ScaleEndDetails details) => _handleInteractionEnd(details);
+
+  void _triggerSwipeNavigation({required bool isNext}) {
+    final docCubit = context.read<DocumentCubit>();
+    final viewCubit = context.read<ViewCubit>();
+    final totalPages = docCubit.state.pageCount;
+    final currentIdx = viewCubit.state.currentPageIndex;
+    final l10n = AppLocalizations.of(context)!;
+
+    if (totalPages <= 1) return;
+
+    if (isNext) {
+      final bool isLast;
+      if (viewCubit.state.pageArrangement == PageArrangementMode.facingSpread) {
+        final currentSpread = (currentIdx == 0) ? 0 : (currentIdx + 1) ~/ 2;
+        final nextSpread = currentSpread + 1;
+        final targetPage = (nextSpread == 0) ? 0 : (2 * nextSpread - 1);
+        isLast = (targetPage >= totalPages);
+      } else {
+        isLast = (currentIdx >= totalPages - 1);
+      }
+
+      if (isLast) {
+        HapticFeedback.lightImpact();
+        _showSwipeToast(
+          message: l10n.swipeLastPageReached,
+          icon: Icons.last_page_rounded,
+        );
+        focusPage(currentIdx, animate: true);
+        return;
+      }
+
+      HapticFeedback.selectionClick();
+      viewCubit.nextSpread(totalPages);
+      final newIdx = viewCubit.state.currentPageIndex;
+      _showSwipeToast(
+        message: l10n.swipeTurnedToPage(newIdx + 1, totalPages),
+        icon: Icons.chevron_right_rounded,
+      );
+    } else {
+      final bool isFirst = (currentIdx == 0);
+      if (isFirst) {
+        HapticFeedback.lightImpact();
+        _showSwipeToast(
+          message: l10n.swipeFirstPageReached,
+          icon: Icons.first_page_rounded,
+        );
+        focusPage(currentIdx, animate: true);
+        return;
+      }
+
+      HapticFeedback.selectionClick();
+      viewCubit.previousSpread();
+      final newIdx = viewCubit.state.currentPageIndex;
+      _showSwipeToast(
+        message: l10n.swipeTurnedToPage(newIdx + 1, totalPages),
+        icon: Icons.chevron_left_rounded,
+      );
+    }
+  }
+
+  void _showSwipeToast({required String message, required IconData icon}) {
+    _swipeToastDismissTimer?.cancel();
+    setState(() {
+      _swipeToastMessage = message;
+      _swipeToastIcon = icon;
+    });
+    _swipeToastDismissTimer = Timer(const Duration(milliseconds: 900), () {
+      if (mounted) {
+        setState(() {
+          _swipeToastMessage = null;
+          _swipeToastIcon = null;
+        });
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final documentCubit = context.watch<DocumentCubit>();
@@ -245,8 +440,9 @@ class TouchCanvasAreaState extends State<TouchCanvasArea> with SingleTickerProvi
                         maxScale: ScaleMetrics.maxZoom,
                         constrained: false,
                         alignment: Alignment.topLeft,
-                        onInteractionStart: widget.onInteractionStart,
-                        onInteractionEnd: widget.onInteractionEnd,
+                        onInteractionStart: _handleInteractionStart,
+                        onInteractionUpdate: _handleInteractionUpdate,
+                        onInteractionEnd: _handleInteractionEnd,
                         child: GestureDetector(
                           behavior: HitTestBehavior.opaque,
                           onDoubleTap: toggleFitZoom,
@@ -277,6 +473,77 @@ class TouchCanvasAreaState extends State<TouchCanvasArea> with SingleTickerProvi
                         ),
                       ),
                     ),
+
+                    // Floating Glassmorphic Page Turn HUD
+                    if (_swipeToastMessage != null)
+                      Positioned(
+                        top: widget.topSafeArea + 48.0,
+                        left: 0.0,
+                        right: 0.0,
+                        child: Center(
+                          child: IgnorePointer(
+                            child: AnimatedOpacity(
+                              duration: const Duration(milliseconds: 200),
+                              opacity: 1.0,
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(20.0),
+                                child: BackdropFilter(
+                                  filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16.0,
+                                      vertical: 8.0,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .surfaceContainerHighest
+                                          .withValues(alpha: 0.88),
+                                      borderRadius: BorderRadius.circular(20.0),
+                                      border: Border.all(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .outlineVariant
+                                            .withValues(alpha: 0.35),
+                                        width: 1.0,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(alpha: 0.12),
+                                          blurRadius: 12.0,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        if (_swipeToastIcon != null) ...[
+                                          Icon(
+                                            _swipeToastIcon,
+                                            size: 18.0,
+                                            color: Theme.of(context).colorScheme.primary,
+                                          ),
+                                          const SizedBox(width: 8.0),
+                                        ],
+                                        Text(
+                                          _swipeToastMessage!,
+                                          style: TextStyle(
+                                            fontSize: 12.5,
+                                            fontWeight: FontWeight.w700,
+                                            letterSpacing: 0.2,
+                                            color: Theme.of(context).colorScheme.onSurface,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),

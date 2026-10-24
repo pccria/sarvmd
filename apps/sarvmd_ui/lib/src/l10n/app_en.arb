@@ -630,5 +630,20 @@
     }
   },
   "autoFocusOnPageChange": "Auto-Focus Active Page",
-  "autoFocusOnPageChangeTooltip": "Automatically centers the camera on the active page during navigation"
+  "autoFocusOnPageChangeTooltip": "Automatically centers the camera on the active page during navigation",
+  "pageSwipeGestures": "Swipe to Turn Pages",
+  "pageSwipeGesturesTooltip": "Swipe horizontally on touch screens to navigate previous/next score pages",
+  "swipeTurnedToPage": "Page {page} of {total}",
+  "@swipeTurnedToPage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "swipeFirstPageReached": "First page",
+  "swipeLastPageReached": "Last page"
 }

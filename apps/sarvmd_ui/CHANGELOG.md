@@ -10,6 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Touch Screen Horizontal Page Swipe Gestures & Glassmorphic HUD Toast**:
+  - Added horizontal swipe navigation on touch screens and mobile displays:
+    - 1-finger horizontal fling or displacement drag in `single` and `facingSpread` page modes.
+    - 2-finger horizontal swipe/fling at any zoom level.
+    - Edge-swipe detection honoring Gouldian multi-page flow.
+    - Automatic spread-by-spread jumping in `facingSpread` mode and page-by-page in `single` mode.
+    - Tactile haptic feedback (`HapticFeedback.selectionClick()` / `HapticFeedback.lightImpact()`).
+    - Floating frosted glassmorphic HUD toast displaying page turn feedback (`Page 2 of 3`, `First page`, `Last page`) with automatic 900 ms dismiss timer.
+    - Toggle switch `pageSwipeGestures` in `ViewPanel` and `DocumentSettingsGroup` (Page Setup) with SharedPreferences persistence.
+    - Full English and Persian localization keys (`pageSwipeGestures`, `pageSwipeGesturesTooltip`, `swipeTurnedToPage`, `swipeFirstPageReached`, `swipeLastPageReached`).
 - **Direct Native Print Workflow (`Ctrl+P` / `⌘P` & File Menu)**:
   - Added native `Print…` entry in `FileMenu` and wired global desktop shortcuts (`Ctrl+P` on Linux/Windows, `Cmd+P` on macOS) via `PrintIntent` in `ShortcutGateway`.
   - Implemented `ExportService.printScore` generating high-resolution vector PDF in temporary cache and invoking the host OS system print dialog / PDF viewer via `url_launcher`.

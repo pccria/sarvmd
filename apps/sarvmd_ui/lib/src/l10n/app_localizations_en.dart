@@ -1444,4 +1444,22 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get autoFocusOnPageChangeTooltip =>
       'Automatically centers the camera on the active page during navigation';
+
+  @override
+  String get pageSwipeGestures => 'Swipe to Turn Pages';
+
+  @override
+  String get pageSwipeGesturesTooltip =>
+      'Swipe horizontally on touch screens to navigate previous/next score pages';
+
+  @override
+  String swipeTurnedToPage(int page, int total) {
+    return 'Page $page of $total';
+  }
+
+  @override
+  String get swipeFirstPageReached => 'First page';
+
+  @override
+  String get swipeLastPageReached => 'Last page';
 }

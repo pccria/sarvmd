@@ -21,6 +21,8 @@ class DocumentSettingsGroup extends StatelessWidget {
     this.onGridColumnsChanged,
     this.autoFocusOnPageChange = true,
     this.onAutoFocusChanged,
+    this.pageSwipeGestures = true,
+    this.onPageSwipeGesturesChanged,
   });
 
   final core.PageSize pageSize;
@@ -35,6 +37,8 @@ class DocumentSettingsGroup extends StatelessWidget {
   final ValueChanged<int>? onGridColumnsChanged;
   final bool autoFocusOnPageChange;
   final ValueChanged<bool>? onAutoFocusChanged;
+  final bool pageSwipeGestures;
+  final ValueChanged<bool>? onPageSwipeGesturesChanged;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -68,6 +72,8 @@ class DocumentSettingsGroup extends StatelessWidget {
               onGridColumnsChanged: onGridColumnsChanged,
               autoFocusOnPageChange: autoFocusOnPageChange,
               onAutoFocusChanged: onAutoFocusChanged,
+              pageSwipeGestures: pageSwipeGestures,
+              onPageSwipeGesturesChanged: onPageSwipeGesturesChanged,
             ),
         ],
       );
@@ -385,6 +391,8 @@ class _PageArrangementGroup extends StatelessWidget {
     this.onGridColumnsChanged,
     this.autoFocusOnPageChange = true,
     this.onAutoFocusChanged,
+    this.pageSwipeGestures = true,
+    this.onPageSwipeGesturesChanged,
   });
 
   final PageArrangementMode arrangementMode;
@@ -393,6 +401,8 @@ class _PageArrangementGroup extends StatelessWidget {
   final ValueChanged<int>? onGridColumnsChanged;
   final bool autoFocusOnPageChange;
   final ValueChanged<bool>? onAutoFocusChanged;
+  final bool pageSwipeGestures;
+  final ValueChanged<bool>? onPageSwipeGesturesChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -513,6 +523,30 @@ class _PageArrangementGroup extends StatelessWidget {
                     child: Switch(
                       value: autoFocusOnPageChange,
                       onChanged: onAutoFocusChanged,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          if (onPageSwipeGesturesChanged != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 4.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Tooltip(
+                      message: l10n.pageSwipeGesturesTooltip,
+                      child: Text(
+                        l10n.pageSwipeGestures,
+                        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                  ),
+                  Transform.scale(
+                    scale: 0.8,
+                    child: Switch(
+                      value: pageSwipeGestures,
+                      onChanged: onPageSwipeGesturesChanged,
                     ),
                   ),
                 ],

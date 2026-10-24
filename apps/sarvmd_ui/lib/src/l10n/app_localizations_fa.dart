@@ -1433,4 +1433,22 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get autoFocusOnPageChangeTooltip =>
       'مرکزسازی خودکار بوم بر روی صفحه فعال هنگام پیمایش';
+
+  @override
+  String get pageSwipeGestures => 'ورق زدن با سوایپ';
+
+  @override
+  String get pageSwipeGesturesTooltip =>
+      'سوایپ افقی روی صفحه‌نمایش لمسی برای ورق زدن و پیمایش صفحات';
+
+  @override
+  String swipeTurnedToPage(int page, int total) {
+    return 'صفحه $page از $total';
+  }
+
+  @override
+  String get swipeFirstPageReached => 'صفحه نخست';
+
+  @override
+  String get swipeLastPageReached => 'صفحه پایانی';
 }

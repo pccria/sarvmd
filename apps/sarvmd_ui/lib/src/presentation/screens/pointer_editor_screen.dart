@@ -758,6 +758,8 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
                                 onGridColumnsChanged: viewCubit.setGridColumns,
                                 autoFocusOnPageChange: viewState.autoFocusOnPageChange,
                                 onAutoFocusChanged: viewCubit.setAutoFocusOnPageChange,
+                                pageSwipeGestures: viewState.pageSwipeGestures,
+                                onPageSwipeGesturesChanged: viewCubit.setPageSwipeGestures,
                               ),
                             ),
                             CollapsibleSectionCard(

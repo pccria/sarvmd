@@ -449,5 +449,10 @@
   "pageArrangementColumnsLabel": "تعداد ستون‌های شبکه",
   "pageArrangementColumnsCount": "{count} ستون",
   "autoFocusOnPageChange": "تمرکز خودکار روی صفحه فعال",
-  "autoFocusOnPageChangeTooltip": "مرکزسازی خودکار بوم بر روی صفحه فعال هنگام پیمایش"
+  "autoFocusOnPageChangeTooltip": "مرکزسازی خودکار بوم بر روی صفحه فعال هنگام پیمایش",
+  "pageSwipeGestures": "ورق زدن با سوایپ",
+  "pageSwipeGesturesTooltip": "سوایپ افقی روی صفحه‌نمایش لمسی برای ورق زدن و پیمایش صفحات",
+  "swipeTurnedToPage": "صفحه {page} از {total}",
+  "swipeFirstPageReached": "صفحه نخست",
+  "swipeLastPageReached": "صفحه پایانی"
 }

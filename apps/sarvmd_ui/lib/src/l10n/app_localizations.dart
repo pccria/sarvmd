@@ -2749,6 +2749,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Automatically centers the camera on the active page during navigation'**
   String get autoFocusOnPageChangeTooltip;
+
+  /// No description provided for @pageSwipeGestures.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe to Turn Pages'**
+  String get pageSwipeGestures;
+
+  /// No description provided for @pageSwipeGesturesTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe horizontally on touch screens to navigate previous/next score pages'**
+  String get pageSwipeGesturesTooltip;
+
+  /// No description provided for @swipeTurnedToPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Page {page} of {total}'**
+  String swipeTurnedToPage(int page, int total);
+
+  /// No description provided for @swipeFirstPageReached.
+  ///
+  /// In en, this message translates to:
+  /// **'First page'**
+  String get swipeFirstPageReached;
+
+  /// No description provided for @swipeLastPageReached.
+  ///
+  /// In en, this message translates to:
+  /// **'Last page'**
+  String get swipeLastPageReached;
 }
 
 class _AppLocalizationsDelegate

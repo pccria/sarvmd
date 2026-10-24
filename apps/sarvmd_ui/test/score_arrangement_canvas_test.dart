@@ -19,6 +19,7 @@ import 'package:sarvmd_ui/src/presentation/widgets/canvas/preview_canvas.dart';
 import 'package:sarvmd_ui/src/presentation/widgets/canvas/score_arrangement_canvas.dart';
 import 'package:sarvmd_ui/src/presentation/widgets/panels/view_panel.dart';
 import 'package:sarvmd_ui/src/presentation/widgets/staff/document_settings_group.dart';
+import 'package:sarvmd_ui/src/presentation/widgets/touch/touch_canvas_area.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Widget _buildTestApp({
@@ -652,6 +653,322 @@ void main() {
 
       viewCubit.close();
       localeCubit.close();
+      docCubit.close();
+    });
+  });
+
+  group('ViewCubit Page Swipe Gestures & Spread Navigation Tests', () {
+    test('setPageSwipeGestures updates state and persists', () async {
+      final cubit = ViewCubit();
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      expect(cubit.state.pageSwipeGestures, isTrue);
+
+      await cubit.setPageSwipeGestures(false);
+      expect(cubit.state.pageSwipeGestures, isFalse);
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getBool('view_page_swipe_gestures'), isFalse);
+
+      await cubit.setPageSwipeGestures(true);
+      expect(cubit.state.pageSwipeGestures, isTrue);
+
+      cubit.close();
+    });
+
+    test('nextSpread and previousSpread in facingSpread mode navigate by spreads', () async {
+      final cubit = ViewCubit();
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      await cubit.setPageArrangement(PageArrangementMode.facingSpread);
+
+      expect(cubit.state.currentPageIndex, equals(0));
+
+      // Spread 0 (page 0) -> Next spread is Spread 1 (page 1)
+      cubit.nextSpread(4);
+      expect(cubit.state.currentPageIndex, equals(1));
+
+      // Spread 1 (pages 1 | 2) -> Next spread is Spread 2 (page 3)
+      cubit.nextSpread(4);
+      expect(cubit.state.currentPageIndex, equals(3));
+
+      // Spread 2 -> Next spread would exceed maxPages (4) so stays on 3
+      cubit.nextSpread(4);
+      expect(cubit.state.currentPageIndex, equals(3));
+
+      // Spread 2 -> Previous spread is Spread 1 (page 1)
+      cubit.previousSpread();
+      expect(cubit.state.currentPageIndex, equals(1));
+
+      // Spread 1 -> Previous spread is Spread 0 (page 0)
+      cubit.previousSpread();
+      expect(cubit.state.currentPageIndex, equals(0));
+
+      // Already on first spread -> stays on 0
+      cubit.previousSpread();
+      expect(cubit.state.currentPageIndex, equals(0));
+
+      cubit.close();
+    });
+
+    test('nextSpread and previousSpread in single mode navigate page-by-page', () async {
+      final cubit = ViewCubit();
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      await cubit.setPageArrangement(PageArrangementMode.single);
+
+      expect(cubit.state.currentPageIndex, equals(0));
+
+      cubit.nextSpread(3);
+      expect(cubit.state.currentPageIndex, equals(1));
+
+      cubit.nextSpread(3);
+      expect(cubit.state.currentPageIndex, equals(2));
+
+      cubit.previousSpread();
+      expect(cubit.state.currentPageIndex, equals(1));
+
+      cubit.previousSpread();
+      expect(cubit.state.currentPageIndex, equals(0));
+
+      cubit.close();
+    });
+  });
+
+  group('Page Swipe Gestures Toggle in ViewPanel & DocumentSettingsGroup Tests', () {
+    testWidgets('toggling page swipe switch in ViewPanel calls onPageSwipeGesturesChanged', (tester) async {
+      final viewCubit = ViewCubit();
+      final localeCubit = LocaleCubit(const LocaleState());
+      final docCubit = DocumentCubit();
+      final tc = TransformationController();
+
+      await tester.pumpWidget(
+        _buildTestApp(
+          localeCubit: localeCubit,
+          viewCubit: viewCubit,
+          docCubit: docCubit,
+          child: SizedBox(
+            width: 320,
+            height: 900,
+            child: ViewPanel(
+              transformationController: tc,
+              onZoomPreset: (_) {},
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Swipe to Turn Pages'), findsOneWidget);
+      final swipeRow = find.ancestor(
+        of: find.text('Swipe to Turn Pages'),
+        matching: find.byType(Row),
+      );
+      final switchFinder = find.descendant(
+        of: swipeRow,
+        matching: find.byType(Switch),
+      );
+      expect(switchFinder, findsOneWidget);
+
+      final switchWidget = tester.widget<Switch>(switchFinder);
+      expect(switchWidget.value, isTrue);
+
+      await tester.ensureVisible(switchFinder);
+      await tester.pumpAndSettle();
+      await tester.tap(switchFinder);
+      await tester.pumpAndSettle();
+
+      expect(viewCubit.state.pageSwipeGestures, isFalse);
+
+      viewCubit.close();
+      localeCubit.close();
+      docCubit.close();
+    });
+
+    testWidgets('toggling page swipe switch in DocumentSettingsGroup updates state', (tester) async {
+      bool swipeGestures = true;
+
+      await tester.pumpWidget(
+        _buildTestApp(
+          child: DocumentSettingsGroup(
+            pageSize: core.PageSize.a4,
+            onPageSizeChanged: (_) {},
+            orientation: core.PageOrientation.portrait,
+            onOrientationChanged: (_) {},
+            arrangementMode: PageArrangementMode.grid,
+            onArrangementModeChanged: (_) {},
+            pageSwipeGestures: swipeGestures,
+            onPageSwipeGesturesChanged: (val) => swipeGestures = val,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Swipe to Turn Pages'), findsOneWidget);
+      final swipeRow = find.ancestor(
+        of: find.text('Swipe to Turn Pages'),
+        matching: find.byType(Row),
+      );
+      final switchFinder = find.descendant(
+        of: swipeRow,
+        matching: find.byType(Switch),
+      );
+      expect(switchFinder, findsOneWidget);
+
+      await tester.tap(switchFinder);
+      await tester.pumpAndSettle();
+
+      expect(swipeGestures, isFalse);
+    });
+  });
+
+  group('TouchCanvasArea Swipe Gestures & Visual HUD Tests', () {
+    testWidgets('flinging horizontally on canvas in TouchCanvasArea navigates pages and displays HUD toast', (tester) async {
+      final docCubit = DocumentCubit();
+      docCubit.setPageCount(3);
+      final viewCubit = ViewCubit();
+      final tc = TransformationController();
+      final cursorNotifier = ValueNotifier<Offset?>(null);
+
+      await tester.pumpWidget(
+        _buildTestApp(
+          docCubit: docCubit,
+          viewCubit: viewCubit,
+          child: SizedBox(
+            width: 400,
+            height: 600,
+            child: TouchCanvasArea(
+              transformationController: tc,
+              cursorNotifier: cursorNotifier,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(viewCubit.state.currentPageIndex, equals(0));
+
+      final state = tester.state<TouchCanvasAreaState>(find.byType(TouchCanvasArea));
+
+      // Simulate swipe left (next page)
+      state.handleInteractionStart(ScaleStartDetails(pointerCount: 1, localFocalPoint: const Offset(200, 200)));
+      state.handleInteractionUpdate(ScaleUpdateDetails(
+        focalPointDelta: const Offset(-80.0, 0.0),
+        pointerCount: 1,
+        scale: 1.0,
+      ));
+      state.handleInteractionEnd(ScaleEndDetails(
+        velocity: const Velocity(pixelsPerSecond: Offset(-600.0, 0.0)),
+        pointerCount: 0,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(viewCubit.state.currentPageIndex, equals(1));
+      expect(find.text('Page 2 of 3'), findsOneWidget);
+
+      // Simulate swipe right (previous page)
+      state.handleInteractionStart(ScaleStartDetails(pointerCount: 1, localFocalPoint: const Offset(200, 200)));
+      state.handleInteractionUpdate(ScaleUpdateDetails(
+        focalPointDelta: const Offset(80.0, 0.0),
+        pointerCount: 1,
+        scale: 1.0,
+      ));
+      state.handleInteractionEnd(ScaleEndDetails(
+        velocity: const Velocity(pixelsPerSecond: Offset(600.0, 0.0)),
+        pointerCount: 0,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(viewCubit.state.currentPageIndex, equals(0));
+      expect(find.text('Page 1 of 3'), findsOneWidget);
+
+      await tester.pump(const Duration(milliseconds: 1000));
+      cursorNotifier.dispose();
+      viewCubit.close();
+      docCubit.close();
+    });
+
+    testWidgets('swiping past boundaries in TouchCanvasArea shows boundary HUD toast', (tester) async {
+      final docCubit = DocumentCubit();
+      docCubit.setPageCount(2);
+      final viewCubit = ViewCubit();
+      final tc = TransformationController();
+      final cursorNotifier = ValueNotifier<Offset?>(null);
+
+      await tester.pumpWidget(
+        _buildTestApp(
+          docCubit: docCubit,
+          viewCubit: viewCubit,
+          child: SizedBox(
+            width: 400,
+            height: 600,
+            child: TouchCanvasArea(
+              transformationController: tc,
+              cursorNotifier: cursorNotifier,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(viewCubit.state.currentPageIndex, equals(0));
+
+      final state = tester.state<TouchCanvasAreaState>(find.byType(TouchCanvasArea));
+
+      // Swiping right when already on page 1 (first page)
+      state.handleInteractionStart(ScaleStartDetails(pointerCount: 1, localFocalPoint: const Offset(200, 200)));
+      state.handleInteractionUpdate(ScaleUpdateDetails(
+        focalPointDelta: const Offset(80.0, 0.0),
+        pointerCount: 1,
+        scale: 1.0,
+      ));
+      state.handleInteractionEnd(ScaleEndDetails(
+        velocity: const Velocity(pixelsPerSecond: Offset(600.0, 0.0)),
+        pointerCount: 0,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(viewCubit.state.currentPageIndex, equals(0));
+      expect(find.text('First page'), findsOneWidget);
+
+      // Advance to page 2 (last page)
+      state.handleInteractionStart(ScaleStartDetails(pointerCount: 1, localFocalPoint: const Offset(200, 200)));
+      state.handleInteractionUpdate(ScaleUpdateDetails(
+        focalPointDelta: const Offset(-80.0, 0.0),
+        pointerCount: 1,
+        scale: 1.0,
+      ));
+      state.handleInteractionEnd(ScaleEndDetails(
+        velocity: const Velocity(pixelsPerSecond: Offset(-600.0, 0.0)),
+        pointerCount: 0,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(viewCubit.state.currentPageIndex, equals(1));
+
+      // Swiping left when already on page 2 (last page)
+      state.handleInteractionStart(ScaleStartDetails(pointerCount: 1, localFocalPoint: const Offset(200, 200)));
+      state.handleInteractionUpdate(ScaleUpdateDetails(
+        focalPointDelta: const Offset(-80.0, 0.0),
+        pointerCount: 1,
+        scale: 1.0,
+      ));
+      state.handleInteractionEnd(ScaleEndDetails(
+        velocity: const Velocity(pixelsPerSecond: Offset(-600.0, 0.0)),
+        pointerCount: 0,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(viewCubit.state.currentPageIndex, equals(1));
+      expect(find.text('Last page'), findsOneWidget);
+
+      await tester.pump(const Duration(milliseconds: 1000));
+      cursorNotifier.dispose();
+      viewCubit.close();
       docCubit.close();
     });
   });

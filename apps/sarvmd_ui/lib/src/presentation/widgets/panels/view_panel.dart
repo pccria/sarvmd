@@ -56,9 +56,11 @@ class ViewPanel extends StatelessWidget {
                   current: viewState.pageArrangement,
                   gridColumns: viewState.gridColumns,
                   autoFocusOnPageChange: viewState.autoFocusOnPageChange,
+                  pageSwipeGestures: viewState.pageSwipeGestures,
                   onArrangementChanged: viewCubit.setPageArrangement,
                   onGridColumnsChanged: viewCubit.setGridColumns,
                   onAutoFocusChanged: viewCubit.setAutoFocusOnPageChange,
+                  onPageSwipeGesturesChanged: viewCubit.setPageSwipeGestures,
                 ),
               ],
             );
@@ -125,9 +127,11 @@ class ViewPanel extends StatelessWidget {
                           current: viewState.pageArrangement,
                           gridColumns: viewState.gridColumns,
                           autoFocusOnPageChange: viewState.autoFocusOnPageChange,
+                          pageSwipeGestures: viewState.pageSwipeGestures,
                           onArrangementChanged: viewCubit.setPageArrangement,
                           onGridColumnsChanged: viewCubit.setGridColumns,
                           onAutoFocusChanged: viewCubit.setAutoFocusOnPageChange,
+                          onPageSwipeGesturesChanged: viewCubit.setPageSwipeGestures,
                         ),
                       ),
                       const FadeInSlide(
@@ -462,17 +466,21 @@ class _PageArrangementControl extends StatelessWidget {
     required this.current,
     required this.gridColumns,
     this.autoFocusOnPageChange = true,
+    this.pageSwipeGestures = true,
     required this.onArrangementChanged,
     required this.onGridColumnsChanged,
     this.onAutoFocusChanged,
+    this.onPageSwipeGesturesChanged,
   });
 
   final PageArrangementMode current;
   final int gridColumns;
   final bool autoFocusOnPageChange;
+  final bool pageSwipeGestures;
   final ValueChanged<PageArrangementMode> onArrangementChanged;
   final ValueChanged<int> onGridColumnsChanged;
   final ValueChanged<bool>? onAutoFocusChanged;
+  final ValueChanged<bool>? onPageSwipeGesturesChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -675,6 +683,38 @@ class _PageArrangementControl extends StatelessWidget {
               ],
             ),
           ),
+          if (onPageSwipeGesturesChanged != null)
+            Container(
+              margin: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: cs.surfaceContainerHighest.withValues(alpha: 0.25),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: cs.outlineVariant.withValues(alpha: 0.25),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Tooltip(
+                      message: l10n.pageSwipeGesturesTooltip,
+                      child: Text(
+                        l10n.pageSwipeGestures,
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                  ),
+                  Transform.scale(
+                    scale: 0.8,
+                    child: Switch(
+                      value: pageSwipeGestures,
+                      onChanged: onPageSwipeGesturesChanged,
+                    ),
+                  ),
+                ],
+              ),
+            ),
         ],
       ],
     );
