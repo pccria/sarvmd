@@ -1,0 +1,260 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Git tag to release (e.g. v0.13.0)'
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-android:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Resolve Version & Tag
+        id: version
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+            TAG_NAME="${GITHUB_REF_NAME}"
+          else
+            TAG_NAME="${{ github.event.inputs.tag_name }}"
+            VERSION="${TAG_NAME#v}"
+          fi
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "TAG_NAME=${TAG_NAME}" >> $GITHUB_ENV
+
+      - name: Install dependencies
+        run: flutter pub get
+        working-directory: apps/sarvmd_ui
+
+      - name: Build Android APK
+        run: flutter build apk --release
+        working-directory: apps/sarvmd_ui
+
+      - name: Stage Android APK
+        run: |
+          mkdir -p staged_android
+          if compgen -G "apps/sarvmd_ui/build/app/outputs/apk/release/sarvmd-v*.apk" > /dev/null; then
+            cp apps/sarvmd_ui/build/app/outputs/apk/release/sarvmd-v*.apk staged_android/
+          elif [ -f apps/sarvmd_ui/build/app/outputs/flutter-apk/app-release.apk ]; then
+            cp apps/sarvmd_ui/build/app/outputs/flutter-apk/app-release.apk staged_android/sarvmd-${TAG_NAME}-android.apk
+          fi
+
+      - name: Upload Android Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-android
+          path: staged_android/*
+
+  build-linux-desktop:
+    name: Build Linux Desktop
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y clang cmake ninja-build pkg-config libgtk-3-dev
+
+      - name: Set up Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Resolve Version & Tag
+        id: version
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+            TAG_NAME="${GITHUB_REF_NAME}"
+          else
+            TAG_NAME="${{ github.event.inputs.tag_name }}"
+            VERSION="${TAG_NAME#v}"
+          fi
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "TAG_NAME=${TAG_NAME}" >> $GITHUB_ENV
+
+      - name: Install dependencies
+        run: flutter pub get
+        working-directory: apps/sarvmd_ui
+
+      - name: Build Linux Desktop Bundle
+        run: flutter build linux --release
+        working-directory: apps/sarvmd_ui
+
+      - name: Package Linux Desktop Bundle
+        run: |
+          mkdir -p staged_linux
+          tar -czf staged_linux/sarvmd-ui-${TAG_NAME}-linux-x64.tar.gz -C apps/sarvmd_ui/build/linux/x64/release/bundle .
+
+      - name: Upload Linux Desktop Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-linux-desktop
+          path: staged_linux/*
+
+  build-cli-linux:
+    name: Build CLI Executable (Linux x64)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Dart SDK
+        uses: dart-lang/setup-dart@v1
+
+      - name: Resolve Version & Tag
+        id: version
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+            TAG_NAME="${GITHUB_REF_NAME}"
+          else
+            TAG_NAME="${{ github.event.inputs.tag_name }}"
+            VERSION="${TAG_NAME#v}"
+          fi
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "TAG_NAME=${TAG_NAME}" >> $GITHUB_ENV
+
+      - name: Install dependencies
+        run: dart pub get
+        working-directory: apps/sarvmd_cli
+
+      - name: Compile Standalone Native Executable
+        run: dart compile exe bin/sarvmd.dart -o sarvmd
+        working-directory: apps/sarvmd_cli
+
+      - name: Package CLI Bundle
+        run: |
+          mkdir -p staged_cli/bundle
+          cp apps/sarvmd_cli/sarvmd staged_cli/bundle/
+          cp apps/sarvmd_cli/README.md staged_cli/bundle/
+          cp LICENSE staged_cli/bundle/
+          tar -czf staged_cli/sarvmd-cli-${TAG_NAME}-linux-x64.tar.gz -C staged_cli/bundle .
+
+      - name: Upload CLI Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-cli-linux
+          path: staged_cli/sarvmd-cli-*.tar.gz
+
+  publish-release:
+    name: Publish Multi-Artifact GitHub Release
+    needs: [build-android, build-linux-desktop, build-cli-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Resolve Version & Tag
+        id: version
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+            TAG_NAME="${GITHUB_REF_NAME}"
+          else
+            TAG_NAME="${{ github.event.inputs.tag_name }}"
+            VERSION="${TAG_NAME#v}"
+          fi
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "TAG_NAME=${TAG_NAME}" >> $GITHUB_ENV
+
+      - name: Download all staged artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release_artifacts
+          merge-multiple: true
+
+      - name: Aggregate Multi-Package Release Notes
+        run: |
+          cat << 'EOF' > generate_notes.sh
+          #!/usr/bin/env bash
+          VERSION="$1"
+          TAG_NAME="$2"
+          
+          extract_section() {
+            local file="$1"
+            if [ -f "$file" ]; then
+              sed -n "/## \[${VERSION}\]/,/## \[/p" "$file" | sed '1d;$d'
+            fi
+          }
+
+          echo "## SarvMD ${TAG_NAME}" > RELEASE_NOTES.md
+          echo "" >> RELEASE_NOTES.md
+
+          UI_NOTES=$(extract_section "apps/sarvmd_ui/CHANGELOG.md")
+          CLI_NOTES=$(extract_section "apps/sarvmd_cli/CHANGELOG.md")
+          CORE_NOTES=$(extract_section "packages/sarvmd_core/CHANGELOG.md")
+
+          if [ -n "$UI_NOTES" ]; then
+            echo "### 🖥️ Desktop & Web Studio (\`sarvmd_ui\`)" >> RELEASE_NOTES.md
+            echo "$UI_NOTES" >> RELEASE_NOTES.md
+            echo "" >> RELEASE_NOTES.md
+          fi
+
+          if [ -n "$CLI_NOTES" ]; then
+            echo "### ⚡ Headless CLI (\`sarvmd_cli\`)" >> RELEASE_NOTES.md
+            echo "$CLI_NOTES" >> RELEASE_NOTES.md
+            echo "" >> RELEASE_NOTES.md
+          fi
+
+          if [ -n "$CORE_NOTES" ]; then
+            echo "### 🎼 Engraving Engine Improvements (\`sarvmd_core\`)" >> RELEASE_NOTES.md
+            echo "$CORE_NOTES" >> RELEASE_NOTES.md
+            echo "" >> RELEASE_NOTES.md
+          fi
+
+          if [ ! -s RELEASE_NOTES.md ]; then
+            echo "Release ${TAG_NAME} of SarvMD." > RELEASE_NOTES.md
+          fi
+          EOF
+
+          chmod +x generate_notes.sh
+          ./generate_notes.sh "${VERSION}" "${TAG_NAME}"
+
+      - name: Generate Checksums
+        run: |
+          cd release_artifacts
+          sha256sum * > sha256sums.txt
+          cat sha256sums.txt
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          name: SarvMD ${{ env.TAG_NAME }}
+          body_path: RELEASE_NOTES.md
+          draft: false
+          prerelease: false
+          files: |
+            release_artifacts/*

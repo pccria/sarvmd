@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **UI Application Manual & Development Guide (`apps/sarvmd_ui/README.md`)**:
+  - Published comprehensive user and contributor manual covering the three-tier Cubit state architecture (`WorkspaceCubit`, `DocumentCubit`, `ViewCubit`), responsive form factors (desktop, tablet, phone), live vector canvas, CAD crosshairs, millimeter HUD bubbles, and complete keyboard shortcuts reference table.
+  - Added build and runtime guides for Linux Desktop, Web (CanvasKit/WASM), Windows, and Android.
+- **Monorepo Architecture & Synchronized Versioning**:
+  - Decoupled changelog tracking across monorepo packages into dedicated domain changelogs (`packages/sarvmd_core/CHANGELOG.md`, `apps/sarvmd_cli/CHANGELOG.md`, `apps/sarvmd_ui/CHANGELOG.md`).
+  - Standardized package manifest versions (`0.12.4`) across `sarvmd_core`, `sarvmd_cli`, and `sarvmd_ui`.
+  - Added centralized documentation navigation hubs in root [`README.md`](file:///home/ono/Projects/sarvmd/README.md) and [`README.fa.md`](file:///home/ono/Projects/sarvmd/README.fa.md).
+
 ## [0.12.4] - 2026-10-22
 
 ### Added
