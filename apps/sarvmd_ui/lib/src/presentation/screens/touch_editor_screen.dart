@@ -604,6 +604,10 @@ class _TouchEditorScreenState extends State<TouchEditorScreen>
                         child: CanvasPageNavigator(
                           currentPageIndex: effectivePageIndex,
                           pageCount: pageCount,
+                          arrangementMode: viewState.pageArrangement,
+                          onArrangementModeChanged: (mode) => context
+                              .read<ViewCubit>()
+                              .setPageArrangement(mode),
                           onPageChanged: (idx) => context
                               .read<ViewCubit>()
                               .setPageIndex(idx, maxPages: pageCount),

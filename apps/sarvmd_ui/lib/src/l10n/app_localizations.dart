@@ -2605,6 +2605,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Previous page'**
   String get shortcutPreviousPage;
+
+  /// No description provided for @pageArrangementSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Page Arrangement'**
+  String get pageArrangementSection;
+
+  /// No description provided for @pageArrangementSectionDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure how manuscript pages are displayed in the workspace'**
+  String get pageArrangementSectionDesc;
+
+  /// No description provided for @pageArrangementSingle.
+  ///
+  /// In en, this message translates to:
+  /// **'Single Page'**
+  String get pageArrangementSingle;
+
+  /// No description provided for @pageArrangementSingleDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Display one page at a time with quick navigation'**
+  String get pageArrangementSingleDesc;
+
+  /// No description provided for @pageArrangementFacing.
+  ///
+  /// In en, this message translates to:
+  /// **'Facing Pages'**
+  String get pageArrangementFacing;
+
+  /// No description provided for @pageArrangementFacingDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Display score in two-page book spreads (Page 1 recto)'**
+  String get pageArrangementFacingDesc;
+
+  /// No description provided for @pageArrangementContinuousVertical.
+  ///
+  /// In en, this message translates to:
+  /// **'Vertical Flow'**
+  String get pageArrangementContinuousVertical;
+
+  /// No description provided for @pageArrangementContinuousVerticalDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Continuous vertical flow of all manuscript pages'**
+  String get pageArrangementContinuousVerticalDesc;
+
+  /// No description provided for @pageArrangementContinuousHorizontal.
+  ///
+  /// In en, this message translates to:
+  /// **'Horizontal Ribbon'**
+  String get pageArrangementContinuousHorizontal;
+
+  /// No description provided for @pageArrangementContinuousHorizontalDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Continuous horizontal ribbon of all manuscript pages'**
+  String get pageArrangementContinuousHorizontalDesc;
+
+  /// No description provided for @pageArrangementGrid.
+  ///
+  /// In en, this message translates to:
+  /// **'Grid Overview'**
+  String get pageArrangementGrid;
+
+  /// No description provided for @pageArrangementGridDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Matrix overview of all pages across customizable columns'**
+  String get pageArrangementGridDesc;
+
+  /// No description provided for @pageArrangementColumnsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Grid Columns'**
+  String get pageArrangementColumnsLabel;
+
+  /// No description provided for @pageArrangementColumnsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 Column} other{{count} Columns}}'**
+  String pageArrangementColumnsCount(int count);
 }
 
 class _AppLocalizationsDelegate

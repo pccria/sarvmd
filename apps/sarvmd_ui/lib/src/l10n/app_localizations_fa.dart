@@ -1348,4 +1348,54 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get shortcutPreviousPage => 'صفحه قبلی';
+
+  @override
+  String get pageArrangementSection => 'چیدمان صفحات';
+
+  @override
+  String get pageArrangementSectionDesc =>
+      'تنظیم نحوه نمایش صفحات دست‌نوشته در بوم';
+
+  @override
+  String get pageArrangementSingle => 'تک‌صفحه';
+
+  @override
+  String get pageArrangementSingleDesc =>
+      'نمایش یک صفحه به صورت مجزا و تمام‌اندازه';
+
+  @override
+  String get pageArrangementFacing => 'صفحات روبرو (کتابی)';
+
+  @override
+  String get pageArrangementFacingDesc =>
+      'نمایش به صورت دوصفحه‌ای روبرو مثل کتاب موسیقی (صفحه ۱ فرد)';
+
+  @override
+  String get pageArrangementContinuousVertical => 'طومار عمودی';
+
+  @override
+  String get pageArrangementContinuousVerticalDesc =>
+      'چیدمان پیوسته عمودی تمام صفحات روی هم';
+
+  @override
+  String get pageArrangementContinuousHorizontal => 'نوار افقی';
+
+  @override
+  String get pageArrangementContinuousHorizontalDesc =>
+      'چیدمان نواری افقی و پیوسته صفحات کنار هم';
+
+  @override
+  String get pageArrangementGrid => 'نمای شبکه‌ای';
+
+  @override
+  String get pageArrangementGridDesc =>
+      'نمای کلی و شبکه‌ای تمام صفحات در چند ستون';
+
+  @override
+  String get pageArrangementColumnsLabel => 'تعداد ستون‌های شبکه';
+
+  @override
+  String pageArrangementColumnsCount(int count) {
+    return '$count ستون';
+  }
 }

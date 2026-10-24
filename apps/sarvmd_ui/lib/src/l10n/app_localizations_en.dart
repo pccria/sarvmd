@@ -1354,4 +1354,60 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shortcutPreviousPage => 'Previous page';
+
+  @override
+  String get pageArrangementSection => 'Page Arrangement';
+
+  @override
+  String get pageArrangementSectionDesc =>
+      'Configure how manuscript pages are displayed in the workspace';
+
+  @override
+  String get pageArrangementSingle => 'Single Page';
+
+  @override
+  String get pageArrangementSingleDesc =>
+      'Display one page at a time with quick navigation';
+
+  @override
+  String get pageArrangementFacing => 'Facing Pages';
+
+  @override
+  String get pageArrangementFacingDesc =>
+      'Display score in two-page book spreads (Page 1 recto)';
+
+  @override
+  String get pageArrangementContinuousVertical => 'Vertical Flow';
+
+  @override
+  String get pageArrangementContinuousVerticalDesc =>
+      'Continuous vertical flow of all manuscript pages';
+
+  @override
+  String get pageArrangementContinuousHorizontal => 'Horizontal Ribbon';
+
+  @override
+  String get pageArrangementContinuousHorizontalDesc =>
+      'Continuous horizontal ribbon of all manuscript pages';
+
+  @override
+  String get pageArrangementGrid => 'Grid Overview';
+
+  @override
+  String get pageArrangementGridDesc =>
+      'Matrix overview of all pages across customizable columns';
+
+  @override
+  String get pageArrangementColumnsLabel => 'Grid Columns';
+
+  @override
+  String pageArrangementColumnsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Columns',
+      one: '1 Column',
+    );
+    return '$_temp0';
+  }
 }

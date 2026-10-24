@@ -541,6 +541,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
     final docState = context.watch<DocumentCubit>().state;
     final cubit = context.read<DocumentCubit>();
     final config = docState.config;
+    final viewState = context.watch<ViewCubit>().state;
+    final viewCubit = context.read<ViewCubit>();
 
     switch (currentSection) {
       case SettingsSection.profiles:
@@ -560,6 +562,10 @@ class _SettingsPanelState extends State<SettingsPanel> {
           onOrientationChanged: cubit.updateOrientation,
           pageCount: cubit.state.pageCount,
           onPageCountChanged: cubit.setPageCount,
+          arrangementMode: viewState.pageArrangement,
+          onArrangementModeChanged: viewCubit.setPageArrangement,
+          gridColumns: viewState.gridColumns,
+          onGridColumnsChanged: viewCubit.setGridColumns,
         );
         break;
 

@@ -23,6 +23,8 @@ class ViewCubit extends Cubit<ViewState> {
   static const String _keyInputMode = 'view_input_mode';
   static const String _keyExpandedPointerSections =
       'view_expanded_pointer_sections';
+  static const String _keyPageArrangement = 'view_page_arrangement';
+  static const String _keyGridColumns = 'view_grid_columns';
 
   Future<void> _loadFromPrefs() async {
     final prefs = await SharedPreferences.getInstance();
@@ -109,6 +111,21 @@ class ViewCubit extends Cubit<ViewState> {
       }
     }
 
+    // Load Page Arrangement & Grid Columns
+    PageArrangementMode pageArrangement = state.pageArrangement;
+    final arrangementIndex = prefs.getInt(_keyPageArrangement);
+    if (arrangementIndex != null &&
+        arrangementIndex >= 0 &&
+        arrangementIndex < PageArrangementMode.values.length) {
+      pageArrangement = PageArrangementMode.values[arrangementIndex];
+    }
+
+    int gridColumns = state.gridColumns;
+    final savedGridColumns = prefs.getInt(_keyGridColumns);
+    if (savedGridColumns != null) {
+      gridColumns = savedGridColumns.clamp(1, 6);
+    }
+
     if (isClosed) return;
     emit(state.copyWith(
       themeMode: themeMode,
@@ -116,12 +133,16 @@ class ViewCubit extends Cubit<ViewState> {
       calibrationFactor: calibrationFactor,
       inputMode: inputMode,
       expandedPointerSections: expandedPointerSections,
+      pageArrangement: pageArrangement,
+      gridColumns: gridColumns,
     ));
     _log.debug('View state restored from SharedPreferences', context: {
       'themeMode': themeMode.name,
       'accent': accent.name,
       'calibrationFactor': calibrationFactor,
       'inputMode': inputMode.name,
+      'pageArrangement': pageArrangement.name,
+      'gridColumns': gridColumns,
     });
   }
 
@@ -384,5 +405,24 @@ class ViewCubit extends Cubit<ViewState> {
     if (state.currentPageIndex > 0) {
       setPageIndex(state.currentPageIndex - 1);
     }
+  }
+
+  // --- Multi-Page Canvas Arrangement ---
+
+  Future<void> setPageArrangement(PageArrangementMode mode) async {
+    if (state.pageArrangement == mode) return;
+    emit(state.copyWith(pageArrangement: mode));
+    _log.debug('Page arrangement mode changed', context: {'mode': mode.name});
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_keyPageArrangement, mode.index);
+  }
+
+  Future<void> setGridColumns(int columns) async {
+    final clamped = columns.clamp(1, 6);
+    if (state.gridColumns == clamped) return;
+    emit(state.copyWith(gridColumns: clamped));
+    _log.debug('Grid columns changed', context: {'columns': clamped});
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_keyGridColumns, clamped);
   }
 }

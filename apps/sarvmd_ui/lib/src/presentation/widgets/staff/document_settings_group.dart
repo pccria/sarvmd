@@ -4,6 +4,7 @@ import '../../../core/theme/app_metrics.dart';
 import '../../../core/utils/unit_formatter.dart';
 import '../common/dropdown_setting.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../logic/view/view_state.dart';
 
 class DocumentSettingsGroup extends StatelessWidget {
   const DocumentSettingsGroup({
@@ -14,6 +15,10 @@ class DocumentSettingsGroup extends StatelessWidget {
     required this.onOrientationChanged,
     this.pageCount = 1,
     this.onPageCountChanged,
+    this.arrangementMode = PageArrangementMode.single,
+    this.onArrangementModeChanged,
+    this.gridColumns = 2,
+    this.onGridColumnsChanged,
   });
 
   final core.PageSize pageSize;
@@ -22,6 +27,10 @@ class DocumentSettingsGroup extends StatelessWidget {
   final ValueChanged<core.PageOrientation> onOrientationChanged;
   final int pageCount;
   final ValueChanged<int>? onPageCountChanged;
+  final PageArrangementMode arrangementMode;
+  final ValueChanged<PageArrangementMode>? onArrangementModeChanged;
+  final int gridColumns;
+  final ValueChanged<int>? onGridColumnsChanged;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -46,6 +55,13 @@ class DocumentSettingsGroup extends StatelessWidget {
             _PageCountRow(
               pageCount: pageCount,
               onChanged: onPageCountChanged!,
+            ),
+          if (onArrangementModeChanged != null)
+            _PageArrangementGroup(
+              arrangementMode: arrangementMode,
+              onArrangementModeChanged: onArrangementModeChanged!,
+              gridColumns: gridColumns,
+              onGridColumnsChanged: onGridColumnsChanged,
             ),
         ],
       );
@@ -350,6 +366,125 @@ class _MiniPaperOrientationIcon extends StatelessWidget {
             color: color.withValues(alpha: 0.5),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _PageArrangementGroup extends StatelessWidget {
+  const _PageArrangementGroup({
+    required this.arrangementMode,
+    required this.onArrangementModeChanged,
+    required this.gridColumns,
+    this.onGridColumnsChanged,
+  });
+
+  final PageArrangementMode arrangementMode;
+  final ValueChanged<PageArrangementMode> onArrangementModeChanged;
+  final int gridColumns;
+  final ValueChanged<int>? onGridColumnsChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
+
+    final modes = [
+      (PageArrangementMode.single, Icons.crop_portrait_rounded, l10n.pageArrangementSingle),
+      (PageArrangementMode.facingSpread, Icons.auto_stories_rounded, l10n.pageArrangementFacing),
+      (PageArrangementMode.continuousVertical, Icons.view_day_rounded, l10n.pageArrangementContinuousVertical),
+      (PageArrangementMode.continuousHorizontal, Icons.view_column_rounded, l10n.pageArrangementContinuousHorizontal),
+      (PageArrangementMode.grid, Icons.grid_view_rounded, l10n.pageArrangementGrid),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(12.0),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHighest.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(12.0),
+        border: Border.all(
+          color: cs.outlineVariant.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: 10.0,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.auto_awesome_mosaic_outlined, size: 16.0, color: cs.primary),
+              const SizedBox(width: 6.0),
+              Text(
+                l10n.pageArrangementSection,
+                style: const TextStyle(fontSize: 12.0, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          Wrap(
+            spacing: 6.0,
+            runSpacing: 6.0,
+            children: modes.map((m) {
+              final isSelected = m.$1 == arrangementMode;
+              return ChoiceChip(
+                showCheckmark: false,
+                avatar: Icon(
+                  m.$2,
+                  size: 14.0,
+                  color: isSelected ? cs.onPrimary : cs.onSurfaceVariant,
+                ),
+                label: Text(
+                  m.$3,
+                  style: TextStyle(
+                    fontSize: 11.0,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+                selected: isSelected,
+                selectedColor: cs.primary,
+                labelStyle: TextStyle(
+                  color: isSelected ? cs.onPrimary : cs.onSurface,
+                ),
+                onSelected: (_) => onArrangementModeChanged(m.$1),
+                visualDensity: VisualDensity.compact,
+              );
+            }).toList(),
+          ),
+          if (arrangementMode == PageArrangementMode.grid && onGridColumnsChanged != null)
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.pageArrangementColumnsLabel,
+                    style: const TextStyle(fontSize: 11.0),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.remove_rounded, size: 16.0),
+                  onPressed: gridColumns > 1
+                      ? () => onGridColumnsChanged!(gridColumns - 1)
+                      : null,
+                  visualDensity: VisualDensity.compact,
+                  splashRadius: 16.0,
+                ),
+                Text(
+                  l10n.pageArrangementColumnsCount(gridColumns),
+                  style: TextStyle(
+                    fontSize: 11.0,
+                    fontWeight: FontWeight.bold,
+                    color: cs.primary,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.add_rounded, size: 16.0),
+                  onPressed: gridColumns < 6
+                      ? () => onGridColumnsChanged!(gridColumns + 1)
+                      : null,
+                  visualDensity: VisualDensity.compact,
+                  splashRadius: 16.0,
+                ),
+              ],
+            ),
+        ],
       ),
     );
   }

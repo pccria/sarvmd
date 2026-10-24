@@ -4,11 +4,12 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../logic/view/view_state.dart';
 
 /// Floating, glassmorphic multi-page navigator and sheet manager.
 ///
 /// Provides quick pagination controls (< Page X of Y >), sheet increment (+),
-/// and sheet decrement (-) directly on the interactive scoring canvas.
+/// sheet decrement (-), and arrangement switcher directly on the scoring canvas.
 class CanvasPageNavigator extends StatelessWidget {
   const CanvasPageNavigator({
     super.key,
@@ -17,6 +18,8 @@ class CanvasPageNavigator extends StatelessWidget {
     required this.onPageChanged,
     required this.onAddPage,
     required this.onRemovePage,
+    this.arrangementMode = PageArrangementMode.single,
+    this.onArrangementModeChanged,
   });
 
   final int currentPageIndex;
@@ -24,6 +27,8 @@ class CanvasPageNavigator extends StatelessWidget {
   final ValueChanged<int> onPageChanged;
   final VoidCallback onAddPage;
   final VoidCallback onRemovePage;
+  final PageArrangementMode arrangementMode;
+  final ValueChanged<PageArrangementMode>? onArrangementModeChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -119,9 +124,108 @@ class CanvasPageNavigator extends StatelessWidget {
                   visualDensity: VisualDensity.compact,
                   splashRadius: 18.0,
                 ),
+
+              // Arrangement Mode Quick Switcher
+              if (onArrangementModeChanged != null) ...[
+                Container(
+                  height: 18.0,
+                  width: 1.0,
+                  margin: const EdgeInsets.symmetric(horizontal: 2.0),
+                  color: cs.outlineVariant.withValues(alpha: 0.4),
+                ),
+                PopupMenuButton<PageArrangementMode>(
+                  tooltip: l10n.pageArrangementSection,
+                  icon: Icon(_arrangementIcon(arrangementMode), size: 18.0),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 220),
+                  initialValue: arrangementMode,
+                  onSelected: onArrangementModeChanged,
+                  itemBuilder: (context) => [
+                    _buildArrangementItem(
+                      context,
+                      PageArrangementMode.single,
+                      Icons.crop_portrait_rounded,
+                      l10n.pageArrangementSingle,
+                    ),
+                    _buildArrangementItem(
+                      context,
+                      PageArrangementMode.facingSpread,
+                      Icons.auto_stories_rounded,
+                      l10n.pageArrangementFacing,
+                    ),
+                    _buildArrangementItem(
+                      context,
+                      PageArrangementMode.continuousVertical,
+                      Icons.view_day_rounded,
+                      l10n.pageArrangementContinuousVertical,
+                    ),
+                    _buildArrangementItem(
+                      context,
+                      PageArrangementMode.continuousHorizontal,
+                      Icons.view_column_rounded,
+                      l10n.pageArrangementContinuousHorizontal,
+                    ),
+                    _buildArrangementItem(
+                      context,
+                      PageArrangementMode.grid,
+                      Icons.grid_view_rounded,
+                      l10n.pageArrangementGrid,
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  IconData _arrangementIcon(PageArrangementMode mode) {
+    switch (mode) {
+      case PageArrangementMode.single:
+        return Icons.crop_portrait_rounded;
+      case PageArrangementMode.facingSpread:
+        return Icons.auto_stories_rounded;
+      case PageArrangementMode.continuousVertical:
+        return Icons.view_day_rounded;
+      case PageArrangementMode.continuousHorizontal:
+        return Icons.view_column_rounded;
+      case PageArrangementMode.grid:
+        return Icons.grid_view_rounded;
+    }
+  }
+
+  PopupMenuItem<PageArrangementMode> _buildArrangementItem(
+    BuildContext context,
+    PageArrangementMode mode,
+    IconData icon,
+    String title,
+  ) {
+    final isSelected = (mode == arrangementMode);
+    final cs = Theme.of(context).colorScheme;
+    return PopupMenuItem<PageArrangementMode>(
+      value: mode,
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 18.0,
+            color: isSelected ? cs.primary : cs.onSurfaceVariant,
+          ),
+          const SizedBox(width: 10.0),
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isSelected ? cs.primary : cs.onSurface,
+              ),
+            ),
+          ),
+          if (isSelected)
+            Icon(Icons.check_rounded, size: 16.0, color: cs.primary),
+        ],
       ),
     );
   }

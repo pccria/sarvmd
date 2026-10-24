@@ -20,7 +20,7 @@ import '../../l10n/app_localizations.dart';
 import '../widgets/staff/profile_picker.dart';
 import '../widgets/canvas/canvas_zoom_calculator.dart';
 import '../widgets/canvas/canvas_page_navigator.dart';
-import '../widgets/canvas/preview_canvas.dart';
+import '../widgets/canvas/score_arrangement_canvas.dart';
 import '../widgets/panels/view_panel.dart';
 import '../widgets/canvas/ruler_box.dart';
 import '../widgets/common/integrated_scale_control.dart';
@@ -752,6 +752,10 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
                                     documentCubit.updateOrientation,
                                 pageCount: documentCubit.state.pageCount,
                                 onPageCountChanged: documentCubit.setPageCount,
+                                arrangementMode: viewState.pageArrangement,
+                                onArrangementModeChanged: viewCubit.setPageArrangement,
+                                gridColumns: viewState.gridColumns,
+                                onGridColumnsChanged: viewCubit.setGridColumns,
                               ),
                             ),
                             CollapsibleSectionCard(
@@ -1291,13 +1295,15 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
                                                             constrained: false,
                                                             alignment:
                                                                 Alignment.topLeft,
-                                                            child: PreviewCanvas(
-                                                              layout:
-                                                                  documentCubit.layoutForPage(effectivePageIndex),
+                                                            child: ScoreArrangementCanvas(
+                                                              documentCubit: documentCubit,
                                                               viewState: viewState,
-                                                              metadata:
-                                                                  documentCubit.state.metadata,
-                                                              pageIndex: effectivePageIndex,
+                                                              onPageTapped: (index) => context
+                                                                  .read<ViewCubit>()
+                                                                  .setPageIndex(
+                                                                    index,
+                                                                    maxPages: documentCubit.state.pageCount,
+                                                                  ),
                                                             ),
                                                           ),
                                                         ),
@@ -1376,6 +1382,10 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
                                                             child: CanvasPageNavigator(
                                                               currentPageIndex: effectivePageIndex,
                                                               pageCount: pageCount,
+                                                              arrangementMode: viewState.pageArrangement,
+                                                              onArrangementModeChanged: (mode) => context
+                                                                  .read<ViewCubit>()
+                                                                  .setPageArrangement(mode),
                                                               onPageChanged: (idx) => context
                                                                   .read<ViewCubit>()
                                                                   .setPageIndex(idx, maxPages: pageCount),

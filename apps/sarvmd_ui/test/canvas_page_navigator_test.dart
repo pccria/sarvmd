@@ -246,8 +246,8 @@ void main() {
             BlocProvider<ViewCubit>.value(value: viewCubit),
           ],
           child: _buildTestApp(
-            child: SarvShortcutGateway(
-              child: const Focus(
+            child: const SarvShortcutGateway(
+              child: Focus(
                 autofocus: true,
                 child: SizedBox(width: 100, height: 100),
               ),

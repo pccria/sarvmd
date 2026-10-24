@@ -425,5 +425,19 @@
   "documentPageCountLabel": "تعداد صفحات سند",
   "documentPageCountDesc": "تعداد کل صفحات در دست‌نوشته",
   "shortcutNextPage": "صفحه بعدی",
-  "shortcutPreviousPage": "صفحه قبلی"
+  "shortcutPreviousPage": "صفحه قبلی",
+  "pageArrangementSection": "چیدمان صفحات",
+  "pageArrangementSectionDesc": "تنظیم نحوه نمایش صفحات دست‌نوشته در بوم",
+  "pageArrangementSingle": "تک‌صفحه",
+  "pageArrangementSingleDesc": "نمایش یک صفحه به صورت مجزا و تمام‌اندازه",
+  "pageArrangementFacing": "صفحات روبرو (کتابی)",
+  "pageArrangementFacingDesc": "نمایش به صورت دوصفحه‌ای روبرو مثل کتاب موسیقی (صفحه ۱ فرد)",
+  "pageArrangementContinuousVertical": "طومار عمودی",
+  "pageArrangementContinuousVerticalDesc": "چیدمان پیوسته عمودی تمام صفحات روی هم",
+  "pageArrangementContinuousHorizontal": "نوار افقی",
+  "pageArrangementContinuousHorizontalDesc": "چیدمان نواری افقی و پیوسته صفحات کنار هم",
+  "pageArrangementGrid": "نمای شبکه‌ای",
+  "pageArrangementGridDesc": "نمای کلی و شبکه‌ای تمام صفحات در چند ستون",
+  "pageArrangementColumnsLabel": "تعداد ستون‌های شبکه",
+  "pageArrangementColumnsCount": "{count} ستون"
 }

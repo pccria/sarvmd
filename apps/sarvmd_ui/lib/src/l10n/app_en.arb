@@ -585,5 +585,26 @@
   "documentPageCountLabel": "Document Pages",
   "documentPageCountDesc": "Total pages in score manuscript",
   "shortcutNextPage": "Next page",
-  "shortcutPreviousPage": "Previous page"
+  "shortcutPreviousPage": "Previous page",
+  "pageArrangementSection": "Page Arrangement",
+  "pageArrangementSectionDesc": "Configure how manuscript pages are displayed in the workspace",
+  "pageArrangementSingle": "Single Page",
+  "pageArrangementSingleDesc": "Display one page at a time with quick navigation",
+  "pageArrangementFacing": "Facing Pages",
+  "pageArrangementFacingDesc": "Display score in two-page book spreads (Page 1 recto)",
+  "pageArrangementContinuousVertical": "Vertical Flow",
+  "pageArrangementContinuousVerticalDesc": "Continuous vertical flow of all manuscript pages",
+  "pageArrangementContinuousHorizontal": "Horizontal Ribbon",
+  "pageArrangementContinuousHorizontalDesc": "Continuous horizontal ribbon of all manuscript pages",
+  "pageArrangementGrid": "Grid Overview",
+  "pageArrangementGridDesc": "Matrix overview of all pages across customizable columns",
+  "pageArrangementColumnsLabel": "Grid Columns",
+  "pageArrangementColumnsCount": "{count, plural, =1{1 Column} other{{count} Columns}}",
+  "@pageArrangementColumnsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

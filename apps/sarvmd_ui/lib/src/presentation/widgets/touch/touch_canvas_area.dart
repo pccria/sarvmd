@@ -1,7 +1,6 @@
 // Copyright (c) 2026 Pooria Askari Moqaddam. All rights reserved.
 // Licensed under the Business Source License 1.1 (BUSL-1.1).
 
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_metrics.dart';
@@ -10,7 +9,7 @@ import '../../../logic/document/document_cubit.dart';
 import '../../../logic/view/view_cubit.dart';
 import '../../../logic/view/view_state.dart';
 import '../canvas/canvas_zoom_calculator.dart';
-import '../canvas/preview_canvas.dart';
+import '../canvas/score_arrangement_canvas.dart';
 import '../canvas/ruler_box.dart';
 import '../common/integrated_scale_control.dart';
 
@@ -138,11 +137,6 @@ class TouchCanvasAreaState extends State<TouchCanvasArea> with SingleTickerProvi
     final docState = documentCubit.state;
     final configState = docState.config;
     final viewState = context.watch<ViewCubit>().state;
-    final int pageCount = docState.pageCount;
-    final int effectivePageIndex = viewState.currentPageIndex.clamp(
-      0,
-      math.max(0, pageCount - 1),
-    ).toInt();
 
     return BlocListener<ViewCubit, ViewState>(
       listenWhen: (prev, curr) => prev.isPanelPeeking != curr.isPanelPeeking,
@@ -220,11 +214,13 @@ class TouchCanvasAreaState extends State<TouchCanvasArea> with SingleTickerProvi
                           onLongPressCancel: widget.onLongPressEndCanvas != null
                               ? () => widget.onLongPressEndCanvas!()
                               : null,
-                          child: PreviewCanvas(
-                            layout: documentCubit.layoutForPage(effectivePageIndex),
+                          child: ScoreArrangementCanvas(
+                            documentCubit: documentCubit,
                             viewState: viewState,
-                            metadata: documentCubit.state.metadata,
-                            pageIndex: effectivePageIndex,
+                            onPageTapped: (index) => context.read<ViewCubit>().setPageIndex(
+                              index,
+                              maxPages: documentCubit.state.pageCount,
+                            ),
                           ),
                         ),
                       ),

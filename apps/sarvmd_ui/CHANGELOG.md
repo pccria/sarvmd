@@ -10,6 +10,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Multi-Page Canvas Arrangement Modes (Single, Facing Spread, Continuous Flow, Grid)**:
+  - Created top-level `ScoreArrangementCanvas` supporting 5 distinct Gouldian and workflow-optimized layout arrangement modes:
+    - `single`: Focused, single-page presentation centered on the canvas.
+    - `facingSpread`: Authentic two-page book spread honoring Gouldian engraving conventions (Spread 0: Page 1 on recto with subtle verso placeholder; Spread $S$: Page $2S$ verso | Page $2S+1$ recto separated by an 18 mm book spine gutter).
+    - `continuousVertical`: Continuous vertical ribbon stacking all manuscript sheets top-to-bottom with 32 px drop-shadow spacing.
+    - `continuousHorizontal`: Continuous horizontal ribbon arranging all pages side-by-side with 32 px spacing.
+    - `grid`: Matrix contact sheet overview grouping pages into customizable column chunks (`gridColumns`, 1 to 6).
+  - **Interactive Page Activation & Badges**: Integrated active page border highlights and floating page badges (`p. 1`, `p. 2`…) in multi-page modes with seamless tap-to-activate page switching (`onPageTapped`).
+  - **Floating Canvas Pill Quick Switcher**: Integrated arrangement mode selector popup directly into the glassmorphic `CanvasPageNavigator` pill on the scoring canvas.
+  - **Desktop ViewPanel & Mobile Page Setup Integration**:
+    - Added dedicated `Page Arrangement` section with sliding animated segmented buttons and grid column stepper in `ViewPanel`.
+    - Added responsive arrangement chip selector directly within `DocumentSettingsGroup` (Page Setup) in `SettingsPanel` (touch drawer) and pointer sidebar.
+  - **State & SharedPreferences Persistence**: Extended `ViewState` and `ViewCubit` with `pageArrangement` and `gridColumns` properties with instant local persistence.
+  - **Bilingual Localization**: Added full English (`app_en.arb`) and Persian (`app_fa.arb`) localization keys for all 5 modes, section descriptions, and grid column counters.
 - **Multi-Page Canvas Navigation & Interactive Pagination**:
   - Implemented floating, glassmorphic `CanvasPageNavigator` widget providing seamless page stepping (`< Page X of Y >`), direct sheet increment (`+`), and sheet removal (`-`) directly on the scoring canvas.
   - Enabled multi-page layout rendering across `PreviewCanvas`, automatically computing Gouldian title blocks and first-system indentation on Page 1 while restoring full staff headroom (0 mm) and running headers (`- 2 -`, `- 3 -`) on Page 2+.
