@@ -1964,6 +1964,12 @@ abstract class AppLocalizations {
   /// **'Save As…'**
   String get menuSaveAs;
 
+  /// No description provided for @menuPrint.
+  ///
+  /// In en, this message translates to:
+  /// **'Print…'**
+  String get menuPrint;
+
   /// No description provided for @unsavedChangesTitle.
   ///
   /// In en, this message translates to:

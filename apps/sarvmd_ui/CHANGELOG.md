@@ -10,6 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Direct Native Print Workflow (`Ctrl+P` / `⌘P` & File Menu)**:
+  - Added native `Print…` entry in `FileMenu` and wired global desktop shortcuts (`Ctrl+P` on Linux/Windows, `Cmd+P` on macOS) via `PrintIntent` in `ShortcutGateway`.
+  - Implemented `ExportService.printScore` generating high-resolution vector PDF in temporary cache and invoking the host OS system print dialog / PDF viewer via `url_launcher`.
+  - Added bilingual localization keys (`menuPrint`: "Print…", "چاپ…").
+  - Documented `Ctrl+P` / `⌘P` in `KeyboardShortcutsDialog` under the File category.
+- **Multi-Page SVG Export Support in `ExportDialog`**:
+  - Added export options when saving SVG format with multi-page scores: users can choose between exporting all pages as a batch of numbered files (`score_p1.svg`, `score_p2.svg`…) or exporting only the currently active page.
+  - Added `ExportService.exportAllPagesToSvg` and `ExportService.exportSinglePageToSvg`.
 - **Multi-Page Canvas Arrangement Modes (Single, Facing Spread, Continuous Flow, Grid)**:
   - Created top-level `ScoreArrangementCanvas` supporting 5 distinct Gouldian and workflow-optimized layout arrangement modes:
     - `single`: Focused, single-page presentation centered on the canvas.

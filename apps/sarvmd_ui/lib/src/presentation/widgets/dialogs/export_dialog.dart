@@ -60,6 +60,7 @@ class _ExportDialogState extends State<ExportDialog> {
   int _pageCount = 1;
   core.SvgLayeringMode _svgMode = core.SvgLayeringMode.flatByCategory;
   bool _isCustomName = false;
+  bool _exportAllSvgPages = true;
   String _outputDir = ExportDirectoryService.getDefaultDirectory();
 
   bool _isExporting = false;
@@ -183,6 +184,9 @@ class _ExportDialogState extends State<ExportDialog> {
             fileName: effectiveExportName,
             outputDir: _outputDir,
             layeringMode: _svgMode,
+            pageCount: _pageCount,
+            pageIndex: layout.pageIndex,
+            exportAllPages: _exportAllSvgPages,
           );
         case ExportFormat.tex:
           result = await ExportService.exportTex(
@@ -224,6 +228,8 @@ class _ExportDialogState extends State<ExportDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final documentCubit = context.read<DocumentCubit>();
+    final layout = documentCubit.layout;
     final cs = Theme.of(context).colorScheme;
     final display = SarvDisplayContext.of(context);
     final isMobile = display.isPhone;
@@ -408,12 +414,45 @@ class _ExportDialogState extends State<ExportDialog> {
                       pageController: _pageController,
                       onPageCountChanged: _updatePageCount,
                     )
-                  else if (_selectedFormat == ExportFormat.svg)
+                  else if (_selectedFormat == ExportFormat.svg) ...[
+                    if (_pageCount > 1)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: cs.surfaceContainerHighest.withValues(alpha: 0.25),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: cs.outline.withValues(alpha: 0.2)),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.pages_outlined, size: 16, color: cs.primary),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _exportAllSvgPages
+                                    ? 'Export all $_pageCount pages as numbered SVG files'
+                                    : 'Export current page (${layout.pageIndex + 1}) only',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: cs.onSurface,
+                                ),
+                              ),
+                            ),
+                            Switch.adaptive(
+                              value: _exportAllSvgPages,
+                              onChanged: (val) => setState(() => _exportAllSvgPages = val),
+                            ),
+                          ],
+                        ),
+                      ),
                     ExportSvgOptionsSection(
                       svgMode: _svgMode,
                       onModeChanged: (mode) =>
                           setState(() => _svgMode = mode),
                     ),
+                  ],
                   const SizedBox(height: 18),
 
                   // Section 4: Export Output Location

@@ -250,13 +250,31 @@ class GenerateCommand extends Command<int> {
               'Generated native vector PDF: $finalPath (${bytes.length} bytes)');
         }
       } else if (format == 'svg') {
-        final svgContent = core.ScoreCompiler.compileToSvg(
-          config,
-          layout,
-          metadata: metadata,
-        );
-        File(finalPath).writeAsStringSync(svgContent);
-        stdout.writeln('Generated vector SVG: $finalPath');
+        if (pageCount > 1) {
+          final svgs = core.ScoreCompiler.compileAllPagesToSvg(
+            config,
+            pageCount: pageCount,
+            initialLayout: layout,
+            metadata: metadata,
+          );
+          for (var pIdx = 0; pIdx < svgs.length; pIdx++) {
+            final pageFileName = core.ScoreCompiler.appendIndex(
+              finalPath,
+              pIdx + 1,
+              separator: '_p',
+            );
+            File(pageFileName).writeAsStringSync(svgs[pIdx]);
+            stdout.writeln('Generated vector SVG: $pageFileName');
+          }
+        } else {
+          final svgContent = core.ScoreCompiler.compileToSvg(
+            config,
+            layout,
+            metadata: metadata,
+          );
+          File(finalPath).writeAsStringSync(svgContent);
+          stdout.writeln('Generated vector SVG: $finalPath');
+        }
       } else if (format == 'tex') {
         final texContent = core.ScoreCompiler.compileToTex(
           config,

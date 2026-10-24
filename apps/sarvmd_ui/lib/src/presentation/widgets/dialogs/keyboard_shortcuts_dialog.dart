@@ -100,6 +100,16 @@ final List<ShortcutItem> appShortcuts = [
   ),
   ShortcutItem(
     category: ShortcutCategory.file,
+    titleBuilder: (l10n) => l10n.menuPrint,
+    keys: const [
+      ['Ctrl', 'P']
+    ],
+    macKeys: const [
+      ['⌘', 'P']
+    ],
+  ),
+  ShortcutItem(
+    category: ShortcutCategory.file,
     titleBuilder: (l10n) => l10n.shortcutDocumentProperties,
     keys: const [
       ['Ctrl', 'I']

@@ -55,7 +55,7 @@ String emitSvg(
     _drawSystemConnectors(buf, config, layout.systems);
     _drawStaffLines(buf, layout.systems, leftX, rightX, gap, strokeMm);
     _drawClefs(buf, layout.systems, leftX, gap, config.engraving);
-    _drawStaffLabels(buf, layout.systems, leftX, gap);
+    _drawStaffLabels(buf, layout.systems, leftX, gap, pageIndex: layout.pageIndex);
     buf.writeln('</svg>');
     return buf.toString();
   }
@@ -81,7 +81,7 @@ String emitSvg(
       _drawSystemConnectors(buf, config, [system]);
       _drawStaffLines(buf, [system], leftX, rightX, gap, strokeMm);
       _drawClefs(buf, [system], leftX, gap, config.engraving);
-      _drawStaffLabels(buf, [system], leftX, gap);
+      _drawStaffLabels(buf, [system], leftX, gap, pageIndex: layout.pageIndex, systemIndexOffset: i);
       buf.writeln('    </g>');
     }
     buf.writeln('  </g>');
@@ -111,7 +111,7 @@ String emitSvg(
     buf.writeln(
       '  <g id="layer-labels" inkscape:groupmode="layer" inkscape:label="Instrument Labels">',
     );
-    _drawStaffLabels(buf, layout.systems, leftX, gap);
+    _drawStaffLabels(buf, layout.systems, leftX, gap, pageIndex: layout.pageIndex);
     buf.writeln('  </g>');
   }
 
@@ -200,12 +200,15 @@ void _drawStaffLabels(
   StringBuffer buf,
   List<StaffSystem> systems,
   double baseLeftX,
-  double lineGapMm,
-) {
+  double lineGapMm, {
+  int pageIndex = 0,
+  int systemIndexOffset = 0,
+}) {
   for (var sysIdx = 0; sysIdx < systems.length; sysIdx++) {
     final system = systems[sysIdx];
     final leftX = baseLeftX + system.leftIndentMm;
-    final bool isFirstSystem = sysIdx == 0;
+    final int globalSysIdx = systemIndexOffset + sysIdx;
+    final bool isFirstSystem = (pageIndex == 0 && globalSysIdx == 0);
 
     // 1. Group labels (Outer tier or section header above staff)
     for (final group in system.groupPlacements) {

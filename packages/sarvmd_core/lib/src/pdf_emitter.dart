@@ -37,6 +37,10 @@ Future<List<int>> emitPdf(
   final rightX = config.effectiveWidth - config.margins.right;
 
   for (var p = 0; p < pageCount; p++) {
+    final pageLayout = (p == layout.pageIndex)
+        ? layout
+        : computeLayout(config, pageIndex: p, metadata: effectiveMetadata);
+
     pdfDoc.addPage(
       pw.Page(
         pageFormat: pageFormat,
@@ -47,7 +51,7 @@ Future<List<int>> emitPdf(
               _drawScoreTypography(
                 canvas,
                 config,
-                layout,
+                pageLayout,
                 hPt,
                 pdfDoc.document,
                 p,
@@ -55,10 +59,10 @@ Future<List<int>> emitPdf(
                 rightX,
                 effectiveMetadata,
               );
-              _drawSystemConnectors(canvas, config, layout.systems, hPt);
-              _drawStaffLines(canvas, layout.systems, leftX, rightX, gap, strokeMm, hPt);
-              _drawClefs(canvas, layout.systems, leftX, gap, config.engraving, hPt);
-              _drawStaffLabels(canvas, layout.systems, leftX, hPt, pdfDoc.document, gap);
+              _drawSystemConnectors(canvas, config, pageLayout.systems, hPt);
+              _drawStaffLines(canvas, pageLayout.systems, leftX, rightX, gap, strokeMm, hPt);
+              _drawClefs(canvas, pageLayout.systems, leftX, gap, config.engraving, hPt);
+              _drawStaffLabels(canvas, pageLayout.systems, leftX, hPt, pdfDoc.document, gap, p);
             },
           );
         },
@@ -151,12 +155,13 @@ void _drawStaffLabels(
   double baseLeftX,
   double hPt,
   pdf.PdfDocument doc,
-  double lineGapMm,
-) {
+  double lineGapMm, [
+  int pageIndex = 0,
+]) {
   for (var sysIdx = 0; sysIdx < systems.length; sysIdx++) {
     final system = systems[sysIdx];
     final leftX = baseLeftX + system.leftIndentMm;
-    final bool isFirstSystem = sysIdx == 0;
+    final bool isFirstSystem = (pageIndex == 0 && sysIdx == 0);
 
     // 1. Group labels (Outer tier or section header above staff)
     for (final group in system.groupPlacements) {

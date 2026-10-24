@@ -20,6 +20,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added boolean visibility flags (`showTitleBlock`, `showTitle`, `showSubtitle`, `showComposer`, `showArranger`, `showLyricist`, `showCopyright`, `showPageNumbers`) to `DocumentMetadata` with full JSON serialization and `copyWith` support.
   - Added granular printable predicate getters (`hasPrintableTitle`, `hasPrintableSubtitle`, `hasPrintableComposer`, `hasPrintableArranger`, `hasPrintableLyricist`, `hasPrintableCopyright`, `hasPrintablePageNumbers`) allowing users to suppress any element or the entire header block without deleting entered text.
   - Dynamically reduce layout vertical headroom and footer clearance when header elements or copyright notices are toggled off.
+- **Multi-Page Layout Parity & Dynamic Gouldian Headroom Across All Emitters**:
+  - Updated `pdf_emitter.dart`, `svg_emitter.dart`, and `emitter.dart` (LaTeX) to dynamically compute and apply page-specific layouts (`computeLayout(config, pageIndex: p, metadata: metadata)`).
+  - Page 1 enforces title block headroom (up to 28mm) and full ensemble/instrument names.
+  - Page 2+ reclaims vertical stave space (0mm headroom, staves flush with top margin), displays running header page numbers (`- 2 -`), and renders abbreviated instrument names.
+- **Multi-Page SVG Compilation**:
+  - Added `ScoreCompiler.compilePageToSvg` and `ScoreCompiler.compileAllPagesToSvg` returning complete SVG documents per page with accurate page index and running page headers.
 - **Developer Documentation & Recipes (`packages/sarvmd_core/README.md`)**:
   - Published comprehensive API Reference covering domain models (`PageConfig`, `StaffConfig`, `SystemLayout`, `StaffNodeGroup`, `Clef`, `ScoreCompiler`, `SarvDocument`).
   - Added copy-paste code recipes for constructing layouts, programmatic `.sarv` mutation, vector PDF/SVG emission, and layout calculation queries.

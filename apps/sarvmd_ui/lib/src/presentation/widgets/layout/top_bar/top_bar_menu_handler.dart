@@ -10,6 +10,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../../logic/document/document_cubit.dart';
 import '../../../../logic/document/document_state.dart';
 import '../../../../logic/locale/locale_cubit.dart';
+import '../../../../logic/services/export_service.dart';
 import '../../../../logic/services/sarv_file_service.dart';
 import '../../../../logic/view/view_cubit.dart';
 import '../../../../logic/workspace/workspace_cubit.dart';
@@ -99,6 +100,14 @@ void handleTopBarMenuSelection(
       break;
     case 'export':
       showExportDialog(context);
+      break;
+    case 'print':
+      ExportService.printScore(
+        documentState.config,
+        documentCubit.layout,
+        pageCount: documentState.pageCount,
+        metadata: documentState.metadata,
+      );
       break;
     case 'document_properties':
       showDocumentPropertiesDialog(context);

@@ -132,6 +132,46 @@ abstract final class ScoreCompiler {
   }
 
 
+  /// Compiles a specific page of the score layout configuration to scalable vector graphics (`.svg`).
+  static String compilePageToSvg(
+    PageConfig config, {
+    required int pageIndex,
+    PageLayout? layout,
+    SvgLayeringMode layeringMode = SvgLayeringMode.flatByCategory,
+    DocumentMetadata? metadata,
+  }) {
+    final effectiveMeta = metadata ?? layout?.metadata;
+    final pageLayout = (layout != null && layout.pageIndex == pageIndex)
+        ? layout
+        : computeLayout(config, pageIndex: pageIndex, metadata: effectiveMeta);
+    return svg_emitter.emitSvg(
+      config,
+      pageLayout,
+      layeringMode: layeringMode,
+      metadata: effectiveMeta,
+    );
+  }
+
+  /// Compiles all pages of the score layout configuration to a list of SVG strings.
+  static List<String> compileAllPagesToSvg(
+    PageConfig config, {
+    required int pageCount,
+    PageLayout? initialLayout,
+    SvgLayeringMode layeringMode = SvgLayeringMode.flatByCategory,
+    DocumentMetadata? metadata,
+  }) {
+    final count = pageCount < 1 ? 1 : pageCount;
+    return List.generate(count, (p) {
+      return compilePageToSvg(
+        config,
+        pageIndex: p,
+        layout: initialLayout,
+        layeringMode: layeringMode,
+        metadata: metadata,
+      );
+    });
+  }
+
   /// Shells out to `pdflatex` to compile an existing `.tex` file on disk to a `.pdf` file.
   static Future<String> compileTexFileToPdf(
     String texPath, {

@@ -49,6 +49,10 @@ class ExportIntent extends Intent {
   const ExportIntent();
 }
 
+class PrintIntent extends Intent {
+  const PrintIntent();
+}
+
 class DocumentPropertiesIntent extends Intent {
   const DocumentPropertiesIntent();
 }
@@ -196,6 +200,8 @@ class SarvShortcutGatewayState extends State<SarvShortcutGateway> {
         SingleActivator(LogicalKeyboardKey.keyS, meta: true, shift: true): SaveAsDocumentIntent(),
         SingleActivator(LogicalKeyboardKey.keyE, control: true): ExportIntent(),
         SingleActivator(LogicalKeyboardKey.keyE, meta: true): ExportIntent(),
+        SingleActivator(LogicalKeyboardKey.keyP, control: true): PrintIntent(),
+        SingleActivator(LogicalKeyboardKey.keyP, meta: true): PrintIntent(),
         SingleActivator(LogicalKeyboardKey.keyI, control: true): DocumentPropertiesIntent(),
         SingleActivator(LogicalKeyboardKey.keyI, meta: true): DocumentPropertiesIntent(),
 
@@ -364,6 +370,15 @@ class SarvShortcutGatewayState extends State<SarvShortcutGateway> {
               final cubit = context.read<DocumentCubit?>();
               if (cubit != null) {
                 handleTopBarMenuSelection(context, 'export', cubit.state);
+              }
+              return null;
+            },
+          ),
+          PrintIntent: CallbackAction<PrintIntent>(
+            onInvoke: (intent) {
+              final cubit = context.read<DocumentCubit?>();
+              if (cubit != null) {
+                handleTopBarMenuSelection(context, 'print', cubit.state);
               }
               return null;
             },

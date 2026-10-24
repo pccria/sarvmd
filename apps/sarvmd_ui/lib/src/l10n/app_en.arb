@@ -439,6 +439,7 @@
   "menuOpen": "Open…",
   "menuSave": "Save",
   "menuSaveAs": "Save As…",
+  "menuPrint": "Print…",
   "unsavedChangesTitle": "Unsaved Changes",
   "unsavedChangesMessage": "Do you want to save changes to \"{documentName}\" before continuing?",
   "@unsavedChangesMessage": {

@@ -323,5 +323,97 @@ void main() {
       }
     });
   });
+
+  group('Multi-Page Export & Print Scenarios Verification', () {
+    test('Multi-page PDF geometry and headroom parity (Page 0 vs Page 1+)', () async {
+      final config = StaffProfiles.stringQuartet.applyTo(const PageConfig());
+      final meta = const DocumentMetadata(
+        title: 'String Quartet No. 1',
+        subtitle: 'Op. 18 No. 1',
+        composer: 'L. v. Beethoven',
+      );
+      final page0Layout = computeLayout(config, pageIndex: 0, metadata: meta);
+      final page1Layout = computeLayout(config, pageIndex: 1, metadata: meta);
+
+      expect(page0Layout.headerHeadroomMm, equals(28.0));
+      expect(page1Layout.headerHeadroomMm, equals(0.0));
+
+      final page0System0Top = page0Layout.systems.first.topY;
+      final page1System0Top = page1Layout.systems.first.topY;
+
+      expect(page0System0Top, greaterThan(page1System0Top));
+      expect(page0System0Top - page1System0Top, closeTo(28.0, 0.1));
+
+      final pdfBytes = await emitPdf(config, page0Layout, pageCount: 2, metadata: meta);
+      expect(pdfBytes, isNotEmpty);
+      expect(String.fromCharCodes(pdfBytes.take(4)), equals('%PDF'));
+    });
+
+    test('Multi-page LaTeX emitter generates separate pages with \\newpage, 0 headroom, - 2 - header, and abbreviated labels', () {
+      final config = StaffProfiles.stringQuartet.applyTo(const PageConfig());
+      final meta = const DocumentMetadata(
+        title: 'String Quartet No. 1',
+        composer: 'L. v. Beethoven',
+      );
+      final page0Layout = computeLayout(config, pageIndex: 0, metadata: meta);
+      final tex = emit(config, page0Layout, pageCount: 2, metadata: meta);
+
+      expect(tex, contains(r'\newpage'));
+      expect(tex, contains('String Quartet No. 1'));
+      expect(tex, contains('L. v. Beethoven'));
+      expect(tex, contains('- 2 -'));
+      expect(tex, contains('Violin I'));
+      expect(tex, contains('Vln. I'));
+    });
+
+    test('Multi-page SVG compilation via compilePageToSvg and compileAllPagesToSvg', () {
+      final config = StaffProfiles.stringQuartet.applyTo(const PageConfig());
+      final meta = const DocumentMetadata(
+        title: 'String Quartet No. 1',
+        composer: 'L. v. Beethoven',
+      );
+      final svgs = ScoreCompiler.compileAllPagesToSvg(
+        config,
+        pageCount: 3,
+        metadata: meta,
+      );
+
+      expect(svgs.length, equals(3));
+
+      // Page 1 has title and full instrument names
+      expect(svgs[0], contains('String Quartet No. 1'));
+      expect(svgs[0], contains('Violin I'));
+      expect(svgs[0], isNot(contains('- 2 -')));
+
+      // Page 2 has running header - 2 - and abbreviated instrument names
+      expect(svgs[1], contains('- 2 -'));
+      expect(svgs[1], contains('Vln. I'));
+      expect(svgs[1], isNot(contains('String Quartet No. 1')));
+
+      // Page 3 has running header - 3 -
+      expect(svgs[2], contains('- 3 -'));
+    });
+
+    test('Document without metadata has 0 headroom across all pages in PDF, SVG, and LaTeX', () async {
+      final config = StaffProfiles.piano.applyTo(const PageConfig());
+      const emptyMeta = DocumentMetadata();
+
+      final p0Layout = computeLayout(config, pageIndex: 0, metadata: emptyMeta);
+      final p1Layout = computeLayout(config, pageIndex: 1, metadata: emptyMeta);
+
+      expect(p0Layout.headerHeadroomMm, equals(0.0));
+      expect(p1Layout.headerHeadroomMm, equals(0.0));
+      expect(p0Layout.systems.first.topY, equals(p1Layout.systems.first.topY));
+
+      final svg0 = ScoreCompiler.compilePageToSvg(config, pageIndex: 0, metadata: emptyMeta);
+      final svg1 = ScoreCompiler.compilePageToSvg(config, pageIndex: 1, metadata: emptyMeta);
+
+      expect(svg0, isNot(contains('<text')));
+      expect(svg1, isNot(contains('<text')));
+
+      final pdfBytes = await ScoreCompiler.compileToPdf(config, p0Layout, pageCount: 2, metadata: emptyMeta);
+      expect(pdfBytes, isNotEmpty);
+    });
+  });
 }
 

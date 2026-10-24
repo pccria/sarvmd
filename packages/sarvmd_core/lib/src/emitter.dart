@@ -45,6 +45,109 @@ String emit(
   buf.writeln(r'\pagestyle{empty}');
   buf.writeln(r'\begin{document}');
 
+  final count = pageCount < 1 ? 1 : pageCount;
+  final centerXMm =
+      (config.margins.left + (pageW - config.margins.right)) / 2.0;
+
+  for (var i = 0; i < count; i++) {
+    final pageLayout = (i == layout.pageIndex)
+        ? layout
+        : computeLayout(config, pageIndex: i, metadata: effectiveMetadata);
+    final pageLiteral = _generatePageLiteral(config, pageLayout);
+    final pageLabels = _generatePageLabels(config, pageLayout, i);
+
+    if (i > 0) {
+      buf.writeln(r'\newpage');
+    }
+    buf.writeln(r'\setlength{\topskip}{0pt}%');
+    buf.writeln(r'\setlength{\parindent}{0pt}%');
+    buf.writeln(r'\setlength{\unitlength}{1mm}%');
+
+    final pageTextBuf = StringBuffer();
+    pageTextBuf.write(pageLabels);
+
+    if (i == 0) {
+      if (effectiveMetadata != null &&
+          effectiveMetadata.hasPrintableTypography) {
+        if (effectiveMetadata.hasPrintableTitle) {
+          final titleY = config.margins.top + 6.0;
+          pageTextBuf.writeln(
+            '  \\put(${_f(centerXMm)}, -${_f(titleY)}){\\makebox(0,0)[c]{\\textbf{\\LARGE ${_escapeLatex(effectiveMetadata.title.trim())}}}}%',
+          );
+        }
+        if (effectiveMetadata.hasPrintableSubtitle) {
+          final subY = config.margins.top + 13.0;
+          pageTextBuf.writeln(
+            '  \\put(${_f(centerXMm)}, -${_f(subY)}){\\makebox(0,0)[c]{\\textit{\\large ${_escapeLatex(effectiveMetadata.subtitle.trim())}}}}%',
+          );
+        }
+        final firstSystemTopY = pageLayout.systems.isNotEmpty
+            ? pageLayout.systems.first.topY
+            : (config.margins.top + pageLayout.headerHeadroomMm);
+        if (effectiveMetadata.hasPrintableLyricist) {
+          final lyricistY = firstSystemTopY - 3.5;
+          pageTextBuf.writeln(
+            '  \\put(${_f(config.margins.left)}, -${_f(lyricistY)}){\\makebox(0,0)[l]{\\normalsize ${_escapeLatex(effectiveMetadata.lyricist.trim())}}}%',
+          );
+        }
+        final hasComp = effectiveMetadata.hasPrintableComposer;
+        final hasArr = effectiveMetadata.hasPrintableArranger;
+        final composerText = effectiveMetadata.composer.trim();
+        final arrangerText = effectiveMetadata.arranger.trim();
+        final rightXMm = pageW - config.margins.right;
+        if (hasComp && hasArr) {
+          final compY = firstSystemTopY - 6.5;
+          final arrY = firstSystemTopY - 2.5;
+          pageTextBuf.writeln(
+            '  \\put(${_f(rightXMm)}, -${_f(compY)}){\\makebox(0,0)[r]{\\textbf{\\normalsize ${_escapeLatex(composerText)}}}}%',
+          );
+          pageTextBuf.writeln(
+            '  \\put(${_f(rightXMm)}, -${_f(arrY)}){\\makebox(0,0)[r]{\\textit{\\small arr. ${_escapeLatex(arrangerText)}}}}%',
+          );
+        } else if (hasComp) {
+          final compY = firstSystemTopY - 3.5;
+          pageTextBuf.writeln(
+            '  \\put(${_f(rightXMm)}, -${_f(compY)}){\\makebox(0,0)[r]{\\textbf{\\normalsize ${_escapeLatex(composerText)}}}}%',
+          );
+        } else if (hasArr) {
+          final arrY = firstSystemTopY - 3.5;
+          pageTextBuf.writeln(
+            '  \\put(${_f(rightXMm)}, -${_f(arrY)}){\\makebox(0,0)[r]{\\textit{\\normalsize arr. ${_escapeLatex(arrangerText)}}}}%',
+          );
+        }
+        if (effectiveMetadata.hasPrintableCopyright) {
+          final copyY = pageH - config.margins.bottom + 4.0;
+          pageTextBuf.writeln(
+            '  \\put(${_f(centerXMm)}, -${_f(copyY)}){\\makebox(0,0)[c]{\\footnotesize ${_escapeLatex(effectiveMetadata.copyright.trim())}}}%',
+          );
+        }
+      }
+    } else {
+      if (effectiveMetadata != null ? effectiveMetadata.hasPrintablePageNumbers : true) {
+        final pageNumY = config.margins.top - 4.0;
+        pageTextBuf.writeln(
+          '  \\put(${_f(centerXMm)}, -${_f(pageNumY)}){\\makebox(0,0)[c]{\\small - ${i + 1} -}}%',
+        );
+      }
+    }
+
+    if (pageTextBuf.isNotEmpty) {
+      buf.writeln(r'\noindent\begin{picture}(0,0)(0,0)%');
+      buf.write(pageTextBuf.toString());
+      buf.writeln(r'\end{picture}%');
+    } else {
+      buf.writeln(r'\null%');
+    }
+    buf.writeln(pageLiteral);
+  }
+  buf.writeln(r'\end{document}');
+
+  return buf.toString();
+}
+
+String _generatePageLiteral(PageConfig config, PageLayout layout) {
+  final pageW = config.effectiveWidth;
+  final pageH = config.effectiveHeight;
   final draw = StringBuffer();
   draw.writeln('q'); // Save graphics state.
 
@@ -200,14 +303,16 @@ String emit(
   }
 
   draw.writeln('Q');
+  return '\\pdfliteral direct {${draw.toString()}}';
+}
 
-  // Text labels (Group labels & Instrument labels)
+String _generatePageLabels(PageConfig config, PageLayout layout, int pageIndex) {
   final textBuf = StringBuffer();
 
   for (var sysIdx = 0; sysIdx < layout.systems.length; sysIdx++) {
     final system = layout.systems[sysIdx];
     final staffLeftMm = config.margins.left + system.leftIndentMm;
-    final bool isFirstSystem = sysIdx == 0;
+    final bool isFirstSystem = (pageIndex == 0 && sysIdx == 0);
 
     // 1. Group labels (Outer tier or section header above staff)
     for (final group in system.groupPlacements) {
@@ -332,98 +437,8 @@ String emit(
     }
   }
 
-  final pageLiteral = '\\pdfliteral direct {${draw.toString()}}';
-  final count = pageCount < 1 ? 1 : pageCount;
-  final centerXMm =
-      (config.margins.left + (pageW - config.margins.right)) / 2.0;
 
-  for (var i = 0; i < count; i++) {
-    if (i > 0) {
-      buf.writeln(r'\newpage');
-    }
-    buf.writeln(r'\setlength{\topskip}{0pt}%');
-    buf.writeln(r'\setlength{\parindent}{0pt}%');
-    buf.writeln(r'\setlength{\unitlength}{1mm}%');
-
-    final pageTextBuf = StringBuffer();
-    if (i == 0) {
-      pageTextBuf.write(textBuf.toString());
-      if (effectiveMetadata != null &&
-          effectiveMetadata.hasPrintableTypography) {
-        if (effectiveMetadata.hasPrintableTitle) {
-          final titleY = config.margins.top + 6.0;
-          pageTextBuf.writeln(
-            '  \\put(${_f(centerXMm)}, -${_f(titleY)}){\\makebox(0,0)[c]{\\textbf{\\LARGE ${_escapeLatex(effectiveMetadata.title.trim())}}}}%',
-          );
-        }
-        if (effectiveMetadata.hasPrintableSubtitle) {
-          final subY = config.margins.top + 13.0;
-          pageTextBuf.writeln(
-            '  \\put(${_f(centerXMm)}, -${_f(subY)}){\\makebox(0,0)[c]{\\textit{\\large ${_escapeLatex(effectiveMetadata.subtitle.trim())}}}}%',
-          );
-        }
-        final firstSystemTopY = layout.systems.isNotEmpty
-            ? layout.systems.first.topY
-            : (config.margins.top + layout.headerHeadroomMm);
-        if (effectiveMetadata.hasPrintableLyricist) {
-          final lyricistY = firstSystemTopY - 3.5;
-          pageTextBuf.writeln(
-            '  \\put(${_f(config.margins.left)}, -${_f(lyricistY)}){\\makebox(0,0)[l]{\\normalsize ${_escapeLatex(effectiveMetadata.lyricist.trim())}}}%',
-          );
-        }
-        final hasComp = effectiveMetadata.hasPrintableComposer;
-        final hasArr = effectiveMetadata.hasPrintableArranger;
-        final composerText = effectiveMetadata.composer.trim();
-        final arrangerText = effectiveMetadata.arranger.trim();
-        final rightXMm = pageW - config.margins.right;
-        if (hasComp && hasArr) {
-          final compY = firstSystemTopY - 6.5;
-          final arrY = firstSystemTopY - 2.5;
-          pageTextBuf.writeln(
-            '  \\put(${_f(rightXMm)}, -${_f(compY)}){\\makebox(0,0)[r]{\\textbf{\\normalsize ${_escapeLatex(composerText)}}}}%',
-          );
-          pageTextBuf.writeln(
-            '  \\put(${_f(rightXMm)}, -${_f(arrY)}){\\makebox(0,0)[r]{\\textit{\\small arr. ${_escapeLatex(arrangerText)}}}}%',
-          );
-        } else if (hasComp) {
-          final compY = firstSystemTopY - 3.5;
-          pageTextBuf.writeln(
-            '  \\put(${_f(rightXMm)}, -${_f(compY)}){\\makebox(0,0)[r]{\\textbf{\\normalsize ${_escapeLatex(composerText)}}}}%',
-          );
-        } else if (hasArr) {
-          final arrY = firstSystemTopY - 3.5;
-          pageTextBuf.writeln(
-            '  \\put(${_f(rightXMm)}, -${_f(arrY)}){\\makebox(0,0)[r]{\\textit{\\normalsize arr. ${_escapeLatex(arrangerText)}}}}%',
-          );
-        }
-        if (effectiveMetadata.hasPrintableCopyright) {
-          final copyY = pageH - config.margins.bottom + 4.0;
-          pageTextBuf.writeln(
-            '  \\put(${_f(centerXMm)}, -${_f(copyY)}){\\makebox(0,0)[c]{\\footnotesize ${_escapeLatex(effectiveMetadata.copyright.trim())}}}%',
-          );
-        }
-      }
-    } else {
-      if (effectiveMetadata != null ? effectiveMetadata.hasPrintablePageNumbers : true) {
-        final pageNumY = config.margins.top - 4.0;
-        pageTextBuf.writeln(
-          '  \\put(${_f(centerXMm)}, -${_f(pageNumY)}){\\makebox(0,0)[c]{\\small - ${i + 1} -}}%',
-        );
-      }
-    }
-
-    if (pageTextBuf.isNotEmpty) {
-      buf.writeln(r'\noindent\begin{picture}(0,0)(0,0)%');
-      buf.write(pageTextBuf.toString());
-      buf.writeln(r'\end{picture}%');
-    } else {
-      buf.writeln(r'\null%');
-    }
-    buf.writeln(pageLiteral);
-  }
-  buf.writeln(r'\end{document}');
-
-  return buf.toString();
+  return textBuf.toString();
 }
 
 String _escapeLatex(String text) {

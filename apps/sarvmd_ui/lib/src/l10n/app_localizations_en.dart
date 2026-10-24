@@ -1012,6 +1012,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get menuSaveAs => 'Save As…';
 
   @override
+  String get menuPrint => 'Print…';
+
+  @override
   String get unsavedChangesTitle => 'Unsaved Changes';
 
   @override

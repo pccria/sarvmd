@@ -1006,6 +1006,9 @@ class AppLocalizationsFa extends AppLocalizations {
   String get menuSaveAs => 'ذخیره به نام…';
 
   @override
+  String get menuPrint => 'چاپ…';
+
+  @override
   String get unsavedChangesTitle => 'تغییرات ذخیره‌نشده';
 
   @override
