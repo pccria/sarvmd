@@ -1293,4 +1293,36 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get scoreTypographyMoreProperties => 'Advanced Properties…';
+
+  @override
+  String get scoreTypographyMoreCredits =>
+      'Additional Credits (Subtitle, Arranger, Lyricist)';
+
+  @override
+  String get scoreTypographyLessCredits => 'Hide Additional Credits';
+
+  @override
+  String get scoreTypographyHiddenNotice => 'Hidden on score';
+
+  @override
+  String get scoreTypographyVisibleNotice => 'Visible on score';
+
+  @override
+  String get scoreTypographyRunningHeader => 'Page Numbers (p. 2+)';
+
+  @override
+  String get scoreTypographyEnterTextNotice => 'Enter text to display on score';
+
+  @override
+  String scoreTypographyHeadroom(String headroom) {
+    return 'Header Headroom: $headroom mm (Page 1)';
+  }
+
+  @override
+  String get scoreTypographyHeadroomNone =>
+      'Full-page staves (0.0 mm headroom)';
+
+  @override
+  String get scoreTypographyHeaderDisabledNotice =>
+      'Header block is hidden. Staves occupy full first page.';
 }

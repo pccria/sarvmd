@@ -1286,4 +1286,37 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get scoreTypographyMoreProperties => 'مشخصات تکمیلی…';
+
+  @override
+  String get scoreTypographyMoreCredits =>
+      'مشخصات بیشتر (زیرعنوان، تنظیم، شعر)';
+
+  @override
+  String get scoreTypographyLessCredits => 'بستن مشخصات بیشتر';
+
+  @override
+  String get scoreTypographyHiddenNotice => 'عدم نمایش در نت';
+
+  @override
+  String get scoreTypographyVisibleNotice => 'نمایش در نت';
+
+  @override
+  String get scoreTypographyRunningHeader => 'شماره صفحات (از صفحه ۲)';
+
+  @override
+  String get scoreTypographyEnterTextNotice =>
+      'برای نمایش در نت، متنی وارد کنید';
+
+  @override
+  String scoreTypographyHeadroom(String headroom) {
+    return 'فاصله سربرگ: $headroom میلی‌متر (صفحه ۱)';
+  }
+
+  @override
+  String get scoreTypographyHeadroomNone =>
+      'حامل‌های تمام‌صفحه (بدون فاصله سربرگ)';
+
+  @override
+  String get scoreTypographyHeaderDisabledNotice =>
+      'سربرگ پنهان است. خطوط حامل تمام صفحه اول را اشغال می‌کنند.';
 }

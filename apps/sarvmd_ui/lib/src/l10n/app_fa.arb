@@ -407,5 +407,14 @@
   "scoreTypographyVisibility": "نمایش در نت",
   "scoreTypographyShowOnScore": "نمایش در نت",
   "scoreTypographyHideOnScore": "عدم نمایش در نت",
-  "scoreTypographyMoreProperties": "مشخصات تکمیلی…"
+  "scoreTypographyMoreProperties": "مشخصات تکمیلی…",
+  "scoreTypographyMoreCredits": "مشخصات بیشتر (زیرعنوان، تنظیم، شعر)",
+  "scoreTypographyLessCredits": "بستن مشخصات بیشتر",
+  "scoreTypographyHiddenNotice": "عدم نمایش در نت",
+  "scoreTypographyVisibleNotice": "نمایش در نت",
+  "scoreTypographyRunningHeader": "شماره صفحات (از صفحه ۲)",
+  "scoreTypographyEnterTextNotice": "برای نمایش در نت، متنی وارد کنید",
+  "scoreTypographyHeadroom": "فاصله سربرگ: {headroom} میلی‌متر (صفحه ۱)",
+  "scoreTypographyHeadroomNone": "حامل‌های تمام‌صفحه (بدون فاصله سربرگ)",
+  "scoreTypographyHeaderDisabledNotice": "سربرگ پنهان است. خطوط حامل تمام صفحه اول را اشغال می‌کنند."
 }

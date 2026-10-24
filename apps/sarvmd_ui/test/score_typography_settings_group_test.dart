@@ -160,5 +160,148 @@ void main() {
 
       expect(currentMeta.title, equals('New Masterpiece'));
     });
+
+    testWidgets('secondary credits are collapsed by default when empty, and expand on tap', (tester) async {
+      core.DocumentMetadata currentMeta = const core.DocumentMetadata(
+        title: 'Solo Violin Piece',
+        composer: 'Paganini',
+      );
+
+      await tester.pumpWidget(
+        StatefulBuilder(
+          builder: (context, setState) {
+            return _buildTestApp(
+              child: ScoreTypographySettingsGroup(
+                metadata: currentMeta,
+                onMetadataChanged: (newMeta) {
+                  setState(() => currentMeta = newMeta);
+                },
+              ),
+            );
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Primary fields are present
+      expect(find.text('Solo Violin Piece'), findsOneWidget);
+      expect(find.text('Paganini'), findsOneWidget);
+
+      // Secondary fields are collapsed initially
+      expect(find.text('Subtitle'), findsNothing);
+      expect(find.text('Arranger'), findsNothing);
+      expect(find.text('Lyricist'), findsNothing);
+
+      // Expansion button is visible
+      final expandBtn = find.text('Additional Credits (Subtitle, Arranger, Lyricist)');
+      expect(expandBtn, findsOneWidget);
+
+      // Tap to expand
+      await tester.tap(expandBtn);
+      await tester.pumpAndSettle();
+
+      // Secondary fields are now visible
+      expect(find.text('Subtitle'), findsOneWidget);
+      expect(find.text('Arranger'), findsOneWidget);
+      expect(find.text('Lyricist'), findsOneWidget);
+      expect(find.text('Hide Additional Credits'), findsOneWidget);
+
+      // Tap again to collapse
+      await tester.tap(find.text('Hide Additional Credits'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Subtitle'), findsNothing);
+      expect(find.text('Additional Credits (Subtitle, Arranger, Lyricist)'), findsOneWidget);
+    });
+
+    testWidgets('live headroom badge displays dynamic Gouldian clearance on page 1', (tester) async {
+      // 1. Title only -> 18.0 mm
+      core.DocumentMetadata currentMeta = const core.DocumentMetadata(
+        title: 'Title Only',
+      );
+
+      await tester.pumpWidget(
+        StatefulBuilder(
+          builder: (context, setState) {
+            return _buildTestApp(
+              child: ScoreTypographySettingsGroup(
+                metadata: currentMeta,
+                onMetadataChanged: (newMeta) {
+                  setState(() => currentMeta = newMeta);
+                },
+              ),
+            );
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Header Headroom: 18.0 mm (Page 1)'), findsOneWidget);
+
+      // 2. Title + Composer -> 22.0 mm
+      currentMeta = const core.DocumentMetadata(
+        title: 'Title',
+        composer: 'Composer',
+      );
+      await tester.pumpWidget(
+        StatefulBuilder(
+          builder: (context, setState) {
+            return _buildTestApp(
+              child: ScoreTypographySettingsGroup(
+                metadata: currentMeta,
+                onMetadataChanged: (newMeta) {
+                  setState(() => currentMeta = newMeta);
+                },
+              ),
+            );
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Header Headroom: 22.0 mm (Page 1)'), findsOneWidget);
+
+      // 3. Title + Subtitle + Composer -> 28.0 mm
+      currentMeta = const core.DocumentMetadata(
+        title: 'Title',
+        subtitle: 'Subtitle',
+        composer: 'Composer',
+      );
+      await tester.pumpWidget(
+        StatefulBuilder(
+          builder: (context, setState) {
+            return _buildTestApp(
+              child: ScoreTypographySettingsGroup(
+                metadata: currentMeta,
+                onMetadataChanged: (newMeta) {
+                  setState(() => currentMeta = newMeta);
+                },
+              ),
+            );
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Header Headroom: 28.0 mm (Page 1)'), findsOneWidget);
+    });
+
+    testWidgets('when header block is disabled, collapses fields and displays notice', (tester) async {
+      const currentMeta = core.DocumentMetadata(
+        title: 'Hidden Header Piece',
+        showTitleBlock: false,
+      );
+
+      await tester.pumpWidget(
+        _buildTestApp(
+          child: ScoreTypographySettingsGroup(
+            metadata: currentMeta,
+            onMetadataChanged: (_) {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Inputs are collapsed
+      expect(find.text('Hidden Header Piece'), findsNothing);
+      expect(find.text('Header block is hidden. Staves occupy full first page.'), findsOneWidget);
+    });
   });
 }

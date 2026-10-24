@@ -2497,6 +2497,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Advanced Properties…'**
   String get scoreTypographyMoreProperties;
+
+  /// No description provided for @scoreTypographyMoreCredits.
+  ///
+  /// In en, this message translates to:
+  /// **'Additional Credits (Subtitle, Arranger, Lyricist)'**
+  String get scoreTypographyMoreCredits;
+
+  /// No description provided for @scoreTypographyLessCredits.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide Additional Credits'**
+  String get scoreTypographyLessCredits;
+
+  /// No description provided for @scoreTypographyHiddenNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden on score'**
+  String get scoreTypographyHiddenNotice;
+
+  /// No description provided for @scoreTypographyVisibleNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Visible on score'**
+  String get scoreTypographyVisibleNotice;
+
+  /// No description provided for @scoreTypographyRunningHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Page Numbers (p. 2+)'**
+  String get scoreTypographyRunningHeader;
+
+  /// No description provided for @scoreTypographyEnterTextNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter text to display on score'**
+  String get scoreTypographyEnterTextNotice;
+
+  /// No description provided for @scoreTypographyHeadroom.
+  ///
+  /// In en, this message translates to:
+  /// **'Header Headroom: {headroom} mm (Page 1)'**
+  String scoreTypographyHeadroom(String headroom);
+
+  /// No description provided for @scoreTypographyHeadroomNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Full-page staves (0.0 mm headroom)'**
+  String get scoreTypographyHeadroomNone;
+
+  /// No description provided for @scoreTypographyHeaderDisabledNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Header block is hidden. Staves occupy full first page.'**
+  String get scoreTypographyHeaderDisabledNotice;
 }
 
 class _AppLocalizationsDelegate

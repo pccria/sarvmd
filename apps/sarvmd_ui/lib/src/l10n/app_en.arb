@@ -550,5 +550,21 @@
   "scoreTypographyVisibility": "Visibility",
   "scoreTypographyShowOnScore": "Show on score",
   "scoreTypographyHideOnScore": "Hide on score",
-  "scoreTypographyMoreProperties": "Advanced Properties…"
+  "scoreTypographyMoreProperties": "Advanced Properties…",
+  "scoreTypographyMoreCredits": "Additional Credits (Subtitle, Arranger, Lyricist)",
+  "scoreTypographyLessCredits": "Hide Additional Credits",
+  "scoreTypographyHiddenNotice": "Hidden on score",
+  "scoreTypographyVisibleNotice": "Visible on score",
+  "scoreTypographyRunningHeader": "Page Numbers (p. 2+)",
+  "scoreTypographyEnterTextNotice": "Enter text to display on score",
+  "scoreTypographyHeadroom": "Header Headroom: {headroom} mm (Page 1)",
+  "@scoreTypographyHeadroom": {
+    "placeholders": {
+      "headroom": {
+        "type": "String"
+      }
+    }
+  },
+  "scoreTypographyHeadroomNone": "Full-page staves (0.0 mm headroom)",
+  "scoreTypographyHeaderDisabledNotice": "Header block is hidden. Staves occupy full first page."
 }
