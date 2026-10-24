@@ -540,5 +540,15 @@
   "noShortcutsFound": "No matching shortcuts found",
   "peekCanvas": "Peek Canvas",
   "restorePanel": "Restore Settings Panel",
-  "pressBackAgainToExit": "Press back again to exit"
+  "pressBackAgainToExit": "Press back again to exit",
+  "sectionScoreTypography": "Score Information",
+  "sectionScoreTypographySubtitle": "Title, contributor credits, and score header engraving",
+  "scoreTypographyHeaderBlock": "Show Header Block",
+  "scoreTypographyHeaderBlockSubtitle": "Master switch to render title and contributor credits on page 1",
+  "scoreTypographyPageNumbers": "Show Page Numbers",
+  "scoreTypographyPageNumbersSubtitle": "Render running page numbers on subsequent pages",
+  "scoreTypographyVisibility": "Visibility",
+  "scoreTypographyShowOnScore": "Show on score",
+  "scoreTypographyHideOnScore": "Hide on score",
+  "scoreTypographyMoreProperties": "Advanced Properties…"
 }

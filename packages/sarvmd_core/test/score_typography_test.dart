@@ -181,5 +181,98 @@ void main() {
       // PDF magic header
       expect(pdfBytes.sublist(0, 4), equals([0x25, 0x50, 0x44, 0x46])); // %PDF
     });
+    test('granular visibility toggles allow hiding elements without erasing content', () {
+      const fullMeta = DocumentMetadata(
+        title: 'Symphony No. 9',
+        subtitle: 'Ode to Joy',
+        composer: 'L. v. Beethoven',
+        arranger: 'Pooria',
+        lyricist: 'Schiller',
+        copyright: '© 2026 SarvMD',
+      );
+
+      expect(fullMeta.hasTitleBlock, isTrue);
+      expect(fullMeta.hasPrintableTitle, isTrue);
+      expect(fullMeta.hasPrintableSubtitle, isTrue);
+      expect(fullMeta.hasPrintableComposer, isTrue);
+      expect(fullMeta.hasPrintableArranger, isTrue);
+      expect(fullMeta.hasPrintableLyricist, isTrue);
+      expect(fullMeta.hasPrintableCopyright, isTrue);
+      expect(fullMeta.hasPrintablePageNumbers, isTrue);
+
+      // Disable individual title
+      final hideTitle = fullMeta.copyWith(showTitle: false);
+      expect(hideTitle.hasPrintableTitle, isFalse);
+      expect(hideTitle.hasPrintableSubtitle, isTrue);
+      expect(hideTitle.title, equals('Symphony No. 9'));
+
+      // Disable entire title block
+      final hideTitleBlock = fullMeta.copyWith(showTitleBlock: false);
+      expect(hideTitleBlock.hasTitleBlock, isFalse);
+      expect(hideTitleBlock.hasPrintableTitle, isFalse);
+      expect(hideTitleBlock.hasPrintableComposer, isFalse);
+      // Copyright & page numbers remain printable
+      expect(hideTitleBlock.hasPrintableCopyright, isTrue);
+      expect(hideTitleBlock.hasPrintablePageNumbers, isTrue);
+
+      // Disable page numbers
+      final hidePageNumbers = fullMeta.copyWith(showPageNumbers: false);
+      expect(hidePageNumbers.hasPrintablePageNumbers, isFalse);
+
+      // Disable copyright
+      final hideCopyright = fullMeta.copyWith(showCopyright: false);
+      expect(hideCopyright.hasPrintableCopyright, isFalse);
+    });
+
+    test('metadata JSON roundtrip preserves all visibility flags', () {
+      const meta = DocumentMetadata(
+        title: 'Custom Score',
+        showTitle: false,
+        showComposer: false,
+        showTitleBlock: false,
+        showPageNumbers: false,
+        showCopyright: false,
+      );
+
+      final json = meta.toJson();
+      final restored = DocumentMetadata.fromJson(json);
+
+      expect(restored.title, equals('Custom Score'));
+      expect(restored.showTitle, isFalse);
+      expect(restored.showComposer, isFalse);
+      expect(restored.showTitleBlock, isFalse);
+      expect(restored.showPageNumbers, isFalse);
+      expect(restored.showCopyright, isFalse);
+      expect(restored, equals(meta));
+    });
+
+    test('hiding elements dynamically reduces layout headroom and suppresses SVG/LaTeX emission', () {
+      const config = PageConfig();
+      const meta = DocumentMetadata(
+        title: 'Concerto in D',
+        composer: 'Bach',
+        copyright: '© 2026',
+      );
+
+      // Full header headroom
+      final fullLayout = computeLayout(config, metadata: meta, pageIndex: 0);
+      expect(fullLayout.headerHeadroomMm, equals(22.0));
+
+      // With showTitleBlock = false, headroom becomes 0
+      final hiddenMeta = meta.copyWith(showTitleBlock: false);
+      final hiddenLayout = computeLayout(config, metadata: hiddenMeta, pageIndex: 0);
+      expect(hiddenLayout.headerHeadroomMm, equals(0.0));
+      expect(hiddenLayout.footerClearanceMm, equals(6.0));
+
+      final svg = ScoreCompiler.compileToSvg(config, hiddenLayout, metadata: hiddenMeta);
+      expect(svg, isNot(contains('Concerto in D')));
+      expect(svg, isNot(contains('Bach')));
+      expect(svg, contains('© 2026'));
+
+      final tex = ScoreCompiler.compileToTex(config, hiddenLayout, metadata: hiddenMeta);
+      expect(tex, isNot(contains('Concerto in D')));
+      expect(tex, isNot(contains('Bach')));
+      expect(tex, contains('© 2026'));
+    });
   });
 }

@@ -1253,4 +1253,37 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get pressBackAgainToExit => 'برای خروج، دوباره بازگشت را بزنید';
+
+  @override
+  String get sectionScoreTypography => 'اطلاعات و عنوان اثر';
+
+  @override
+  String get sectionScoreTypographySubtitle =>
+      'عنوان، پدیدآورندگان و حکاکی سربرگ نت';
+
+  @override
+  String get scoreTypographyHeaderBlock => 'نمایش بلوک سربرگ';
+
+  @override
+  String get scoreTypographyHeaderBlockSubtitle =>
+      'کلید اصلی نمایش عنوان و مشخصات پدیدآورندگان در صفحه اول';
+
+  @override
+  String get scoreTypographyPageNumbers => 'نمایش شماره صفحات';
+
+  @override
+  String get scoreTypographyPageNumbersSubtitle =>
+      'نمایش شماره صفحات در بالای صفحات بعدی';
+
+  @override
+  String get scoreTypographyVisibility => 'نمایش در نت';
+
+  @override
+  String get scoreTypographyShowOnScore => 'نمایش در نت';
+
+  @override
+  String get scoreTypographyHideOnScore => 'عدم نمایش در نت';
+
+  @override
+  String get scoreTypographyMoreProperties => 'مشخصات تکمیلی…';
 }

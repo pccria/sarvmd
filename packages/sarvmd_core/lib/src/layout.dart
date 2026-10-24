@@ -257,10 +257,10 @@ abstract final class ScoreTypographyMetrics {
   /// Computes the required vertical headroom in mm for the score title block on the first page.
   static double computeHeaderHeadroomMm(DocumentMetadata? metadata) {
     if (metadata == null || !metadata.hasTitleBlock) return 0.0;
-    final hasSub = metadata.subtitle.trim().isNotEmpty;
-    final hasContrib = metadata.composer.trim().isNotEmpty ||
-        metadata.lyricist.trim().isNotEmpty ||
-        metadata.arranger.trim().isNotEmpty;
+    final hasSub = metadata.hasPrintableSubtitle;
+    final hasContrib = metadata.hasPrintableComposer ||
+        metadata.hasPrintableLyricist ||
+        metadata.hasPrintableArranger;
 
     if (hasSub && hasContrib) return 28.0;
     if (hasSub || hasContrib) return 22.0;
@@ -269,7 +269,7 @@ abstract final class ScoreTypographyMetrics {
 
   /// Computes the bottom clearance needed if a copyright notice is present.
   static double computeFooterClearanceMm(DocumentMetadata? metadata) {
-    if (metadata == null || metadata.copyright.trim().isEmpty) return 0.0;
+    if (metadata == null || !metadata.hasPrintableCopyright) return 0.0;
     return 6.0;
   }
 }

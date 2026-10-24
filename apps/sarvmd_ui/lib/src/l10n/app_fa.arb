@@ -397,5 +397,15 @@
   "noShortcutsFound": "میانبری با این عبارت یافت نشد",
   "peekCanvas": "مشاهده بوم",
   "restorePanel": "نمایش پنل تنظیمات",
-  "pressBackAgainToExit": "برای خروج، دوباره بازگشت را بزنید"
+  "pressBackAgainToExit": "برای خروج، دوباره بازگشت را بزنید",
+  "sectionScoreTypography": "اطلاعات و عنوان اثر",
+  "sectionScoreTypographySubtitle": "عنوان، پدیدآورندگان و حکاکی سربرگ نت",
+  "scoreTypographyHeaderBlock": "نمایش بلوک سربرگ",
+  "scoreTypographyHeaderBlockSubtitle": "کلید اصلی نمایش عنوان و مشخصات پدیدآورندگان در صفحه اول",
+  "scoreTypographyPageNumbers": "نمایش شماره صفحات",
+  "scoreTypographyPageNumbersSubtitle": "نمایش شماره صفحات در بالای صفحات بعدی",
+  "scoreTypographyVisibility": "نمایش در نت",
+  "scoreTypographyShowOnScore": "نمایش در نت",
+  "scoreTypographyHideOnScore": "عدم نمایش در نت",
+  "scoreTypographyMoreProperties": "مشخصات تکمیلی…"
 }

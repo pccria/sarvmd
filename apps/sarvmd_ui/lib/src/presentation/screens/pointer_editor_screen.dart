@@ -8,6 +8,7 @@ import 'package:sarvmd_core/sarvmd_core.dart' as core;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/staff/document_settings_group.dart';
 import '../widgets/staff/margins_settings_group.dart';
+import '../widgets/staff/score_typography_settings_group.dart';
 import '../../core/theme/app_metrics.dart';
 import '../../core/theme/layout_policy.dart';
 import '../widgets/staff/staff_spacing_group.dart';
@@ -46,6 +47,7 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
   final ScrollController _sidebarScrollController = ScrollController();
   final GlobalKey _profilesAnchorKey = GlobalKey();
   final GlobalKey _pageSetupAnchorKey = GlobalKey();
+  final GlobalKey _scoreTypographyAnchorKey = GlobalKey();
   final GlobalKey _marginsAnchorKey = GlobalKey();
   final GlobalKey _staffSpacingAnchorKey = GlobalKey();
   final GlobalKey _hierarchyAnchorKey = GlobalKey();
@@ -519,6 +521,13 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
         isExpanded: viewState.isPointerSectionExpanded(SettingsSection.pageSetup),
       ),
       SectionSpineEntry(
+        section: SettingsSection.scoreTypography,
+        label: l10n.sectionScoreTypography,
+        icon: Icons.title_rounded,
+        key: _scoreTypographyAnchorKey,
+        isExpanded: viewState.isPointerSectionExpanded(SettingsSection.scoreTypography),
+      ),
+      SectionSpineEntry(
         section: SettingsSection.margins,
         label: l10n.marginsLabel,
         icon: Icons.space_dashboard_outlined,
@@ -740,6 +749,20 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
                                 orientation: configState.orientation,
                                 onOrientationChanged:
                                     documentCubit.updateOrientation,
+                              ),
+                            ),
+                            CollapsibleSectionCard(
+                              section: SettingsSection.scoreTypography,
+                              title: l10n.sectionScoreTypography,
+                              icon: Icons.title_rounded,
+                              isExpanded: viewState.isPointerSectionExpanded(
+                                  SettingsSection.scoreTypography),
+                              onToggle: () => viewCubit.togglePointerSection(
+                                  SettingsSection.scoreTypography),
+                              anchorKey: _scoreTypographyAnchorKey,
+                              child: ScoreTypographySettingsGroup(
+                                metadata: documentCubit.state.metadata,
+                                onMetadataChanged: documentCubit.updateMetadata,
                               ),
                             ),
                             CollapsibleSectionCard(

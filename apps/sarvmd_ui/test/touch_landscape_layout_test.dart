@@ -108,17 +108,18 @@ void main() {
       // SettingsPanel should appear as an elevated Left Side Sheet
       expect(find.byType(SettingsPanel), findsOneWidget);
 
-      // Verify all 5 categories are displayed simultaneously in dense landscape mode without scrolling
+      // Verify categories are displayed in dense landscape mode
       expect(find.text('ENSEMBLE PROFILES'), findsOneWidget);
       expect(find.text('Page Settings'), findsOneWidget);
+      expect(find.text('Score Information'), findsOneWidget);
       expect(find.text('Staff Spacing'), findsOneWidget);
       expect(find.text('System Hierarchy & Clefs'), findsOneWidget);
-      expect(find.text('Export Manuscript'), findsOneWidget);
 
-      // Verify that scrolling down inside the side sheet reveals the unpinned Ensemble Summary and About
+      // Verify that scrolling down inside the side sheet reveals Export Manuscript, unpinned Ensemble Summary and About
       await tester.drag(find.text('ENSEMBLE PROFILES'), const Offset(0, -300));
       await tester.pumpAndSettle();
 
+      expect(find.text('Export Manuscript'), findsOneWidget);
       expect(find.byType(EnsembleSummaryWidget), findsOneWidget);
       expect(find.text('About SarvMD'), findsOneWidget);
 

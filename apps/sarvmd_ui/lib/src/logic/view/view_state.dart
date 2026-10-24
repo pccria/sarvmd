@@ -24,6 +24,7 @@ enum SettingsSection {
   mainMenu,
   profiles,
   pageSetup,
+  scoreTypography,
   margins,
   staffSpacing,
   systemHierarchy,
@@ -61,6 +62,7 @@ class ViewState {
     this.expandedPointerSections = const {
       SettingsSection.profiles,
       SettingsSection.pageSetup,
+      SettingsSection.scoreTypography,
       SettingsSection.margins,
       SettingsSection.staffSpacing,
       SettingsSection.systemHierarchy,

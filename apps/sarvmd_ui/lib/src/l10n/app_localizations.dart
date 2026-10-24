@@ -2437,6 +2437,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Press back again to exit'**
   String get pressBackAgainToExit;
+
+  /// No description provided for @sectionScoreTypography.
+  ///
+  /// In en, this message translates to:
+  /// **'Score Information'**
+  String get sectionScoreTypography;
+
+  /// No description provided for @sectionScoreTypographySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Title, contributor credits, and score header engraving'**
+  String get sectionScoreTypographySubtitle;
+
+  /// No description provided for @scoreTypographyHeaderBlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Header Block'**
+  String get scoreTypographyHeaderBlock;
+
+  /// No description provided for @scoreTypographyHeaderBlockSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Master switch to render title and contributor credits on page 1'**
+  String get scoreTypographyHeaderBlockSubtitle;
+
+  /// No description provided for @scoreTypographyPageNumbers.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Page Numbers'**
+  String get scoreTypographyPageNumbers;
+
+  /// No description provided for @scoreTypographyPageNumbersSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Render running page numbers on subsequent pages'**
+  String get scoreTypographyPageNumbersSubtitle;
+
+  /// No description provided for @scoreTypographyVisibility.
+  ///
+  /// In en, this message translates to:
+  /// **'Visibility'**
+  String get scoreTypographyVisibility;
+
+  /// No description provided for @scoreTypographyShowOnScore.
+  ///
+  /// In en, this message translates to:
+  /// **'Show on score'**
+  String get scoreTypographyShowOnScore;
+
+  /// No description provided for @scoreTypographyHideOnScore.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide on score'**
+  String get scoreTypographyHideOnScore;
+
+  /// No description provided for @scoreTypographyMoreProperties.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced Properties…'**
+  String get scoreTypographyMoreProperties;
 }
 
 class _AppLocalizationsDelegate

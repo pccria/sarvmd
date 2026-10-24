@@ -22,6 +22,30 @@ class DocumentMetadata {
   /// Copyright notice or license terms printed on the score.
   final String copyright;
 
+  /// Master switch for rendering the first-page title block.
+  final bool showTitleBlock;
+
+  /// Whether the work title is visible on printed output.
+  final bool showTitle;
+
+  /// Whether the subtitle is visible on printed output.
+  final bool showSubtitle;
+
+  /// Whether the composer name is visible on printed output.
+  final bool showComposer;
+
+  /// Whether the arranger name is visible on printed output.
+  final bool showArranger;
+
+  /// Whether the lyricist name is visible on printed output.
+  final bool showLyricist;
+
+  /// Whether the copyright notice is visible on printed output.
+  final bool showCopyright;
+
+  /// Whether running page numbers are visible on subsequent pages.
+  final bool showPageNumbers;
+
   /// The ID of the built-in staff profile from which this document originated (if any).
   final String? profileId;
 
@@ -41,6 +65,14 @@ class DocumentMetadata {
     this.arranger = '',
     this.lyricist = '',
     this.copyright = '',
+    this.showTitleBlock = true,
+    this.showTitle = true,
+    this.showSubtitle = true,
+    this.showComposer = true,
+    this.showArranger = true,
+    this.showLyricist = true,
+    this.showCopyright = true,
+    this.showPageNumbers = true,
     this.profileId,
     this.createdAt,
     this.modifiedAt,
@@ -62,6 +94,14 @@ class DocumentMetadata {
     String? arranger,
     String? lyricist,
     String? copyright,
+    bool? showTitleBlock,
+    bool? showTitle,
+    bool? showSubtitle,
+    bool? showComposer,
+    bool? showArranger,
+    bool? showLyricist,
+    bool? showCopyright,
+    bool? showPageNumbers,
     String? Function()? profileId,
     DateTime? createdAt,
     DateTime? modifiedAt,
@@ -74,6 +114,14 @@ class DocumentMetadata {
       arranger: arranger ?? this.arranger,
       lyricist: lyricist ?? this.lyricist,
       copyright: copyright ?? this.copyright,
+      showTitleBlock: showTitleBlock ?? this.showTitleBlock,
+      showTitle: showTitle ?? this.showTitle,
+      showSubtitle: showSubtitle ?? this.showSubtitle,
+      showComposer: showComposer ?? this.showComposer,
+      showArranger: showArranger ?? this.showArranger,
+      showLyricist: showLyricist ?? this.showLyricist,
+      showCopyright: showCopyright ?? this.showCopyright,
+      showPageNumbers: showPageNumbers ?? this.showPageNumbers,
       profileId: profileId != null ? profileId() : this.profileId,
       createdAt: createdAt ?? this.createdAt,
       modifiedAt: modifiedAt ?? this.modifiedAt,
@@ -89,6 +137,14 @@ class DocumentMetadata {
         'arranger': arranger,
         'lyricist': lyricist,
         'copyright': copyright,
+        if (!showTitleBlock) 'showTitleBlock': false,
+        if (!showTitle) 'showTitle': false,
+        if (!showSubtitle) 'showSubtitle': false,
+        if (!showComposer) 'showComposer': false,
+        if (!showArranger) 'showArranger': false,
+        if (!showLyricist) 'showLyricist': false,
+        if (!showCopyright) 'showCopyright': false,
+        if (!showPageNumbers) 'showPageNumbers': false,
         if (profileId != null) 'profileId': profileId,
         if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
         if (modifiedAt != null) 'modifiedAt': modifiedAt!.toIso8601String(),
@@ -111,6 +167,14 @@ class DocumentMetadata {
       arranger: json['arranger'] as String? ?? '',
       lyricist: json['lyricist'] as String? ?? '',
       copyright: json['copyright'] as String? ?? '',
+      showTitleBlock: json['showTitleBlock'] as bool? ?? true,
+      showTitle: json['showTitle'] as bool? ?? true,
+      showSubtitle: json['showSubtitle'] as bool? ?? true,
+      showComposer: json['showComposer'] as bool? ?? true,
+      showArranger: json['showArranger'] as bool? ?? true,
+      showLyricist: json['showLyricist'] as bool? ?? true,
+      showCopyright: json['showCopyright'] as bool? ?? true,
+      showPageNumbers: json['showPageNumbers'] as bool? ?? true,
       profileId: json['profileId'] as String?,
       createdAt: parseDate(json['createdAt']),
       modifiedAt: parseDate(json['modifiedAt']),
@@ -149,6 +213,14 @@ class DocumentMetadata {
           arranger == other.arranger &&
           lyricist == other.lyricist &&
           copyright == other.copyright &&
+          showTitleBlock == other.showTitleBlock &&
+          showTitle == other.showTitle &&
+          showSubtitle == other.showSubtitle &&
+          showComposer == other.showComposer &&
+          showArranger == other.showArranger &&
+          showLyricist == other.showLyricist &&
+          showCopyright == other.showCopyright &&
+          showPageNumbers == other.showPageNumbers &&
           profileId == other.profileId &&
           _mapEquals(customProperties, other.customProperties));
 
@@ -163,6 +235,14 @@ class DocumentMetadata {
           arranger == other.arranger &&
           lyricist == other.lyricist &&
           copyright == other.copyright &&
+          showTitleBlock == other.showTitleBlock &&
+          showTitle == other.showTitle &&
+          showSubtitle == other.showSubtitle &&
+          showComposer == other.showComposer &&
+          showArranger == other.showArranger &&
+          showLyricist == other.showLyricist &&
+          showCopyright == other.showCopyright &&
+          showPageNumbers == other.showPageNumbers &&
           profileId == other.profileId &&
           createdAt == other.createdAt &&
           modifiedAt == other.modifiedAt &&
@@ -176,6 +256,14 @@ class DocumentMetadata {
         arranger,
         lyricist,
         copyright,
+        showTitleBlock,
+        showTitle,
+        showSubtitle,
+        showComposer,
+        showArranger,
+        showLyricist,
+        showCopyright,
+        showPageNumbers,
         profileId,
         createdAt,
         modifiedAt,
@@ -184,21 +272,45 @@ class DocumentMetadata {
 
 /// Convenience extension providing score engraving typography checks.
 extension DocumentMetadataTypography on DocumentMetadata {
-  /// Whether this document has any user-facing printable header/footer metadata to render.
-  bool get hasPrintableTypography =>
-      title.trim().isNotEmpty ||
-      subtitle.trim().isNotEmpty ||
-      composer.trim().isNotEmpty ||
-      lyricist.trim().isNotEmpty ||
-      arranger.trim().isNotEmpty ||
-      copyright.trim().isNotEmpty;
+  /// Whether the title should be printed on the first page.
+  bool get hasPrintableTitle =>
+      showTitleBlock && showTitle && title.trim().isNotEmpty;
+
+  /// Whether the subtitle should be printed on the first page.
+  bool get hasPrintableSubtitle =>
+      showTitleBlock && showSubtitle && subtitle.trim().isNotEmpty;
+
+  /// Whether the composer name should be printed on the first page.
+  bool get hasPrintableComposer =>
+      showTitleBlock && showComposer && composer.trim().isNotEmpty;
+
+  /// Whether the arranger name should be printed on the first page.
+  bool get hasPrintableArranger =>
+      showTitleBlock && showArranger && arranger.trim().isNotEmpty;
+
+  /// Whether the lyricist/librettist name should be printed on the first page.
+  bool get hasPrintableLyricist =>
+      showTitleBlock && showLyricist && lyricist.trim().isNotEmpty;
+
+  /// Whether the copyright/license notice should be printed.
+  bool get hasPrintableCopyright =>
+      showCopyright && copyright.trim().isNotEmpty;
+
+  /// Whether page numbers should be printed on subsequent pages.
+  bool get hasPrintablePageNumbers => showPageNumbers;
 
   /// Whether a score title block (title, subtitle, composer, lyricist, arranger)
   /// should be rendered at the top of the first page.
   bool get hasTitleBlock =>
-      title.trim().isNotEmpty ||
-      subtitle.trim().isNotEmpty ||
-      composer.trim().isNotEmpty ||
-      lyricist.trim().isNotEmpty ||
-      arranger.trim().isNotEmpty;
+      showTitleBlock &&
+      (hasPrintableTitle ||
+          hasPrintableSubtitle ||
+          hasPrintableComposer ||
+          hasPrintableLyricist ||
+          hasPrintableArranger);
+
+  /// Whether this document has any user-facing printable header/footer metadata to render.
+  bool get hasPrintableTypography =>
+      hasTitleBlock || hasPrintableCopyright;
 }
+

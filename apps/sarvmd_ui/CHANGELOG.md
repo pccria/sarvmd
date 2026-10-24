@@ -14,6 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Implemented `_paintScoreTypography` in `PreviewCanvas` rendering title, subtitle, composer, arranger, lyricist, bottom copyright, and running page numbers in real time.
   - Wired `DocumentCubit.layout` with document metadata and updated `PointerEditorScreen` and `TouchCanvasArea` canvas bindings.
   - Connected `ExportService` (`exportTex`, `exportPdf`, `exportSvg`) to pass active score metadata to compiler emitters.
+- **Score Information & Typography Configuration Section**:
+  - Added dedicated `ScoreTypographySettingsGroup` widget positioned directly below Page Setup in both the Pointer Editor left sidebar (`CollapsibleSectionCard`) and Touch Drawer (`SettingsPanel`).
+  - Added master Header Block and Page Numbers switches, inline show/hide eye toggles for each contributor field, and "Advanced Properties…" shortcut button.
+  - Added `SettingsSection.scoreTypography` to `ViewState` and wired SectionSpine 8-bead navigation.
+  - Enhanced `DocumentPropertiesDialog` with inline show/hide switches for all metadata fields.
+  - Added complete English (`app_en.arb`) and Persian (`app_fa.arb`) localization strings.
 - **UI Application Manual & Development Guide (`apps/sarvmd_ui/README.md`)**:
   - Published comprehensive user and contributor manual covering the three-tier Cubit state architecture (`WorkspaceCubit`, `DocumentCubit`, `ViewCubit`), responsive form factors (desktop, tablet, phone), live vector canvas, CAD crosshairs, millimeter HUD bubbles, and complete keyboard shortcuts reference table.
   - Added build and runtime guides for Linux Desktop, Web (CanvasKit/WASM), Windows, and Android.

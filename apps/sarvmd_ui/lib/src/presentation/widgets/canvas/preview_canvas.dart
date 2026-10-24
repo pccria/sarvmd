@@ -714,7 +714,8 @@ class _ManuscriptPainter extends CustomPainter {
     Color inkColor,
     core.DocumentMetadata? metadata,
   ) {
-    if (metadata == null || !metadata.hasPrintableTypography) return;
+    if (metadata == null) return;
+    if (layout.pageIndex == 0 && !metadata.hasPrintableTypography) return;
 
     final config = layout.config;
     final leftX = config.margins.left;
@@ -725,7 +726,7 @@ class _ManuscriptPainter extends CustomPainter {
 
     if (layout.pageIndex == 0) {
       // 1. Work Title
-      if (metadata.title.trim().isNotEmpty) {
+      if (metadata.hasPrintableTitle) {
         final titleYMm = config.margins.top + 6.0;
         final tp = TextPainter(
           text: TextSpan(
@@ -749,7 +750,7 @@ class _ManuscriptPainter extends CustomPainter {
       }
 
       // 2. Subtitle / Movement / Opus
-      if (metadata.subtitle.trim().isNotEmpty) {
+      if (metadata.hasPrintableSubtitle) {
         final subYMm = config.margins.top + 13.0;
         final tp = TextPainter(
           text: TextSpan(
@@ -778,8 +779,8 @@ class _ManuscriptPainter extends CustomPainter {
           : (config.margins.top + layout.headerHeadroomMm);
 
       // 3. Poet / Lyricist / Instrumentation (Left-aligned)
-      final lyricistText = metadata.lyricist.trim();
-      if (lyricistText.isNotEmpty) {
+      if (metadata.hasPrintableLyricist) {
+        final lyricistText = metadata.lyricist.trim();
         final lyricistYMm = firstSystemTopY - 3.5;
         final tp = TextPainter(
           text: TextSpan(
@@ -804,10 +805,12 @@ class _ManuscriptPainter extends CustomPainter {
       }
 
       // 4. Composer / Arranger (Right-aligned)
+      final hasComp = metadata.hasPrintableComposer;
+      final hasArr = metadata.hasPrintableArranger;
       final composerText = metadata.composer.trim();
       final arrangerText = metadata.arranger.trim();
 
-      if (composerText.isNotEmpty && arrangerText.isNotEmpty) {
+      if (hasComp && hasArr) {
         final compYMm = firstSystemTopY - 6.5;
         final arrYMm = firstSystemTopY - 2.5;
 
@@ -852,7 +855,7 @@ class _ManuscriptPainter extends CustomPainter {
           canvas,
           Offset(rightX * scale - arrTp.width, arrYMm * scale - arrBaseline),
         );
-      } else if (composerText.isNotEmpty) {
+      } else if (hasComp) {
         final compYMm = firstSystemTopY - 3.5;
         final tp = TextPainter(
           text: TextSpan(
@@ -874,7 +877,7 @@ class _ManuscriptPainter extends CustomPainter {
           canvas,
           Offset(rightX * scale - tp.width, compYMm * scale - baselineOffset),
         );
-      } else if (arrangerText.isNotEmpty) {
+      } else if (hasArr) {
         final arrYMm = firstSystemTopY - 3.5;
         final tp = TextPainter(
           text: TextSpan(
@@ -899,7 +902,7 @@ class _ManuscriptPainter extends CustomPainter {
       }
 
       // 5. Copyright (Bottom Centered)
-      if (metadata.copyright.trim().isNotEmpty) {
+      if (metadata.hasPrintableCopyright) {
         final copyrightYMm =
             config.effectiveHeight - config.margins.bottom + 4.0;
         final tp = TextPainter(
@@ -924,25 +927,27 @@ class _ManuscriptPainter extends CustomPainter {
       }
     } else {
       // Running header for subsequent pages (e.g. "- 2 -")
-      final pageNumYMm = config.margins.top - 4.0;
-      final tp = TextPainter(
-        text: TextSpan(
-          text: '- ${layout.pageIndex + 1} -',
-          style: TextStyle(
-            fontSize: 9.0 * ptScale,
-            color: inkColor.withValues(alpha: 0.8),
-            fontFamily: fontFamily,
+      if (metadata.hasPrintablePageNumbers) {
+        final pageNumYMm = config.margins.top - 4.0;
+        final tp = TextPainter(
+          text: TextSpan(
+            text: '- ${layout.pageIndex + 1} -',
+            style: TextStyle(
+              fontSize: 9.0 * ptScale,
+              color: inkColor.withValues(alpha: 0.8),
+              fontFamily: fontFamily,
+            ),
           ),
-        ),
-        textAlign: TextAlign.center,
-        textDirection: TextDirection.ltr,
-      )..layout();
+          textAlign: TextAlign.center,
+          textDirection: TextDirection.ltr,
+        )..layout();
 
-      final baselineOffset =
-          tp.computeDistanceToActualBaseline(TextBaseline.alphabetic);
-      final top = pageNumYMm * scale - baselineOffset;
-      final left = centerXMm * scale - (tp.width / 2.0);
-      tp.paint(canvas, Offset(left, top));
+        final baselineOffset =
+            tp.computeDistanceToActualBaseline(TextBaseline.alphabetic);
+        final top = pageNumYMm * scale - baselineOffset;
+        final left = centerXMm * scale - (tp.width / 2.0);
+        tp.paint(canvas, Offset(left, top));
+      }
     }
   }
 

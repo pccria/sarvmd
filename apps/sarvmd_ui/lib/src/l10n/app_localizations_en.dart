@@ -1260,4 +1260,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pressBackAgainToExit => 'Press back again to exit';
+
+  @override
+  String get sectionScoreTypography => 'Score Information';
+
+  @override
+  String get sectionScoreTypographySubtitle =>
+      'Title, contributor credits, and score header engraving';
+
+  @override
+  String get scoreTypographyHeaderBlock => 'Show Header Block';
+
+  @override
+  String get scoreTypographyHeaderBlockSubtitle =>
+      'Master switch to render title and contributor credits on page 1';
+
+  @override
+  String get scoreTypographyPageNumbers => 'Show Page Numbers';
+
+  @override
+  String get scoreTypographyPageNumbersSubtitle =>
+      'Render running page numbers on subsequent pages';
+
+  @override
+  String get scoreTypographyVisibility => 'Visibility';
+
+  @override
+  String get scoreTypographyShowOnScore => 'Show on score';
+
+  @override
+  String get scoreTypographyHideOnScore => 'Hide on score';
+
+  @override
+  String get scoreTypographyMoreProperties => 'Advanced Properties…';
 }

@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated `computeLayout` to compute vertical headroom dynamically on Page 1 while reclaiming stave drawing space on subsequent pages, remaining 100% backward-compatible when metadata is empty.
   - Implemented authentic typography engraving in `pdf_emitter.dart`, `svg_emitter.dart` (`<g id="layer-score-typography">`), and `emitter.dart` (LaTeX picture environment).
   - Extended `ScoreCompiler` methods (`compileToTex`, `compileToPdf`, `compileToSvg`) with optional `DocumentMetadata? metadata`.
+- **Granular Score Typography & Header Block Visibility Toggles**:
+  - Added boolean visibility flags (`showTitleBlock`, `showTitle`, `showSubtitle`, `showComposer`, `showArranger`, `showLyricist`, `showCopyright`, `showPageNumbers`) to `DocumentMetadata` with full JSON serialization and `copyWith` support.
+  - Added granular printable predicate getters (`hasPrintableTitle`, `hasPrintableSubtitle`, `hasPrintableComposer`, `hasPrintableArranger`, `hasPrintableLyricist`, `hasPrintableCopyright`, `hasPrintablePageNumbers`) allowing users to suppress any element or the entire header block without deleting entered text.
+  - Dynamically reduce layout vertical headroom and footer clearance when header elements or copyright notices are toggled off.
 - **Developer Documentation & Recipes (`packages/sarvmd_core/README.md`)**:
   - Published comprehensive API Reference covering domain models (`PageConfig`, `StaffConfig`, `SystemLayout`, `StaffNodeGroup`, `Clef`, `ScoreCompiler`, `SarvDocument`).
   - Added copy-paste code recipes for constructing layouts, programmatic `.sarv` mutation, vector PDF/SVG emission, and layout calculation queries.

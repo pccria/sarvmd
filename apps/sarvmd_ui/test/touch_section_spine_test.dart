@@ -62,7 +62,7 @@ void main() {
       );
     }
 
-    testWidgets('renders all 7 spine beads with correct keys and icons', (tester) async {
+    testWidgets('renders all 8 spine beads with correct keys and icons', (tester) async {
       await tester.pumpWidget(
         createTestWidget(
           child: Scaffold(
@@ -75,10 +75,11 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Verify all 7 section spine bead keys are present
+      // Verify all 8 section spine bead keys are present
       expect(find.byKey(const ValueKey('touch_spine_mainMenu')), findsOneWidget);
       expect(find.byKey(const ValueKey('touch_spine_profiles')), findsOneWidget);
       expect(find.byKey(const ValueKey('touch_spine_pageSetup')), findsOneWidget);
+      expect(find.byKey(const ValueKey('touch_spine_scoreTypography')), findsOneWidget);
       expect(find.byKey(const ValueKey('touch_spine_margins')), findsOneWidget);
       expect(find.byKey(const ValueKey('touch_spine_staffSpacing')), findsOneWidget);
       expect(find.byKey(const ValueKey('touch_spine_systemHierarchy')), findsOneWidget);

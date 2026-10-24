@@ -429,7 +429,7 @@ void _drawScoreTypography(
     canvas.setFillColor(pdf.PdfColors.black);
 
     // 1. Work Title
-    if (metadata.title.trim().isNotEmpty) {
+    if (metadata.hasPrintableTitle) {
       final titleYMm = config.margins.top + 6.0;
       final titleYPt = hPt - (titleYMm * _mmToPt);
       _drawCenteredText(
@@ -443,7 +443,7 @@ void _drawScoreTypography(
     }
 
     // 2. Subtitle / Movement / Opus
-    if (metadata.subtitle.trim().isNotEmpty) {
+    if (metadata.hasPrintableSubtitle) {
       final subtitleYMm = config.margins.top + 13.0;
       final subtitleYPt = hPt - (subtitleYMm * _mmToPt);
       _drawCenteredText(
@@ -462,8 +462,8 @@ void _drawScoreTypography(
         : (config.margins.top + layout.headerHeadroomMm);
 
     // 3. Poet / Lyricist / Instrumentation (Left-aligned)
-    final lyricistText = metadata.lyricist.trim();
-    if (lyricistText.isNotEmpty) {
+    if (metadata.hasPrintableLyricist) {
+      final lyricistText = metadata.lyricist.trim();
       final lyricistYMm = firstSystemTopY - 3.5;
       final lyricistYPt = hPt - (lyricistYMm * _mmToPt);
       _drawLeftAlignedText(
@@ -477,10 +477,12 @@ void _drawScoreTypography(
     }
 
     // 4. Composer / Arranger (Right-aligned)
-    final composerText = metadata.composer.trim();
-    final arrangerText = metadata.arranger.trim();
-    if (composerText.isNotEmpty || arrangerText.isNotEmpty) {
-      if (composerText.isNotEmpty && arrangerText.isNotEmpty) {
+    final hasComp = metadata.hasPrintableComposer;
+    final hasArr = metadata.hasPrintableArranger;
+    if (hasComp || hasArr) {
+      final composerText = metadata.composer.trim();
+      final arrangerText = metadata.arranger.trim();
+      if (hasComp && hasArr) {
         final compYMm = firstSystemTopY - 6.5;
         final arrYMm = firstSystemTopY - 2.5;
         _drawRightAlignedText(
@@ -499,7 +501,7 @@ void _drawScoreTypography(
           rightAnchorXPt: rightXPt,
           baselineYPt: hPt - (arrYMm * _mmToPt),
         );
-      } else if (composerText.isNotEmpty) {
+      } else if (hasComp) {
         final compYMm = firstSystemTopY - 3.5;
         _drawRightAlignedText(
           canvas: canvas,
@@ -523,7 +525,7 @@ void _drawScoreTypography(
     }
 
     // 5. Copyright (Bottom Centered)
-    if (metadata.copyright.trim().isNotEmpty) {
+    if (metadata.hasPrintableCopyright) {
       final copyrightYMm = config.effectiveHeight - config.margins.bottom + 4.0;
       final copyrightYPt = hPt - (copyrightYMm * _mmToPt);
       _drawCenteredText(
@@ -537,7 +539,7 @@ void _drawScoreTypography(
     }
 
     canvas.restoreContext();
-  } else {
+  } else if (metadata.hasPrintablePageNumbers) {
     // Running header for subsequent pages (e.g. "- 2 -")
     canvas.saveContext();
     canvas.setFillColor(pdf.PdfColors.black);
@@ -553,6 +555,7 @@ void _drawScoreTypography(
     );
     canvas.restoreContext();
   }
+
 }
 
 /// Helper method to draw system connectors (braces, brackets, sub-brackets,

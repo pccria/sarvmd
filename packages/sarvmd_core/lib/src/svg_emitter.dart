@@ -483,7 +483,7 @@ void _drawScoreTypography(
 
   if (layout.pageIndex == 0) {
     // 1. Work Title
-    if (metadata.title.trim().isNotEmpty) {
+    if (metadata.hasPrintableTitle) {
       final titleYMm = config.margins.top + 6.0;
       final fontSizeMm = ScoreTypographyMetrics.titleFontSizePt * (25.4 / 72.0);
       _writeCenteredText(
@@ -498,7 +498,7 @@ void _drawScoreTypography(
     }
 
     // 2. Subtitle / Movement
-    if (metadata.subtitle.trim().isNotEmpty) {
+    if (metadata.hasPrintableSubtitle) {
       final subYMm = config.margins.top + 13.0;
       final fontSizeMm =
           ScoreTypographyMetrics.subtitleFontSizePt * (25.4 / 72.0);
@@ -518,8 +518,8 @@ void _drawScoreTypography(
         : (config.margins.top + layout.headerHeadroomMm);
 
     // 3. Poet / Lyricist / Instrumentation (Left-aligned)
-    final lyricistText = metadata.lyricist.trim();
-    if (lyricistText.isNotEmpty) {
+    if (metadata.hasPrintableLyricist) {
+      final lyricistText = metadata.lyricist.trim();
       final lyricistYMm = firstSystemTopY - 3.5;
       final fontSizeMm =
           ScoreTypographyMetrics.contributorFontSizePt * (25.4 / 72.0);
@@ -534,60 +534,64 @@ void _drawScoreTypography(
     }
 
     // 4. Composer / Arranger (Right-aligned)
-    final composerText = metadata.composer.trim();
-    final arrangerText = metadata.arranger.trim();
-    final contribFontSizeMm =
-        ScoreTypographyMetrics.contributorFontSizePt * (25.4 / 72.0);
-    final arrFontSizeMm =
-        ScoreTypographyMetrics.copyrightFontSizePt * (25.4 / 72.0);
+    final hasComp = metadata.hasPrintableComposer;
+    final hasArr = metadata.hasPrintableArranger;
+    if (hasComp || hasArr) {
+      final composerText = metadata.composer.trim();
+      final arrangerText = metadata.arranger.trim();
+      final contribFontSizeMm =
+          ScoreTypographyMetrics.contributorFontSizePt * (25.4 / 72.0);
+      final arrFontSizeMm =
+          ScoreTypographyMetrics.copyrightFontSizePt * (25.4 / 72.0);
 
-    if (composerText.isNotEmpty && arrangerText.isNotEmpty) {
-      final compYMm = firstSystemTopY - 6.5;
-      final arrYMm = firstSystemTopY - 2.5;
-      _writeRightAlignedText(
-        buf: buf,
-        text: composerText,
-        rightAnchorXMm: rightX,
-        centerYMm: compYMm,
-        fontSizeMm: contribFontSizeMm,
-        fontFamily: fontFamily,
-        isBold: true,
-      );
-      _writeRightAlignedText(
-        buf: buf,
-        text: 'arr. $arrangerText',
-        rightAnchorXMm: rightX,
-        centerYMm: arrYMm,
-        fontSizeMm: arrFontSizeMm,
-        fontFamily: fontFamily,
-        isItalic: true,
-      );
-    } else if (composerText.isNotEmpty) {
-      final compYMm = firstSystemTopY - 3.5;
-      _writeRightAlignedText(
-        buf: buf,
-        text: composerText,
-        rightAnchorXMm: rightX,
-        centerYMm: compYMm,
-        fontSizeMm: contribFontSizeMm,
-        fontFamily: fontFamily,
-        isBold: true,
-      );
-    } else if (arrangerText.isNotEmpty) {
-      final arrYMm = firstSystemTopY - 3.5;
-      _writeRightAlignedText(
-        buf: buf,
-        text: 'arr. $arrangerText',
-        rightAnchorXMm: rightX,
-        centerYMm: arrYMm,
-        fontSizeMm: contribFontSizeMm,
-        fontFamily: fontFamily,
-        isItalic: true,
-      );
+      if (hasComp && hasArr) {
+        final compYMm = firstSystemTopY - 6.5;
+        final arrYMm = firstSystemTopY - 2.5;
+        _writeRightAlignedText(
+          buf: buf,
+          text: composerText,
+          rightAnchorXMm: rightX,
+          centerYMm: compYMm,
+          fontSizeMm: contribFontSizeMm,
+          fontFamily: fontFamily,
+          isBold: true,
+        );
+        _writeRightAlignedText(
+          buf: buf,
+          text: 'arr. $arrangerText',
+          rightAnchorXMm: rightX,
+          centerYMm: arrYMm,
+          fontSizeMm: arrFontSizeMm,
+          fontFamily: fontFamily,
+          isItalic: true,
+        );
+      } else if (hasComp) {
+        final compYMm = firstSystemTopY - 3.5;
+        _writeRightAlignedText(
+          buf: buf,
+          text: composerText,
+          rightAnchorXMm: rightX,
+          centerYMm: compYMm,
+          fontSizeMm: contribFontSizeMm,
+          fontFamily: fontFamily,
+          isBold: true,
+        );
+      } else {
+        final arrYMm = firstSystemTopY - 3.5;
+        _writeRightAlignedText(
+          buf: buf,
+          text: 'arr. $arrangerText',
+          rightAnchorXMm: rightX,
+          centerYMm: arrYMm,
+          fontSizeMm: contribFontSizeMm,
+          fontFamily: fontFamily,
+          isItalic: true,
+        );
+      }
     }
 
     // 5. Copyright (Bottom Centered)
-    if (metadata.copyright.trim().isNotEmpty) {
+    if (metadata.hasPrintableCopyright) {
       final copyrightYMm =
           config.effectiveHeight - config.margins.bottom + 4.0;
       final fontSizeMm =
@@ -601,7 +605,7 @@ void _drawScoreTypography(
         fontFamily: fontFamily,
       );
     }
-  } else {
+  } else if (metadata.hasPrintablePageNumbers) {
     // Running page number for subsequent pages
     final pageNumYMm = config.margins.top - 4.0;
     final fontSizeMm = 9.0 * (25.4 / 72.0);
@@ -614,6 +618,7 @@ void _drawScoreTypography(
       fontFamily: fontFamily,
     );
   }
+
 
   buf.writeln('  </g>');
 }
