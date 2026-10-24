@@ -1325,4 +1325,33 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get scoreTypographyHeaderDisabledNotice =>
       'Header block is hidden. Staves occupy full first page.';
+
+  @override
+  String pageNavigatorPageOf(int current, int total) {
+    return 'Page $current of $total';
+  }
+
+  @override
+  String get pageNavigatorPrevTooltip => 'Previous Page (PageUp)';
+
+  @override
+  String get pageNavigatorNextTooltip => 'Next Page (PageDown)';
+
+  @override
+  String get pageNavigatorAddPageTooltip => 'Add Page';
+
+  @override
+  String get pageNavigatorRemovePageTooltip => 'Remove Last Page';
+
+  @override
+  String get documentPageCountLabel => 'Document Pages';
+
+  @override
+  String get documentPageCountDesc => 'Total pages in score manuscript';
+
+  @override
+  String get shortcutNextPage => 'Next page';
+
+  @override
+  String get shortcutPreviousPage => 'Previous page';
 }

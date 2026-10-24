@@ -566,5 +566,24 @@
     }
   },
   "scoreTypographyHeadroomNone": "Full-page staves (0.0 mm headroom)",
-  "scoreTypographyHeaderDisabledNotice": "Header block is hidden. Staves occupy full first page."
+  "scoreTypographyHeaderDisabledNotice": "Header block is hidden. Staves occupy full first page.",
+  "pageNavigatorPageOf": "Page {current} of {total}",
+  "@pageNavigatorPageOf": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "pageNavigatorPrevTooltip": "Previous Page (PageUp)",
+  "pageNavigatorNextTooltip": "Next Page (PageDown)",
+  "pageNavigatorAddPageTooltip": "Add Page",
+  "pageNavigatorRemovePageTooltip": "Remove Last Page",
+  "documentPageCountLabel": "Document Pages",
+  "documentPageCountDesc": "Total pages in score manuscript",
+  "shortcutNextPage": "Next page",
+  "shortcutPreviousPage": "Previous page"
 }

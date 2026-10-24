@@ -19,6 +19,7 @@ import '../widgets/common/shortcut_gateway.dart';
 import '../../l10n/app_localizations.dart';
 import '../widgets/staff/profile_picker.dart';
 import '../widgets/canvas/canvas_zoom_calculator.dart';
+import '../widgets/canvas/canvas_page_navigator.dart';
 import '../widgets/canvas/preview_canvas.dart';
 import '../widgets/panels/view_panel.dart';
 import '../widgets/canvas/ruler_box.dart';
@@ -749,6 +750,8 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
                                 orientation: configState.orientation,
                                 onOrientationChanged:
                                     documentCubit.updateOrientation,
+                                pageCount: documentCubit.state.pageCount,
+                                onPageCountChanged: documentCubit.setPageCount,
                               ),
                             ),
                             CollapsibleSectionCard(
@@ -1238,6 +1241,11 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
                                     child: LayoutBuilder(
                                       builder: (context, constraints) {
                                         _lastConstraints = constraints;
+                                        final pageCount = documentCubit.state.pageCount;
+                                        final int effectivePageIndex = viewState.currentPageIndex.clamp(
+                                          0,
+                                          math.max(0, pageCount - 1),
+                                        ).toInt();
                                         if (!_hasCentered) {
                                           _hasCentered = true;
                                           WidgetsBinding.instance
@@ -1285,10 +1293,11 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
                                                                 Alignment.topLeft,
                                                             child: PreviewCanvas(
                                                               layout:
-                                                                  documentCubit.layout,
+                                                                  documentCubit.layoutForPage(effectivePageIndex),
                                                               viewState: viewState,
                                                               metadata:
                                                                   documentCubit.state.metadata,
+                                                              pageIndex: effectivePageIndex,
                                                             ),
                                                           ),
                                                         ),
@@ -1355,6 +1364,23 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
                                                                   : Icons
                                                                       .arrow_forward_ios,
                                                               size: 20,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        // Floating Page Navigator (Bottom Center)
+                                                        Positioned(
+                                                          bottom: 24,
+                                                          left: 0,
+                                                          right: 0,
+                                                          child: Center(
+                                                            child: CanvasPageNavigator(
+                                                              currentPageIndex: effectivePageIndex,
+                                                              pageCount: pageCount,
+                                                              onPageChanged: (idx) => context
+                                                                  .read<ViewCubit>()
+                                                                  .setPageIndex(idx, maxPages: pageCount),
+                                                              onAddPage: () => documentCubit.addPage(),
+                                                              onRemovePage: () => documentCubit.removeLastPage(),
                                                             ),
                                                           ),
                                                         ),

@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Multi-Page Canvas Navigation & Interactive Pagination**:
+  - Implemented floating, glassmorphic `CanvasPageNavigator` widget providing seamless page stepping (`< Page X of Y >`), direct sheet increment (`+`), and sheet removal (`-`) directly on the scoring canvas.
+  - Enabled multi-page layout rendering across `PreviewCanvas`, automatically computing Gouldian title blocks and first-system indentation on Page 1 while restoring full staff headroom (0 mm) and running headers (`- 2 -`, `- 3 -`) on Page 2+.
+  - Integrated document page count management directly into `DocumentSettingsGroup` (Page Setup) featuring an interactive stepper and quick preset chips (`1`, `2`, `4`, `8`), wired to `DocumentCubit.setPageCount`.
+  - Added global multi-page keyboard navigation intents (`NextPageIntent`, `PreviousPageIntent`) bound to `PageDown` / `Alt+ArrowRight` and `PageUp` / `Alt+ArrowLeft` in `ShortcutGateway`, and documented them in `KeyboardShortcutsDialog`.
+  - Synced multi-page settings with `ExportDialog` so export flows default to the active document page count.
 - **Printable Score Typography Canvas & Export Integration**:
   - Implemented `_paintScoreTypography` in `PreviewCanvas` rendering title, subtitle, composer, arranger, lyricist, bottom copyright, and running page numbers in real time.
   - Wired `DocumentCubit.layout` with document metadata and updated `PointerEditorScreen` and `TouchCanvasArea` canvas bindings.

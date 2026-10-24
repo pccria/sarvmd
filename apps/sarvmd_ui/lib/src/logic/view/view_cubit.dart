@@ -363,4 +363,26 @@ class ViewCubit extends Cubit<ViewState> {
     if (state.selectedHierarchyStaffUids.isEmpty) return;
     emit(state.copyWith(selectedHierarchyStaffUids: const {}));
   }
+
+  // --- Multi-Page Canvas Navigation ---
+
+  void setPageIndex(int index, {int maxPages = 100}) {
+    final clamped = index.clamp(0, (maxPages > 0 ? maxPages - 1 : 0));
+    if (state.currentPageIndex != clamped) {
+      emit(state.copyWith(currentPageIndex: clamped));
+      _log.debug('Canvas page index changed', context: {'pageIndex': clamped});
+    }
+  }
+
+  void nextPage(int maxPages) {
+    if (state.currentPageIndex < maxPages - 1) {
+      setPageIndex(state.currentPageIndex + 1, maxPages: maxPages);
+    }
+  }
+
+  void previousPage() {
+    if (state.currentPageIndex > 0) {
+      setPageIndex(state.currentPageIndex - 1);
+    }
+  }
 }

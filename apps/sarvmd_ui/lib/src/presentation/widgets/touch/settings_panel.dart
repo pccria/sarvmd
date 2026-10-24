@@ -558,6 +558,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
           onPageSizeChanged: cubit.updatePageSize,
           orientation: config.orientation,
           onOrientationChanged: cubit.updateOrientation,
+          pageCount: cubit.state.pageCount,
+          onPageCountChanged: cubit.setPageCount,
         );
         break;
 

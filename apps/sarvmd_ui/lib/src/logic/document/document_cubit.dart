@@ -320,8 +320,14 @@ class DocumentCubit extends Cubit<DocumentState> {
   core.StaffUIHints get uiHints =>
       activeProfile?.uiHints ?? const core.StaffUIHints();
 
-  core.PageLayout get layout =>
-      core.computeLayout(state.config, metadata: state.metadata, pageIndex: 0);
+  /// Computes the physical page layout for a specific [pageIndex].
+  core.PageLayout layoutForPage(int pageIndex) => core.computeLayout(
+        state.config,
+        metadata: state.metadata,
+        pageIndex: pageIndex,
+      );
+
+  core.PageLayout get layout => layoutForPage(0);
 
   core.StaffDefinition? get _primaryDef {
     final root = state.config.systemLayout.rootGroup;
@@ -366,6 +372,20 @@ class DocumentCubit extends Cubit<DocumentState> {
 
   void updateOrientation(core.PageOrientation orientation) {
     execute(core.SetOrientationCommand(orientation));
+  }
+
+  void setPageCount(int count) {
+    execute(core.SetPageCountCommand(count));
+  }
+
+  void addPage() {
+    setPageCount(state.document.pageCount + 1);
+  }
+
+  void removeLastPage() {
+    if (state.document.pageCount > 1) {
+      setPageCount(state.document.pageCount - 1);
+    }
   }
 
   void updateStaffConfig(core.StaffConfig staff) {

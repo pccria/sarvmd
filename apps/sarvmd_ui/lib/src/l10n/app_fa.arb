@@ -416,5 +416,14 @@
   "scoreTypographyEnterTextNotice": "برای نمایش در نت، متنی وارد کنید",
   "scoreTypographyHeadroom": "فاصله سربرگ: {headroom} میلی‌متر (صفحه ۱)",
   "scoreTypographyHeadroomNone": "حامل‌های تمام‌صفحه (بدون فاصله سربرگ)",
-  "scoreTypographyHeaderDisabledNotice": "سربرگ پنهان است. خطوط حامل تمام صفحه اول را اشغال می‌کنند."
+  "scoreTypographyHeaderDisabledNotice": "سربرگ پنهان است. خطوط حامل تمام صفحه اول را اشغال می‌کنند.",
+  "pageNavigatorPageOf": "صفحه {current} از {total}",
+  "pageNavigatorPrevTooltip": "صفحه قبلی (PageUp)",
+  "pageNavigatorNextTooltip": "صفحه بعدی (PageDown)",
+  "pageNavigatorAddPageTooltip": "افزودن صفحه",
+  "pageNavigatorRemovePageTooltip": "حذف آخرین صفحه",
+  "documentPageCountLabel": "تعداد صفحات سند",
+  "documentPageCountDesc": "تعداد کل صفحات در دست‌نوشته",
+  "shortcutNextPage": "صفحه بعدی",
+  "shortcutPreviousPage": "صفحه قبلی"
 }

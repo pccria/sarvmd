@@ -213,6 +213,30 @@ final List<ShortcutItem> appShortcuts = [
       ['␣', 'Drag']
     ],
   ),
+  ShortcutItem(
+    category: ShortcutCategory.canvas,
+    titleBuilder: (l10n) => l10n.shortcutNextPage,
+    keys: const [
+      ['PageDown'],
+      ['Alt', '→'],
+    ],
+    macKeys: const [
+      ['PageDown'],
+      ['⌥', '→'],
+    ],
+  ),
+  ShortcutItem(
+    category: ShortcutCategory.canvas,
+    titleBuilder: (l10n) => l10n.shortcutPreviousPage,
+    keys: const [
+      ['PageUp'],
+      ['Alt', '←'],
+    ],
+    macKeys: const [
+      ['PageUp'],
+      ['⌥', '←'],
+    ],
+  ),
 
   // ── Panels & View ────────────────────────────────────────────────────────
   ShortcutItem(

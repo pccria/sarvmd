@@ -12,11 +12,13 @@ class PreviewCanvas extends StatelessWidget {
     required this.layout,
     required this.viewState,
     this.metadata,
+    this.pageIndex = 0,
   });
 
   final core.PageLayout layout;
   final ViewState viewState;
   final core.DocumentMetadata? metadata;
+  final int pageIndex;
 
   @override
   Widget build(BuildContext context) {

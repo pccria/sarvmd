@@ -76,7 +76,8 @@ class _ExportDialogState extends State<ExportDialog> {
     final stripped = core.FileNaming.stripExtension(docDisplayName);
     final defaultName = stripped.isNotEmpty ? stripped : ExportService.getDefaultFileName(config);
     _nameController.text = defaultName;
-    _pageController.text = '1';
+    _pageCount = docCubit.state.pageCount;
+    _pageController.text = '$_pageCount';
     _dirController.text = _outputDir;
     _loadOutputDir();
   }

@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Pooria Askari Moqaddam. All rights reserved.
 // Licensed under the Business Source License 1.1 (BUSL-1.1).
 
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_metrics.dart';
@@ -137,6 +138,11 @@ class TouchCanvasAreaState extends State<TouchCanvasArea> with SingleTickerProvi
     final docState = documentCubit.state;
     final configState = docState.config;
     final viewState = context.watch<ViewCubit>().state;
+    final int pageCount = docState.pageCount;
+    final int effectivePageIndex = viewState.currentPageIndex.clamp(
+      0,
+      math.max(0, pageCount - 1),
+    ).toInt();
 
     return BlocListener<ViewCubit, ViewState>(
       listenWhen: (prev, curr) => prev.isPanelPeeking != curr.isPanelPeeking,
@@ -215,9 +221,10 @@ class TouchCanvasAreaState extends State<TouchCanvasArea> with SingleTickerProvi
                               ? () => widget.onLongPressEndCanvas!()
                               : null,
                           child: PreviewCanvas(
-                            layout: documentCubit.layout,
+                            layout: documentCubit.layoutForPage(effectivePageIndex),
                             viewState: viewState,
                             metadata: documentCubit.state.metadata,
+                            pageIndex: effectivePageIndex,
                           ),
                         ),
                       ),

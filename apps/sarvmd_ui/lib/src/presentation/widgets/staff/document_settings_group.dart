@@ -12,12 +12,16 @@ class DocumentSettingsGroup extends StatelessWidget {
     required this.onPageSizeChanged,
     required this.orientation,
     required this.onOrientationChanged,
+    this.pageCount = 1,
+    this.onPageCountChanged,
   });
 
   final core.PageSize pageSize;
   final ValueChanged<core.PageSize> onPageSizeChanged;
   final core.PageOrientation orientation;
   final ValueChanged<core.PageOrientation> onOrientationChanged;
+  final int pageCount;
+  final ValueChanged<int>? onPageCountChanged;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -38,8 +42,149 @@ class DocumentSettingsGroup extends StatelessWidget {
             current: orientation,
             onChanged: onOrientationChanged,
           ),
+          if (onPageCountChanged != null)
+            _PageCountRow(
+              pageCount: pageCount,
+              onChanged: onPageCountChanged!,
+            ),
         ],
       );
+}
+
+class _PageCountRow extends StatelessWidget {
+  const _PageCountRow({
+    required this.pageCount,
+    required this.onChanged,
+  });
+
+  final int pageCount;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
+      decoration: BoxDecoration(
+        color: cs.onSurface.withValues(alpha: AppOpacities.border),
+        borderRadius: BorderRadius.circular(10.0),
+        border: Border.all(
+          color: cs.outlineVariant.withValues(alpha: 0.4),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: 8.0,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.auto_stories_outlined, size: 18.0, color: cs.primary),
+              const SizedBox(width: 8.0),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.documentPageCountLabel,
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      l10n.documentPageCountDesc,
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        color: cs.onSurfaceVariant.withValues(alpha: 0.7),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.remove_rounded, size: 16.0),
+                    onPressed:
+                        pageCount > 1 ? () => onChanged(pageCount - 1) : null,
+                    visualDensity: VisualDensity.compact,
+                    splashRadius: 16.0,
+                  ),
+                  Container(
+                    constraints: const BoxConstraints(minWidth: 28.0),
+                    alignment: Alignment.center,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 6.0, vertical: 2.0),
+                    decoration: BoxDecoration(
+                      color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(6.0),
+                    ),
+                    child: Text(
+                      '$pageCount',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.bold,
+                        color: cs.primary,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.add_rounded, size: 16.0),
+                    onPressed:
+                        pageCount < 100 ? () => onChanged(pageCount + 1) : null,
+                    visualDensity: VisualDensity.compact,
+                    splashRadius: 16.0,
+                  ),
+                ],
+              ),
+            ],
+          ),
+          // Preset Quick Chips
+          Row(
+            spacing: 6.0,
+            children: [1, 2, 4, 8].map((count) {
+              final isSelected = pageCount == count;
+              return Expanded(
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(6.0),
+                  onTap: () => onChanged(count),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 4.0),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? cs.primary
+                          : cs.surfaceContainerHighest.withValues(alpha: 0.35),
+                      borderRadius: BorderRadius.circular(6.0),
+                      border: Border.all(
+                        color: isSelected
+                            ? cs.primary
+                            : cs.outlineVariant.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Text(
+                      '$count',
+                      style: TextStyle(
+                        fontSize: 11.0,
+                        fontWeight:
+                            isSelected ? FontWeight.bold : FontWeight.w500,
+                        color: isSelected ? cs.onPrimary : cs.onSurface,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class OrientationSwitcher extends StatelessWidget {

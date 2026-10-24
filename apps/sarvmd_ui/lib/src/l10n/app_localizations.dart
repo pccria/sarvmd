@@ -2551,6 +2551,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Header block is hidden. Staves occupy full first page.'**
   String get scoreTypographyHeaderDisabledNotice;
+
+  /// No description provided for @pageNavigatorPageOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Page {current} of {total}'**
+  String pageNavigatorPageOf(int current, int total);
+
+  /// No description provided for @pageNavigatorPrevTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous Page (PageUp)'**
+  String get pageNavigatorPrevTooltip;
+
+  /// No description provided for @pageNavigatorNextTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Next Page (PageDown)'**
+  String get pageNavigatorNextTooltip;
+
+  /// No description provided for @pageNavigatorAddPageTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Page'**
+  String get pageNavigatorAddPageTooltip;
+
+  /// No description provided for @pageNavigatorRemovePageTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove Last Page'**
+  String get pageNavigatorRemovePageTooltip;
+
+  /// No description provided for @documentPageCountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Document Pages'**
+  String get documentPageCountLabel;
+
+  /// No description provided for @documentPageCountDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Total pages in score manuscript'**
+  String get documentPageCountDesc;
+
+  /// No description provided for @shortcutNextPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Next page'**
+  String get shortcutNextPage;
+
+  /// No description provided for @shortcutPreviousPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous page'**
+  String get shortcutPreviousPage;
 }
 
 class _AppLocalizationsDelegate

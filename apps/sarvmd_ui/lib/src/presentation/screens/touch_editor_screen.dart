@@ -2,6 +2,7 @@
 // Licensed under the Business Source License 1.1 (BUSL-1.1).
 
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,6 +10,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/utils/unit_formatter.dart';
 import '../../logic/document/document_cubit.dart';
 import '../../logic/document/document_state.dart';
+import '../widgets/canvas/canvas_page_navigator.dart';
 import '../widgets/common/integrated_scale_control.dart';
 import '../widgets/touch/settings_panel.dart';
 import '../widgets/touch/floating_hud.dart';
@@ -488,6 +490,13 @@ class _TouchEditorScreenState extends State<TouchEditorScreen>
     final topSafeArea = isPinned ? 0.0 : topPadding;
     final leftSafeArea = isLandscape ? leftPadding : 0.0;
     final showTopBar = isPinned || ((_batonVisible || _isEditingScoreTitle) && _longPressPos == null);
+    final docState = context.watch<DocumentCubit>().state;
+    final viewState = context.watch<ViewCubit>().state;
+    final pageCount = docState.pageCount;
+    final int effectivePageIndex = viewState.currentPageIndex.clamp(
+      0,
+      math.max(0, pageCount - 1),
+    ).toInt();
 
     return BlocListener<DocumentCubit, DocumentState>(
       listenWhen: (previous, current) =>
@@ -578,6 +587,31 @@ class _TouchEditorScreenState extends State<TouchEditorScreen>
                             child: _buildTopCoordinateHUD(context, _longPressPos!),
                           )
                         : const SizedBox.shrink(key: ValueKey('top_coord_hud_idle')),
+                  ),
+                ),
+
+                // Layer 2.5: Floating Page Navigator
+                Positioned(
+                  bottom: (isLandscape ? 16.0 : 78.0) + MediaQuery.paddingOf(context).bottom,
+                  left: 0.0,
+                  right: 0.0,
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 200),
+                    opacity: (_batonVisible && _longPressPos == null) ? 1.0 : 0.0,
+                    child: IgnorePointer(
+                      ignoring: !_batonVisible || _longPressPos != null,
+                      child: Center(
+                        child: CanvasPageNavigator(
+                          currentPageIndex: effectivePageIndex,
+                          pageCount: pageCount,
+                          onPageChanged: (idx) => context
+                              .read<ViewCubit>()
+                              .setPageIndex(idx, maxPages: pageCount),
+                          onAddPage: () => context.read<DocumentCubit>().addPage(),
+                          onRemovePage: () => context.read<DocumentCubit>().removeLastPage(),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
 

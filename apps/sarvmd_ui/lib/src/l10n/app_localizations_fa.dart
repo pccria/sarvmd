@@ -1319,4 +1319,33 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get scoreTypographyHeaderDisabledNotice =>
       'سربرگ پنهان است. خطوط حامل تمام صفحه اول را اشغال می‌کنند.';
+
+  @override
+  String pageNavigatorPageOf(int current, int total) {
+    return 'صفحه $current از $total';
+  }
+
+  @override
+  String get pageNavigatorPrevTooltip => 'صفحه قبلی (PageUp)';
+
+  @override
+  String get pageNavigatorNextTooltip => 'صفحه بعدی (PageDown)';
+
+  @override
+  String get pageNavigatorAddPageTooltip => 'افزودن صفحه';
+
+  @override
+  String get pageNavigatorRemovePageTooltip => 'حذف آخرین صفحه';
+
+  @override
+  String get documentPageCountLabel => 'تعداد صفحات سند';
+
+  @override
+  String get documentPageCountDesc => 'تعداد کل صفحات در دست‌نوشته';
+
+  @override
+  String get shortcutNextPage => 'صفحه بعدی';
+
+  @override
+  String get shortcutPreviousPage => 'صفحه قبلی';
 }

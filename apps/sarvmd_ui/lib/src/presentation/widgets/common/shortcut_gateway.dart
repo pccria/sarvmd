@@ -6,11 +6,20 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../logic/document/document_cubit.dart';
+import '../../../logic/view/view_cubit.dart';
 
 import '../../../logic/workspace/workspace_cubit.dart';
 import '../dialogs/keyboard_shortcuts_dialog.dart';
 import '../dialogs/unsaved_changes_dialog.dart';
 import '../layout/top_bar/top_bar_menu_handler.dart';
+
+class NextPageIntent extends Intent {
+  const NextPageIntent();
+}
+
+class PreviousPageIntent extends Intent {
+  const PreviousPageIntent();
+}
 
 class UndoIntent extends Intent {
   const UndoIntent();
@@ -201,6 +210,10 @@ class SarvShortcutGatewayState extends State<SarvShortcutGateway> {
         SingleActivator(LogicalKeyboardKey.pageUp, control: true): PreviousTabIntent(),
 
         // Canvas Zoom & Navigation
+        SingleActivator(LogicalKeyboardKey.pageDown): const NextPageIntent(),
+        SingleActivator(LogicalKeyboardKey.arrowRight, alt: true): const NextPageIntent(),
+        SingleActivator(LogicalKeyboardKey.pageUp): const PreviousPageIntent(),
+        SingleActivator(LogicalKeyboardKey.arrowLeft, alt: true): const PreviousPageIntent(),
         SingleActivator(LogicalKeyboardKey.equal, control: true): ZoomInIntent(),
         SingleActivator(LogicalKeyboardKey.equal, meta: true): ZoomInIntent(),
         SingleActivator(LogicalKeyboardKey.add, control: true): ZoomInIntent(),
@@ -265,6 +278,25 @@ class SarvShortcutGatewayState extends State<SarvShortcutGateway> {
           ToggleZenModeIntent: CallbackAction<ToggleZenModeIntent>(
             onInvoke: (intent) {
               widget.onToggleZenMode?.call();
+              return null;
+            },
+          ),
+          NextPageIntent: CallbackAction<NextPageIntent>(
+            onInvoke: (intent) {
+              final docCubit = context.read<DocumentCubit?>();
+              final viewCubit = context.read<ViewCubit?>();
+              if (docCubit != null && viewCubit != null) {
+                viewCubit.nextPage(docCubit.state.pageCount);
+              }
+              return null;
+            },
+          ),
+          PreviousPageIntent: CallbackAction<PreviousPageIntent>(
+            onInvoke: (intent) {
+              final viewCubit = context.read<ViewCubit?>();
+              if (viewCubit != null) {
+                viewCubit.previousPage();
+              }
               return null;
             },
           ),

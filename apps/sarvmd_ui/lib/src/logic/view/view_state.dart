@@ -47,6 +47,7 @@ class ViewState {
   final Set<int> collapsedHierarchyGroups;
   final Set<String> selectedHierarchyStaffUids;
   final SettingsSection? jumpTargetSection;
+  final int currentPageIndex;
 
   const ViewState({
     this.themeMode = ThemeMode.system,
@@ -70,6 +71,7 @@ class ViewState {
     this.collapsedHierarchyGroups = const {},
     this.selectedHierarchyStaffUids = const {},
     this.jumpTargetSection,
+    this.currentPageIndex = 0,
   });
 
   ViewState copyWith({
@@ -90,6 +92,7 @@ class ViewState {
     Set<String>? selectedHierarchyStaffUids,
     SettingsSection? jumpTargetSection,
     bool clearJumpTarget = false,
+    int? currentPageIndex,
   }) {
     return ViewState(
       themeMode: themeMode ?? this.themeMode,
@@ -115,6 +118,7 @@ class ViewState {
       jumpTargetSection: clearJumpTarget
           ? null
           : (jumpTargetSection ?? this.jumpTargetSection),
+      currentPageIndex: currentPageIndex ?? this.currentPageIndex,
     );
   }
 
