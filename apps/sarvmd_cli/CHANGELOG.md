@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Printable Score Typography & Header Generation**:
+  - Added CLI options (`--title`, `--subtitle`, `--composer`, `--arranger`, `--lyricist`, `--copyright`) to `generate` (`g`) command.
+  - Connected `doc.metadata` passing in `compile` (`c`) command to render authentic score headers and running page numbers.
 - **Modernized `CommandRunner` Architecture (`lib/src/runner.dart`)**:
   - Refactored `sarvmd_cli` to use `package:args/command_runner.dart` following Dart CLI best practices (`dart-build-cli-app`).
   - Added global flags: `--help` (`-h`), `--version`, `--verbose` (`-v`), and `--lang` (`en`, `fa`).

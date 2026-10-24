@@ -181,3 +181,24 @@ class DocumentMetadata {
         modifiedAt,
       );
 }
+
+/// Convenience extension providing score engraving typography checks.
+extension DocumentMetadataTypography on DocumentMetadata {
+  /// Whether this document has any user-facing printable header/footer metadata to render.
+  bool get hasPrintableTypography =>
+      title.trim().isNotEmpty ||
+      subtitle.trim().isNotEmpty ||
+      composer.trim().isNotEmpty ||
+      lyricist.trim().isNotEmpty ||
+      arranger.trim().isNotEmpty ||
+      copyright.trim().isNotEmpty;
+
+  /// Whether a score title block (title, subtitle, composer, lyricist, arranger)
+  /// should be rendered at the top of the first page.
+  bool get hasTitleBlock =>
+      title.trim().isNotEmpty ||
+      subtitle.trim().isNotEmpty ||
+      composer.trim().isNotEmpty ||
+      lyricist.trim().isNotEmpty ||
+      arranger.trim().isNotEmpty;
+}

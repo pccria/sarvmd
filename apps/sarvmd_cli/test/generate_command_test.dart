@@ -135,5 +135,58 @@ void main() {
 
       expect(exitCode, equals(1));
     });
+
+    test('generates score with printable typography metadata in SVG and TeX', () async {
+      final outSvg = p.join(tempDir.path, 'with_meta.svg');
+      final exitCodeSvg = await runner.run([
+        'generate',
+        '--profile',
+        'piano',
+        '--title',
+        'Nocturne in C-sharp Minor',
+        '--subtitle',
+        'Op. Posth.',
+        '--composer',
+        'Frédéric Chopin',
+        '--arranger',
+        'Pooria Askari Moqaddam',
+        '--copyright',
+        '© 2026 SarvMD',
+        '--format',
+        'svg',
+        '--output',
+        outSvg,
+      ]);
+
+      expect(exitCodeSvg, equals(0));
+      final svgContent = File(outSvg).readAsStringSync();
+      expect(svgContent, contains('layer-score-typography'));
+      expect(svgContent, contains('Nocturne in C-sharp Minor'));
+      expect(svgContent, contains('Op. Posth.'));
+      expect(svgContent, contains('Frédéric Chopin'));
+      expect(svgContent, contains('arr. Pooria Askari Moqaddam'));
+      expect(svgContent, contains('© 2026 SarvMD'));
+
+      final outTex = p.join(tempDir.path, 'with_meta.tex');
+      final exitCodeTex = await runner.run([
+        'generate',
+        '--profile',
+        'piano',
+        '--title',
+        'Nocturne in C-sharp Minor',
+        '--composer',
+        'Frédéric Chopin',
+        '--format',
+        'tex',
+        '--output',
+        outTex,
+      ]);
+
+      expect(exitCodeTex, equals(0));
+      final texContent = File(outTex).readAsStringSync();
+      expect(texContent, contains('Nocturne in C-sharp Minor'));
+      expect(texContent, contains(r'\textbf{\normalsize Frédéric Chopin}'));
+    });
   });
 }
+

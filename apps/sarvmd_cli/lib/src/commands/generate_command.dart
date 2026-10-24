@@ -73,8 +73,24 @@ class GenerateCommand extends Command<int> {
         help: 'Optional score title.',
       )
       ..addOption(
+        'subtitle',
+        help: 'Optional score subtitle or movement title.',
+      )
+      ..addOption(
         'composer',
         help: 'Optional composer name.',
+      )
+      ..addOption(
+        'arranger',
+        help: 'Optional arranger name.',
+      )
+      ..addOption(
+        'lyricist',
+        help: 'Optional lyricist or poet name.',
+      )
+      ..addOption(
+        'copyright',
+        help: 'Optional copyright or license statement.',
       )
       ..addFlag(
         'use-pdflatex',
@@ -138,13 +154,33 @@ class GenerateCommand extends Command<int> {
       return 1;
     }
 
-    // 5. Build configuration & compute layout
+    // 5. Build metadata & configuration, then compute layout
+    final titleOpt = (argResults?['title'] as String?)?.trim() ?? '';
+    final subtitleOpt = (argResults?['subtitle'] as String?)?.trim() ?? '';
+    final composerOpt = (argResults?['composer'] as String?)?.trim() ?? '';
+    final arrangerOpt = (argResults?['arranger'] as String?)?.trim() ?? '';
+    final lyricistOpt = (argResults?['lyricist'] as String?)?.trim() ?? '';
+    final copyrightOpt = (argResults?['copyright'] as String?)?.trim() ?? '';
+
+    final metadata = core.DocumentMetadata(
+      title: titleOpt,
+      subtitle: subtitleOpt,
+      composer: composerOpt,
+      arranger: arrangerOpt,
+      lyricist: lyricistOpt,
+      copyright: copyrightOpt,
+    );
+
     final config = core.PageConfig(
       pageSize: pageSize,
       orientation: orientation,
       systemLayout: profile.systemLayout,
     );
-    final layout = core.computeLayout(config);
+    final layout = core.computeLayout(
+      config,
+      metadata: metadata,
+      pageIndex: 0,
+    );
 
     // 6. Resolve output file path & format
     final format = (argResults?['format'] as String?)?.toLowerCase() ?? 'pdf';
@@ -168,13 +204,8 @@ class GenerateCommand extends Command<int> {
       Directory(outDir).createSync(recursive: true);
     }
 
-    final titleOpt = argResults?['title'] as String?;
-    final composerOpt = argResults?['composer'] as String?;
-    if (titleOpt != null && titleOpt.isNotEmpty) {
-      _log.info('Score title: $titleOpt');
-    }
-    if (composerOpt != null && composerOpt.isNotEmpty) {
-      _log.info('Score composer: $composerOpt');
+    if (metadata.hasPrintableTypography) {
+      _log.info('Score typography: title="${metadata.title}", composer="${metadata.composer}"');
     }
 
     _log.info(
@@ -194,8 +225,12 @@ class GenerateCommand extends Command<int> {
         final useLatex = argResults?['use-pdflatex'] as bool? ?? false;
         if (useLatex) {
           final texPath = p.setExtension(finalPath, '.tex');
-          final texContent = core.ScoreCompiler.compileToTex(config, layout,
-              pageCount: pageCount);
+          final texContent = core.ScoreCompiler.compileToTex(
+            config,
+            layout,
+            pageCount: pageCount,
+            metadata: metadata,
+          );
           File(texPath).writeAsStringSync(texContent);
           final compiledPdfPath = await core.ScoreCompiler.compileTexFileToPdf(
             texPath,
@@ -208,18 +243,27 @@ class GenerateCommand extends Command<int> {
             config,
             layout,
             pageCount: pageCount,
+            metadata: metadata,
           );
           File(finalPath).writeAsBytesSync(bytes);
           stdout.writeln(
               'Generated native vector PDF: $finalPath (${bytes.length} bytes)');
         }
       } else if (format == 'svg') {
-        final svgContent = core.ScoreCompiler.compileToSvg(config, layout);
+        final svgContent = core.ScoreCompiler.compileToSvg(
+          config,
+          layout,
+          metadata: metadata,
+        );
         File(finalPath).writeAsStringSync(svgContent);
         stdout.writeln('Generated vector SVG: $finalPath');
       } else if (format == 'tex') {
-        final texContent = core.ScoreCompiler.compileToTex(config, layout,
-            pageCount: pageCount);
+        final texContent = core.ScoreCompiler.compileToTex(
+          config,
+          layout,
+          pageCount: pageCount,
+          metadata: metadata,
+        );
         File(finalPath).writeAsStringSync(texContent);
         stdout.writeln('Generated LaTeX source: $finalPath');
       }

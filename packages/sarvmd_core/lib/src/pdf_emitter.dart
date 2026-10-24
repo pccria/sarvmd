@@ -12,6 +12,7 @@ import 'package:pdf/widgets.dart' as pw;
 
 import 'config.dart';
 import 'domain/clef.dart';
+import 'domain/metadata.dart';
 import 'engraving_config.dart';
 import 'layout.dart';
 
@@ -22,7 +23,9 @@ Future<List<int>> emitPdf(
   PageConfig config,
   PageLayout layout, {
   int pageCount = 1,
+  DocumentMetadata? metadata,
 }) async {
+  final effectiveMetadata = metadata ?? layout.metadata;
   final pdfDoc = pw.Document();
   final wPt = config.effectiveWidth * _mmToPt;
   final hPt = config.effectiveHeight * _mmToPt;
@@ -41,6 +44,17 @@ Future<List<int>> emitPdf(
           return pw.CustomPaint(
             size: pdf.PdfPoint(wPt, hPt),
             painter: (pdf.PdfGraphics canvas, pdf.PdfPoint size) {
+              _drawScoreTypography(
+                canvas,
+                config,
+                layout,
+                hPt,
+                pdfDoc.document,
+                p,
+                leftX,
+                rightX,
+                effectiveMetadata,
+              );
               _drawSystemConnectors(canvas, config, layout.systems, hPt);
               _drawStaffLines(canvas, layout.systems, leftX, rightX, gap, strokeMm, hPt);
               _drawClefs(canvas, layout.systems, leftX, gap, config.engraving, hPt);
@@ -336,6 +350,28 @@ void _drawLeftAlignedText({
   }
 }
 
+/// Helper method to draw centered single or multi-line text blocks on PDF.
+void _drawCenteredText({
+  required pdf.PdfGraphics canvas,
+  required pdf.PdfFont font,
+  required double fontPt,
+  required String text,
+  required double centerXPt,
+  required double baselineYPt,
+}) {
+  final safeText = _sanitizePdfText(text);
+  final lines = safeText.split('\n');
+  final lineHeightPt = fontPt * 1.2;
+  for (var i = 0; i < lines.length; i++) {
+    final line = lines[i];
+    final textMetrics = font.stringMetrics(line);
+    final textWidthPt = textMetrics.width * fontPt;
+    final drawXPt = centerXPt - (textWidthPt / 2.0);
+    final drawYPt = baselineYPt - (i * lineHeightPt);
+    canvas.drawString(font, fontPt, line, drawXPt, drawYPt);
+  }
+}
+
 /// Helper method to draw right-aligned single or multi-line text blocks on PDF.
 void _drawRightAlignedText({
   required pdf.PdfGraphics canvas,
@@ -343,14 +379,16 @@ void _drawRightAlignedText({
   required double fontPt,
   required String text,
   required double rightAnchorXPt,
-  required double centerYPt,
+  double? centerYPt,
+  double? baselineYPt,
 }) {
   final safeText = _sanitizePdfText(text);
   final lines = safeText.split('\n');
   final lineHeightPt = fontPt * 1.2;
-  final totalBlockHeightPt = (lines.length - 1) * lineHeightPt;
-  final startBaselineYPt =
-      centerYPt + (totalBlockHeightPt / 2.0) - (fontPt * 0.3);
+  final double startBaselineYPt = baselineYPt ??
+      ((centerYPt ?? 0.0) +
+          (((lines.length - 1) * lineHeightPt) / 2.0) -
+          (fontPt * 0.3));
 
   for (var i = 0; i < lines.length; i++) {
     final line = lines[i];
@@ -359,6 +397,161 @@ void _drawRightAlignedText({
     final drawXPt = rightAnchorXPt - textWidthPt;
     final drawYPt = startBaselineYPt - (i * lineHeightPt);
     canvas.drawString(font, fontPt, line, drawXPt, drawYPt);
+  }
+}
+
+/// Draws professional score typography (Title block on page 1, page numbers on subsequent pages,
+/// and copyright at the bottom) according to Elaine Gould engraving standards.
+void _drawScoreTypography(
+  pdf.PdfGraphics canvas,
+  PageConfig config,
+  PageLayout layout,
+  double hPt,
+  pdf.PdfDocument doc,
+  int pageIndex,
+  double leftX,
+  double rightX,
+  DocumentMetadata? metadata,
+) {
+  if (metadata == null || !metadata.hasPrintableTypography) return;
+
+  final centerXPt = ((leftX + rightX) / 2.0) * _mmToPt;
+  final leftXPt = leftX * _mmToPt;
+  final rightXPt = rightX * _mmToPt;
+
+  final titleFont = pdf.PdfFont.timesBold(doc);
+  final italicFont = pdf.PdfFont.timesItalic(doc);
+  final regularFont = pdf.PdfFont.times(doc);
+  final boldFont = pdf.PdfFont.timesBold(doc);
+
+  if (pageIndex == 0) {
+    canvas.saveContext();
+    canvas.setFillColor(pdf.PdfColors.black);
+
+    // 1. Work Title
+    if (metadata.title.trim().isNotEmpty) {
+      final titleYMm = config.margins.top + 6.0;
+      final titleYPt = hPt - (titleYMm * _mmToPt);
+      _drawCenteredText(
+        canvas: canvas,
+        font: titleFont,
+        fontPt: ScoreTypographyMetrics.titleFontSizePt,
+        text: metadata.title.trim(),
+        centerXPt: centerXPt,
+        baselineYPt: titleYPt,
+      );
+    }
+
+    // 2. Subtitle / Movement / Opus
+    if (metadata.subtitle.trim().isNotEmpty) {
+      final subtitleYMm = config.margins.top + 13.0;
+      final subtitleYPt = hPt - (subtitleYMm * _mmToPt);
+      _drawCenteredText(
+        canvas: canvas,
+        font: italicFont,
+        fontPt: ScoreTypographyMetrics.subtitleFontSizePt,
+        text: metadata.subtitle.trim(),
+        centerXPt: centerXPt,
+        baselineYPt: subtitleYPt,
+      );
+    }
+
+    // Reference top of the first system
+    final firstSystemTopY = layout.systems.isNotEmpty
+        ? layout.systems.first.topY
+        : (config.margins.top + layout.headerHeadroomMm);
+
+    // 3. Poet / Lyricist / Instrumentation (Left-aligned)
+    final lyricistText = metadata.lyricist.trim();
+    if (lyricistText.isNotEmpty) {
+      final lyricistYMm = firstSystemTopY - 3.5;
+      final lyricistYPt = hPt - (lyricistYMm * _mmToPt);
+      _drawLeftAlignedText(
+        canvas: canvas,
+        font: regularFont,
+        fontPt: ScoreTypographyMetrics.contributorFontSizePt,
+        text: lyricistText,
+        leftAnchorXPt: leftXPt,
+        baselineYPt: lyricistYPt,
+      );
+    }
+
+    // 4. Composer / Arranger (Right-aligned)
+    final composerText = metadata.composer.trim();
+    final arrangerText = metadata.arranger.trim();
+    if (composerText.isNotEmpty || arrangerText.isNotEmpty) {
+      if (composerText.isNotEmpty && arrangerText.isNotEmpty) {
+        final compYMm = firstSystemTopY - 6.5;
+        final arrYMm = firstSystemTopY - 2.5;
+        _drawRightAlignedText(
+          canvas: canvas,
+          font: boldFont,
+          fontPt: ScoreTypographyMetrics.contributorFontSizePt,
+          text: composerText,
+          rightAnchorXPt: rightXPt,
+          baselineYPt: hPt - (compYMm * _mmToPt),
+        );
+        _drawRightAlignedText(
+          canvas: canvas,
+          font: italicFont,
+          fontPt: ScoreTypographyMetrics.copyrightFontSizePt,
+          text: 'arr. $arrangerText',
+          rightAnchorXPt: rightXPt,
+          baselineYPt: hPt - (arrYMm * _mmToPt),
+        );
+      } else if (composerText.isNotEmpty) {
+        final compYMm = firstSystemTopY - 3.5;
+        _drawRightAlignedText(
+          canvas: canvas,
+          font: boldFont,
+          fontPt: ScoreTypographyMetrics.contributorFontSizePt,
+          text: composerText,
+          rightAnchorXPt: rightXPt,
+          baselineYPt: hPt - (compYMm * _mmToPt),
+        );
+      } else {
+        final arrYMm = firstSystemTopY - 3.5;
+        _drawRightAlignedText(
+          canvas: canvas,
+          font: italicFont,
+          fontPt: ScoreTypographyMetrics.contributorFontSizePt,
+          text: 'arr. $arrangerText',
+          rightAnchorXPt: rightXPt,
+          baselineYPt: hPt - (arrYMm * _mmToPt),
+        );
+      }
+    }
+
+    // 5. Copyright (Bottom Centered)
+    if (metadata.copyright.trim().isNotEmpty) {
+      final copyrightYMm = config.effectiveHeight - config.margins.bottom + 4.0;
+      final copyrightYPt = hPt - (copyrightYMm * _mmToPt);
+      _drawCenteredText(
+        canvas: canvas,
+        font: regularFont,
+        fontPt: ScoreTypographyMetrics.copyrightFontSizePt,
+        text: metadata.copyright.trim(),
+        centerXPt: centerXPt,
+        baselineYPt: copyrightYPt,
+      );
+    }
+
+    canvas.restoreContext();
+  } else {
+    // Running header for subsequent pages (e.g. "- 2 -")
+    canvas.saveContext();
+    canvas.setFillColor(pdf.PdfColors.black);
+    final pageNumYMm = config.margins.top - 4.0;
+    final pageNumYPt = hPt - (pageNumYMm * _mmToPt);
+    _drawCenteredText(
+      canvas: canvas,
+      font: regularFont,
+      fontPt: 9.0,
+      text: '- ${pageIndex + 1} -',
+      centerXPt: centerXPt,
+      baselineYPt: pageNumYPt,
+    );
+    canvas.restoreContext();
   }
 }
 

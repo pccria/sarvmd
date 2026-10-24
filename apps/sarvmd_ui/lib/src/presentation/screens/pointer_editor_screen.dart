@@ -1264,6 +1264,8 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
                                                               layout:
                                                                   documentCubit.layout,
                                                               viewState: viewState,
+                                                              metadata:
+                                                                  documentCubit.state.metadata,
                                                             ),
                                                           ),
                                                         ),

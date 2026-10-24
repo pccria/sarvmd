@@ -120,6 +120,7 @@ class ExportService {
     String? fileName,
     int pageCount = 1,
     String? outputDir,
+    core.DocumentMetadata? metadata,
   }) async {
     _log.info('Exporting TeX', context: {
       'pageSize': config.pageSize.name,
@@ -128,7 +129,13 @@ class ExportService {
     });
     final sw = Stopwatch()..start();
     try {
-      final tex = core.ScoreCompiler.compileToTex(config, layout, pageCount: pageCount);
+      final effectiveMeta = metadata ?? layout.metadata;
+      final tex = core.ScoreCompiler.compileToTex(
+        config,
+        layout,
+        pageCount: pageCount,
+        metadata: effectiveMeta,
+      );
       final name = _cleanFileName(fileName ?? '', config);
       final bytes = Uint8List.fromList(utf8.encode(tex));
 
@@ -168,6 +175,7 @@ class ExportService {
     int pageCount = 1,
     String? outputDir,
     bool useLatexCompiler = false,
+    core.DocumentMetadata? metadata,
   }) async {
     _log.info('Exporting PDF', context: {
       'pageSize': config.pageSize.name,
@@ -178,9 +186,15 @@ class ExportService {
     final sw = Stopwatch()..start();
     try {
       final name = _cleanFileName(fileName ?? '', config);
+      final effectiveMeta = metadata ?? layout.metadata;
 
       if (kIsWeb || !useLatexCompiler) {
-        final pdfBytes = await core.ScoreCompiler.compileToPdf(config, layout, pageCount: pageCount);
+        final pdfBytes = await core.ScoreCompiler.compileToPdf(
+          config,
+          layout,
+          pageCount: pageCount,
+          metadata: effectiveMeta,
+        );
 
         if (kIsWeb) {
           downloadFileWeb('$name.pdf', pdfBytes, 'application/pdf');
@@ -220,6 +234,7 @@ class ExportService {
         fileName: name,
         pageCount: pageCount,
         outputDir: dir,
+        metadata: effectiveMeta,
       );
       final pdfPath = await core.ScoreCompiler.compileTexFileToPdf(texResult.filePath, outputDir: dir);
       final file = File(pdfPath);
@@ -251,6 +266,7 @@ class ExportService {
     String? fileName,
     String? outputDir,
     core.SvgLayeringMode layeringMode = core.SvgLayeringMode.flatByCategory,
+    core.DocumentMetadata? metadata,
   }) async {
     _log.info('Exporting SVG', context: {
       'pageSize': config.pageSize.name,
@@ -259,9 +275,16 @@ class ExportService {
     });
     final sw = Stopwatch()..start();
     try {
-      final svg = core.ScoreCompiler.compileToSvg(config, layout, layeringMode: layeringMode);
+      final effectiveMeta = metadata ?? layout.metadata;
+      final svg = core.ScoreCompiler.compileToSvg(
+        config,
+        layout,
+        layeringMode: layeringMode,
+        metadata: effectiveMeta,
+      );
       final name = _cleanFileName(fileName ?? '', config);
       final bytes = Uint8List.fromList(utf8.encode(svg));
+
 
       if (kIsWeb) {
         downloadFileWeb('$name.svg', bytes, 'image/svg+xml;charset=utf-8');

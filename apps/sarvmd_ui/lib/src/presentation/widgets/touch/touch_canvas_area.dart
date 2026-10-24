@@ -217,6 +217,7 @@ class TouchCanvasAreaState extends State<TouchCanvasArea> with SingleTickerProvi
                           child: PreviewCanvas(
                             layout: documentCubit.layout,
                             viewState: viewState,
+                            metadata: documentCubit.state.metadata,
                           ),
                         ),
                       ),

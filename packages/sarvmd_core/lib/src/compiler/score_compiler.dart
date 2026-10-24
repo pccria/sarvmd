@@ -5,6 +5,7 @@ import 'dart:typed_data';
 
 import '../compiler.dart' as pdflatex;
 import '../config.dart';
+import '../domain/metadata.dart';
 import '../domain/score.dart';
 import '../domain/svg_layering_mode.dart';
 import '../emitter.dart' as tex_emitter;
@@ -89,8 +90,14 @@ abstract final class ScoreCompiler {
     PageConfig config,
     PageLayout layout, {
     int pageCount = 1,
+    DocumentMetadata? metadata,
   }) {
-    return tex_emitter.emit(config, layout, pageCount: pageCount);
+    return tex_emitter.emit(
+      config,
+      layout,
+      pageCount: pageCount,
+      metadata: metadata,
+    );
   }
 
   /// Compiles the score layout configuration directly to vector PDF bytes (`.pdf`).
@@ -98,8 +105,14 @@ abstract final class ScoreCompiler {
     PageConfig config,
     PageLayout layout, {
     int pageCount = 1,
+    DocumentMetadata? metadata,
   }) async {
-    final bytes = await pdf_emitter.emitPdf(config, layout, pageCount: pageCount);
+    final bytes = await pdf_emitter.emitPdf(
+      config,
+      layout,
+      pageCount: pageCount,
+      metadata: metadata,
+    );
     return Uint8List.fromList(bytes);
   }
 
@@ -108,8 +121,14 @@ abstract final class ScoreCompiler {
     PageConfig config,
     PageLayout layout, {
     SvgLayeringMode layeringMode = SvgLayeringMode.flatByCategory,
+    DocumentMetadata? metadata,
   }) {
-    return svg_emitter.emitSvg(config, layout, layeringMode: layeringMode);
+    return svg_emitter.emitSvg(
+      config,
+      layout,
+      layeringMode: layeringMode,
+      metadata: metadata,
+    );
   }
 
 

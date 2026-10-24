@@ -320,7 +320,8 @@ class DocumentCubit extends Cubit<DocumentState> {
   core.StaffUIHints get uiHints =>
       activeProfile?.uiHints ?? const core.StaffUIHints();
 
-  core.PageLayout get layout => core.computeLayout(state.config);
+  core.PageLayout get layout =>
+      core.computeLayout(state.config, metadata: state.metadata, pageIndex: 0);
 
   core.StaffDefinition? get _primaryDef {
     final root = state.config.systemLayout.rootGroup;

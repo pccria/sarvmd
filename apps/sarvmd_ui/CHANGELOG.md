@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Printable Score Typography Canvas & Export Integration**:
+  - Implemented `_paintScoreTypography` in `PreviewCanvas` rendering title, subtitle, composer, arranger, lyricist, bottom copyright, and running page numbers in real time.
+  - Wired `DocumentCubit.layout` with document metadata and updated `PointerEditorScreen` and `TouchCanvasArea` canvas bindings.
+  - Connected `ExportService` (`exportTex`, `exportPdf`, `exportSvg`) to pass active score metadata to compiler emitters.
 - **UI Application Manual & Development Guide (`apps/sarvmd_ui/README.md`)**:
   - Published comprehensive user and contributor manual covering the three-tier Cubit state architecture (`WorkspaceCubit`, `DocumentCubit`, `ViewCubit`), responsive form factors (desktop, tablet, phone), live vector canvas, CAD crosshairs, millimeter HUD bubbles, and complete keyboard shortcuts reference table.
   - Added build and runtime guides for Linux Desktop, Web (CanvasKit/WASM), Windows, and Android.

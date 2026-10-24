@@ -11,10 +11,12 @@ class PreviewCanvas extends StatelessWidget {
     super.key,
     required this.layout,
     required this.viewState,
+    this.metadata,
   });
 
   final core.PageLayout layout;
   final ViewState viewState;
+  final core.DocumentMetadata? metadata;
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +51,7 @@ class PreviewCanvas extends StatelessWidget {
           viewState: viewState,
           colorScheme: Theme.of(context).colorScheme,
           inkColor: inkColor,
+          metadata: metadata,
         ),
       ),
     );
@@ -62,6 +65,7 @@ class _ManuscriptPainter extends CustomPainter {
     required this.viewState,
     required this.colorScheme,
     required this.inkColor,
+    this.metadata,
   });
 
   final core.PageLayout layout;
@@ -69,6 +73,7 @@ class _ManuscriptPainter extends CustomPainter {
   final ViewState viewState;
   final ColorScheme colorScheme;
   final Color inkColor;
+  final core.DocumentMetadata? metadata;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -84,6 +89,9 @@ class _ManuscriptPainter extends CustomPainter {
     final lineGapPx = layout.config.staffConfig.lineGapMm * scale;
     final leftMm = layout.config.margins.left;
     final rightMm = layout.config.effectiveWidth - layout.config.margins.right;
+
+    final effectiveMetadata = metadata ?? layout.metadata;
+    _paintScoreTypography(canvas, layout, scale, inkColor, effectiveMetadata);
 
     final guidePaint = Paint()
       ..color = colorScheme.primary.withValues(alpha: 0.3)
@@ -697,10 +705,253 @@ class _ManuscriptPainter extends CustomPainter {
     );
   }
 
+  /// Paints Gouldian printable score typography (Title, Subtitle, Composer, Arranger,
+  /// Lyricist, bottom Copyright, and running page numbers on subsequent pages).
+  void _paintScoreTypography(
+    Canvas canvas,
+    core.PageLayout layout,
+    double scale,
+    Color inkColor,
+    core.DocumentMetadata? metadata,
+  ) {
+    if (metadata == null || !metadata.hasPrintableTypography) return;
+
+    final config = layout.config;
+    final leftX = config.margins.left;
+    final rightX = config.effectiveWidth - config.margins.right;
+    final centerXMm = (leftX + rightX) / 2.0;
+    final double ptScale = (96.0 / 72.0) * (scale / (96.0 / 25.4));
+    const String fontFamily = 'Noto Serif';
+
+    if (layout.pageIndex == 0) {
+      // 1. Work Title
+      if (metadata.title.trim().isNotEmpty) {
+        final titleYMm = config.margins.top + 6.0;
+        final tp = TextPainter(
+          text: TextSpan(
+            text: metadata.title.trim(),
+            style: TextStyle(
+              fontSize: core.ScoreTypographyMetrics.titleFontSizePt * ptScale,
+              fontWeight: FontWeight.bold,
+              color: inkColor,
+              fontFamily: fontFamily,
+            ),
+          ),
+          textAlign: TextAlign.center,
+          textDirection: TextDirection.ltr,
+        )..layout();
+
+        final baselineOffset =
+            tp.computeDistanceToActualBaseline(TextBaseline.alphabetic);
+        final top = titleYMm * scale - baselineOffset;
+        final left = centerXMm * scale - (tp.width / 2.0);
+        tp.paint(canvas, Offset(left, top));
+      }
+
+      // 2. Subtitle / Movement / Opus
+      if (metadata.subtitle.trim().isNotEmpty) {
+        final subYMm = config.margins.top + 13.0;
+        final tp = TextPainter(
+          text: TextSpan(
+            text: metadata.subtitle.trim(),
+            style: TextStyle(
+              fontSize:
+                  core.ScoreTypographyMetrics.subtitleFontSizePt * ptScale,
+              fontStyle: FontStyle.italic,
+              color: inkColor,
+              fontFamily: fontFamily,
+            ),
+          ),
+          textAlign: TextAlign.center,
+          textDirection: TextDirection.ltr,
+        )..layout();
+
+        final baselineOffset =
+            tp.computeDistanceToActualBaseline(TextBaseline.alphabetic);
+        final top = subYMm * scale - baselineOffset;
+        final left = centerXMm * scale - (tp.width / 2.0);
+        tp.paint(canvas, Offset(left, top));
+      }
+
+      final firstSystemTopY = layout.systems.isNotEmpty
+          ? layout.systems.first.topY
+          : (config.margins.top + layout.headerHeadroomMm);
+
+      // 3. Poet / Lyricist / Instrumentation (Left-aligned)
+      final lyricistText = metadata.lyricist.trim();
+      if (lyricistText.isNotEmpty) {
+        final lyricistYMm = firstSystemTopY - 3.5;
+        final tp = TextPainter(
+          text: TextSpan(
+            text: lyricistText,
+            style: TextStyle(
+              fontSize:
+                  core.ScoreTypographyMetrics.contributorFontSizePt * ptScale,
+              fontWeight: FontWeight.normal,
+              color: inkColor,
+              fontFamily: fontFamily,
+            ),
+          ),
+          textAlign: TextAlign.left,
+          textDirection: TextDirection.ltr,
+        )..layout();
+
+        final baselineOffset =
+            tp.computeDistanceToActualBaseline(TextBaseline.alphabetic);
+        final top = lyricistYMm * scale - baselineOffset;
+        final left = leftX * scale;
+        tp.paint(canvas, Offset(left, top));
+      }
+
+      // 4. Composer / Arranger (Right-aligned)
+      final composerText = metadata.composer.trim();
+      final arrangerText = metadata.arranger.trim();
+
+      if (composerText.isNotEmpty && arrangerText.isNotEmpty) {
+        final compYMm = firstSystemTopY - 6.5;
+        final arrYMm = firstSystemTopY - 2.5;
+
+        final compTp = TextPainter(
+          text: TextSpan(
+            text: composerText,
+            style: TextStyle(
+              fontSize:
+                  core.ScoreTypographyMetrics.contributorFontSizePt * ptScale,
+              fontWeight: FontWeight.bold,
+              color: inkColor,
+              fontFamily: fontFamily,
+            ),
+          ),
+          textAlign: TextAlign.right,
+          textDirection: TextDirection.ltr,
+        )..layout();
+        final compBaseline =
+            compTp.computeDistanceToActualBaseline(TextBaseline.alphabetic);
+        compTp.paint(
+          canvas,
+          Offset(rightX * scale - compTp.width, compYMm * scale - compBaseline),
+        );
+
+        final arrTp = TextPainter(
+          text: TextSpan(
+            text: 'arr. $arrangerText',
+            style: TextStyle(
+              fontSize:
+                  core.ScoreTypographyMetrics.copyrightFontSizePt * ptScale,
+              fontStyle: FontStyle.italic,
+              color: inkColor,
+              fontFamily: fontFamily,
+            ),
+          ),
+          textAlign: TextAlign.right,
+          textDirection: TextDirection.ltr,
+        )..layout();
+        final arrBaseline =
+            arrTp.computeDistanceToActualBaseline(TextBaseline.alphabetic);
+        arrTp.paint(
+          canvas,
+          Offset(rightX * scale - arrTp.width, arrYMm * scale - arrBaseline),
+        );
+      } else if (composerText.isNotEmpty) {
+        final compYMm = firstSystemTopY - 3.5;
+        final tp = TextPainter(
+          text: TextSpan(
+            text: composerText,
+            style: TextStyle(
+              fontSize:
+                  core.ScoreTypographyMetrics.contributorFontSizePt * ptScale,
+              fontWeight: FontWeight.bold,
+              color: inkColor,
+              fontFamily: fontFamily,
+            ),
+          ),
+          textAlign: TextAlign.right,
+          textDirection: TextDirection.ltr,
+        )..layout();
+        final baselineOffset =
+            tp.computeDistanceToActualBaseline(TextBaseline.alphabetic);
+        tp.paint(
+          canvas,
+          Offset(rightX * scale - tp.width, compYMm * scale - baselineOffset),
+        );
+      } else if (arrangerText.isNotEmpty) {
+        final arrYMm = firstSystemTopY - 3.5;
+        final tp = TextPainter(
+          text: TextSpan(
+            text: 'arr. $arrangerText',
+            style: TextStyle(
+              fontSize:
+                  core.ScoreTypographyMetrics.contributorFontSizePt * ptScale,
+              fontStyle: FontStyle.italic,
+              color: inkColor,
+              fontFamily: fontFamily,
+            ),
+          ),
+          textAlign: TextAlign.right,
+          textDirection: TextDirection.ltr,
+        )..layout();
+        final baselineOffset =
+            tp.computeDistanceToActualBaseline(TextBaseline.alphabetic);
+        tp.paint(
+          canvas,
+          Offset(rightX * scale - tp.width, arrYMm * scale - baselineOffset),
+        );
+      }
+
+      // 5. Copyright (Bottom Centered)
+      if (metadata.copyright.trim().isNotEmpty) {
+        final copyrightYMm =
+            config.effectiveHeight - config.margins.bottom + 4.0;
+        final tp = TextPainter(
+          text: TextSpan(
+            text: metadata.copyright.trim(),
+            style: TextStyle(
+              fontSize:
+                  core.ScoreTypographyMetrics.copyrightFontSizePt * ptScale,
+              color: inkColor.withValues(alpha: 0.85),
+              fontFamily: fontFamily,
+            ),
+          ),
+          textAlign: TextAlign.center,
+          textDirection: TextDirection.ltr,
+        )..layout();
+
+        final baselineOffset =
+            tp.computeDistanceToActualBaseline(TextBaseline.alphabetic);
+        final top = copyrightYMm * scale - baselineOffset;
+        final left = centerXMm * scale - (tp.width / 2.0);
+        tp.paint(canvas, Offset(left, top));
+      }
+    } else {
+      // Running header for subsequent pages (e.g. "- 2 -")
+      final pageNumYMm = config.margins.top - 4.0;
+      final tp = TextPainter(
+        text: TextSpan(
+          text: '- ${layout.pageIndex + 1} -',
+          style: TextStyle(
+            fontSize: 9.0 * ptScale,
+            color: inkColor.withValues(alpha: 0.8),
+            fontFamily: fontFamily,
+          ),
+        ),
+        textAlign: TextAlign.center,
+        textDirection: TextDirection.ltr,
+      )..layout();
+
+      final baselineOffset =
+          tp.computeDistanceToActualBaseline(TextBaseline.alphabetic);
+      final top = pageNumYMm * scale - baselineOffset;
+      final left = centerXMm * scale - (tp.width / 2.0);
+      tp.paint(canvas, Offset(left, top));
+    }
+  }
+
   @override
   bool shouldRepaint(covariant _ManuscriptPainter oldDelegate) {
     return oldDelegate.layout != layout ||
         oldDelegate.scale != scale ||
-        oldDelegate.viewState != viewState;
+        oldDelegate.viewState != viewState ||
+        oldDelegate.metadata != metadata;
   }
 }
+

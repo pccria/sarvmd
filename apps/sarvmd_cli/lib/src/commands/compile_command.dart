@@ -79,7 +79,8 @@ class CompileCommand extends Command<int> {
     }
 
     // 2. Resolve layout & page count
-    final layout = core.computeLayout(doc.config);
+    final layout = core.computeLayout(doc.config,
+        metadata: doc.metadata, pageIndex: 0);
     final pageCountOverride = argResults?['page-count'] != null
         ? int.tryParse(argResults!['page-count'] as String)
         : null;
@@ -131,8 +132,12 @@ class CompileCommand extends Command<int> {
         final useLatex = argResults?['use-pdflatex'] as bool? ?? false;
         if (useLatex) {
           final texPath = p.setExtension(finalPath, '.tex');
-          final texContent = core.ScoreCompiler.compileToTex(doc.config, layout,
-              pageCount: pageCount);
+          final texContent = core.ScoreCompiler.compileToTex(
+            doc.config,
+            layout,
+            pageCount: pageCount,
+            metadata: doc.metadata,
+          );
           File(texPath).writeAsStringSync(texContent);
           final compiledPdfPath = await core.ScoreCompiler.compileTexFileToPdf(
             texPath,
@@ -144,18 +149,27 @@ class CompileCommand extends Command<int> {
             doc.config,
             layout,
             pageCount: pageCount,
+            metadata: doc.metadata,
           );
           File(finalPath).writeAsBytesSync(bytes);
           stdout.writeln(
               'Compiled native vector PDF: $finalPath (${bytes.length} bytes)');
         }
       } else if (format == 'svg') {
-        final svgContent = core.ScoreCompiler.compileToSvg(doc.config, layout);
+        final svgContent = core.ScoreCompiler.compileToSvg(
+          doc.config,
+          layout,
+          metadata: doc.metadata,
+        );
         File(finalPath).writeAsStringSync(svgContent);
         stdout.writeln('Compiled vector SVG: $finalPath');
       } else if (format == 'tex') {
-        final texContent = core.ScoreCompiler.compileToTex(doc.config, layout,
-            pageCount: pageCount);
+        final texContent = core.ScoreCompiler.compileToTex(
+          doc.config,
+          layout,
+          pageCount: pageCount,
+          metadata: doc.metadata,
+        );
         File(finalPath).writeAsStringSync(texContent);
         stdout.writeln('Compiled LaTeX source: $finalPath');
       }

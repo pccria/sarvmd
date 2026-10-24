@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Printable Score Typography & Gouldian Header Engraving**:
+  - Added `DocumentMetadataTypography` extension (`hasPrintableTypography`, `hasTitleBlock`) for smart layout detection.
+  - Added `ScoreTypographyMetrics` with Elaine Gould standard proportions (Title 20pt bold, Subtitle 12pt italic, Composer/Lyricist 10.5pt, Copyright 8.5pt, running header 9pt).
+  - Updated `computeLayout` to compute vertical headroom dynamically on Page 1 while reclaiming stave drawing space on subsequent pages, remaining 100% backward-compatible when metadata is empty.
+  - Implemented authentic typography engraving in `pdf_emitter.dart`, `svg_emitter.dart` (`<g id="layer-score-typography">`), and `emitter.dart` (LaTeX picture environment).
+  - Extended `ScoreCompiler` methods (`compileToTex`, `compileToPdf`, `compileToSvg`) with optional `DocumentMetadata? metadata`.
 - **Developer Documentation & Recipes (`packages/sarvmd_core/README.md`)**:
   - Published comprehensive API Reference covering domain models (`PageConfig`, `StaffConfig`, `SystemLayout`, `StaffNodeGroup`, `Clef`, `ScoreCompiler`, `SarvDocument`).
   - Added copy-paste code recipes for constructing layouts, programmatic `.sarv` mutation, vector PDF/SVG emission, and layout calculation queries.
