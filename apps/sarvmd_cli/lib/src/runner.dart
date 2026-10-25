@@ -14,7 +14,7 @@ import 'commands/profiles_command.dart';
 
 /// Central CommandRunner for the SarvMD CLI.
 class SarvCommandRunner extends CommandRunner<int> {
-  static const String currentVersion = '0.12.4';
+  static const String currentVersion = '0.13.0';
 
   SarvCommandRunner()
       : super(
