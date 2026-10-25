@@ -318,6 +318,27 @@
     }
   },
 
+  "bookletImpositionHeader": "Saddle-Stitch Booklet (Imposition)",
+  "bookletToggleLabel": "Impose as Foldable Booklet",
+  "bookletToggleSubtitle": "Pairs pages 2-up per sheet side for folded, stapled sheet music.",
+  "bookletSheetModeDouble": "Double Sheet (1:1, e.g. A3)",
+  "bookletSheetModeScaled": "Same Sheet (Scaled 2-up, e.g. A4)",
+  "bookletSpineTicks": "Spine fold tick marks",
+  "bookletSignatureBadge": "{pages} pages imposed on {sheets} sheet(s) ({sides} sides)",
+  "@bookletSignatureBadge": {
+    "placeholders": {
+      "pages": {
+        "type": "int"
+      },
+      "sheets": {
+        "type": "int"
+      },
+      "sides": {
+        "type": "int"
+      }
+    }
+  },
+
   "displayCalibrationTitle": "Display Calibration",
   "displayCalibrationSubtitle": "Calibrate \"Actual Size\" to your physical display.",
   "calibrationStep1": "Hold a physical ruler flat against your screen.",
@@ -439,6 +460,7 @@
   "menuOpen": "Open…",
   "menuSave": "Save",
   "menuSaveAs": "Save As…",
+  "menuPrint": "Print…",
   "unsavedChangesTitle": "Unsaved Changes",
   "unsavedChangesMessage": "Do you want to save changes to \"{documentName}\" before continuing?",
   "@unsavedChangesMessage": {
@@ -540,5 +562,88 @@
   "noShortcutsFound": "No matching shortcuts found",
   "peekCanvas": "Peek Canvas",
   "restorePanel": "Restore Settings Panel",
-  "pressBackAgainToExit": "Press back again to exit"
+  "pressBackAgainToExit": "Press back again to exit",
+  "sectionScoreTypography": "Score Information",
+  "sectionScoreTypographySubtitle": "Title, contributor credits, and score header engraving",
+  "scoreTypographyHeaderBlock": "Show Header Block",
+  "scoreTypographyHeaderBlockSubtitle": "Master switch to render title and contributor credits on page 1",
+  "scoreTypographyPageNumbers": "Show Page Numbers",
+  "scoreTypographyPageNumbersSubtitle": "Render running page numbers on subsequent pages",
+  "scoreTypographyVisibility": "Visibility",
+  "scoreTypographyShowOnScore": "Show on score",
+  "scoreTypographyHideOnScore": "Hide on score",
+  "scoreTypographyMoreProperties": "Advanced Properties…",
+  "scoreTypographyMoreCredits": "Additional Credits (Subtitle, Arranger, Lyricist)",
+  "scoreTypographyLessCredits": "Hide Additional Credits",
+  "scoreTypographyHiddenNotice": "Hidden on score",
+  "scoreTypographyVisibleNotice": "Visible on score",
+  "scoreTypographyRunningHeader": "Page Numbers (p. 2+)",
+  "scoreTypographyEnterTextNotice": "Enter text to display on score",
+  "scoreTypographyHeadroom": "Header Headroom: {headroom} mm (Page 1)",
+  "@scoreTypographyHeadroom": {
+    "placeholders": {
+      "headroom": {
+        "type": "String"
+      }
+    }
+  },
+  "scoreTypographyHeadroomNone": "Full-page staves (0.0 mm headroom)",
+  "scoreTypographyHeaderDisabledNotice": "Header block is hidden. Staves occupy full first page.",
+  "pageNavigatorPageOf": "Page {current} of {total}",
+  "@pageNavigatorPageOf": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "pageNavigatorPrevTooltip": "Previous Page (PageUp)",
+  "pageNavigatorNextTooltip": "Next Page (PageDown)",
+  "pageNavigatorAddPageTooltip": "Add Page",
+  "pageNavigatorRemovePageTooltip": "Remove Last Page",
+  "documentPageCountLabel": "Document Pages",
+  "documentPageCountDesc": "Total pages in score manuscript",
+  "shortcutNextPage": "Next page",
+  "shortcutPreviousPage": "Previous page",
+  "pageArrangementSection": "Page Arrangement",
+  "pageArrangementSectionDesc": "Configure how manuscript pages are displayed in the workspace",
+  "pageArrangementSingle": "Single Page",
+  "pageArrangementSingleDesc": "Display one page at a time with quick navigation",
+  "pageArrangementFacing": "Facing Pages",
+  "pageArrangementFacingDesc": "Display score in two-page book spreads (Page 1 recto)",
+  "pageArrangementContinuousVertical": "Vertical Flow",
+  "pageArrangementContinuousVerticalDesc": "Continuous vertical flow of all manuscript pages",
+  "pageArrangementContinuousHorizontal": "Horizontal Ribbon",
+  "pageArrangementContinuousHorizontalDesc": "Continuous horizontal ribbon of all manuscript pages",
+  "pageArrangementGrid": "Grid Overview",
+  "pageArrangementGridDesc": "Matrix overview of all pages across customizable columns",
+  "pageArrangementColumnsLabel": "Grid Columns",
+  "pageArrangementColumnsCount": "{count, plural, =1{1 Column} other{{count} Columns}}",
+  "@pageArrangementColumnsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "autoFocusOnPageChange": "Auto-Focus Active Page",
+  "autoFocusOnPageChangeTooltip": "Automatically centers the camera on the active page during navigation",
+  "pageSwipeGestures": "Swipe to Turn Pages",
+  "pageSwipeGesturesTooltip": "Swipe horizontally on touch screens to navigate previous/next score pages",
+  "swipeTurnedToPage": "Page {page} of {total}",
+  "@swipeTurnedToPage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "swipeFirstPageReached": "First page",
+  "swipeLastPageReached": "Last page"
 }

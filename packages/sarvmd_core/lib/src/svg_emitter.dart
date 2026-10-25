@@ -10,6 +10,7 @@
 
 import 'config.dart';
 import 'domain/clef.dart';
+import 'domain/metadata.dart';
 import 'engraving_config.dart';
 import 'layout.dart';
 import 'domain/svg_layering_mode.dart';
@@ -28,7 +29,9 @@ String emitSvg(
   PageConfig config,
   PageLayout layout, {
   SvgLayeringMode layeringMode = SvgLayeringMode.flatByCategory,
+  DocumentMetadata? metadata,
 }) {
+  final effectiveMetadata = metadata ?? layout.metadata;
   final buf = StringBuffer();
   final w = config.effectiveWidth;
   final h = config.effectiveHeight;
@@ -48,10 +51,11 @@ String emitSvg(
 
   if (layeringMode == SvgLayeringMode.none) {
     buf.writeln('  <rect width="${_f(w)}" height="${_f(h)}" fill="white"/>');
+    _drawScoreTypography(buf, config, layout, leftX, rightX, effectiveMetadata);
     _drawSystemConnectors(buf, config, layout.systems);
     _drawStaffLines(buf, layout.systems, leftX, rightX, gap, strokeMm);
     _drawClefs(buf, layout.systems, leftX, gap, config.engraving);
-    _drawStaffLabels(buf, layout.systems, leftX, gap);
+    _drawStaffLabels(buf, layout.systems, leftX, gap, pageIndex: layout.pageIndex);
     buf.writeln('</svg>');
     return buf.toString();
   }
@@ -64,6 +68,7 @@ String emitSvg(
   buf.writeln('  </g>');
 
   if (layeringMode == SvgLayeringMode.hierarchicalBySystem) {
+    _drawScoreTypography(buf, config, layout, leftX, rightX, effectiveMetadata);
     buf.writeln(
       '  <g id="layer-systems" inkscape:groupmode="layer" inkscape:label="Score Systems">',
     );
@@ -76,12 +81,14 @@ String emitSvg(
       _drawSystemConnectors(buf, config, [system]);
       _drawStaffLines(buf, [system], leftX, rightX, gap, strokeMm);
       _drawClefs(buf, [system], leftX, gap, config.engraving);
-      _drawStaffLabels(buf, [system], leftX, gap);
+      _drawStaffLabels(buf, [system], leftX, gap, pageIndex: layout.pageIndex, systemIndexOffset: i);
       buf.writeln('    </g>');
     }
     buf.writeln('  </g>');
   } else {
     // SvgLayeringMode.flatByCategory
+    _drawScoreTypography(buf, config, layout, leftX, rightX, effectiveMetadata);
+
     buf.writeln(
       '  <g id="layer-system-structure" inkscape:groupmode="layer" inkscape:label="System Structure">',
     );
@@ -104,7 +111,7 @@ String emitSvg(
     buf.writeln(
       '  <g id="layer-labels" inkscape:groupmode="layer" inkscape:label="Instrument Labels">',
     );
-    _drawStaffLabels(buf, layout.systems, leftX, gap);
+    _drawStaffLabels(buf, layout.systems, leftX, gap, pageIndex: layout.pageIndex);
     buf.writeln('  </g>');
   }
 
@@ -193,12 +200,15 @@ void _drawStaffLabels(
   StringBuffer buf,
   List<StaffSystem> systems,
   double baseLeftX,
-  double lineGapMm,
-) {
+  double lineGapMm, {
+  int pageIndex = 0,
+  int systemIndexOffset = 0,
+}) {
   for (var sysIdx = 0; sysIdx < systems.length; sysIdx++) {
     final system = systems[sysIdx];
     final leftX = baseLeftX + system.leftIndentMm;
-    final bool isFirstSystem = sysIdx == 0;
+    final int globalSysIdx = systemIndexOffset + sysIdx;
+    final bool isFirstSystem = (pageIndex == 0 && globalSysIdx == 0);
 
     // 1. Group labels (Outer tier or section header above staff)
     for (final group in system.groupPlacements) {
@@ -413,6 +423,207 @@ void _writeRightAlignedText({
     }
     buf.writeln('    </text>');
   }
+}
+
+/// Helper method to write centered text in SVG.
+void _writeCenteredText({
+  required StringBuffer buf,
+  required String text,
+  required double centerXMm,
+  required double baselineYMm,
+  required double fontSizeMm,
+  required String fontFamily,
+  bool isBold = false,
+  bool isItalic = false,
+}) {
+  final boldAttr = isBold ? ' font-weight="bold"' : '';
+  final italicAttr = isItalic ? ' font-style="italic"' : '';
+  final lines = text.split('\n');
+
+  if (lines.length == 1) {
+    buf.writeln(
+      '    <text x="${_f(centerXMm)}" y="${_f(baselineYMm)}"'
+      ' font-family="$fontFamily" font-size="${_f(fontSizeMm)}"$boldAttr$italicAttr'
+      ' fill="black" text-anchor="middle">'
+      '${_escapeXml(lines.first)}'
+      '</text>',
+    );
+  } else {
+    final lineHeightMm = fontSizeMm * 1.2;
+    buf.writeln(
+      '    <text x="${_f(centerXMm)}" y="${_f(baselineYMm)}"'
+      ' font-family="$fontFamily" font-size="${_f(fontSizeMm)}"$boldAttr$italicAttr'
+      ' fill="black" text-anchor="middle">',
+    );
+    for (var i = 0; i < lines.length; i++) {
+      final dy = i == 0 ? '0' : _f(lineHeightMm);
+      buf.writeln(
+        '      <tspan x="${_f(centerXMm)}" dy="$dy">${_escapeXml(lines[i])}</tspan>',
+      );
+    }
+    buf.writeln('    </text>');
+  }
+}
+
+/// Draws professional score typography (Title block on page 1, running page numbers,
+/// and bottom copyright statement) in SVG according to Elaine Gould engraving standards.
+void _drawScoreTypography(
+  StringBuffer buf,
+  PageConfig config,
+  PageLayout layout,
+  double leftX,
+  double rightX,
+  DocumentMetadata? metadata,
+) {
+  if (metadata == null || !metadata.hasPrintableTypography) return;
+
+  final centerXMm = (leftX + rightX) / 2.0;
+  const fontFamily = "Georgia, 'Times New Roman', serif";
+
+  buf.writeln(
+    '  <g id="layer-score-typography" inkscape:groupmode="layer" inkscape:label="Score Typography">',
+  );
+
+  if (layout.pageIndex == 0) {
+    // 1. Work Title
+    if (metadata.hasPrintableTitle) {
+      final titleYMm = config.margins.top + 6.0;
+      final fontSizeMm = ScoreTypographyMetrics.titleFontSizePt * (25.4 / 72.0);
+      _writeCenteredText(
+        buf: buf,
+        text: metadata.title.trim(),
+        centerXMm: centerXMm,
+        baselineYMm: titleYMm,
+        fontSizeMm: fontSizeMm,
+        fontFamily: fontFamily,
+        isBold: true,
+      );
+    }
+
+    // 2. Subtitle / Movement
+    if (metadata.hasPrintableSubtitle) {
+      final subYMm = config.margins.top + 13.0;
+      final fontSizeMm =
+          ScoreTypographyMetrics.subtitleFontSizePt * (25.4 / 72.0);
+      _writeCenteredText(
+        buf: buf,
+        text: metadata.subtitle.trim(),
+        centerXMm: centerXMm,
+        baselineYMm: subYMm,
+        fontSizeMm: fontSizeMm,
+        fontFamily: fontFamily,
+        isItalic: true,
+      );
+    }
+
+    final firstSystemTopY = layout.systems.isNotEmpty
+        ? layout.systems.first.topY
+        : (config.margins.top + layout.headerHeadroomMm);
+
+    // 3. Poet / Lyricist / Instrumentation (Left-aligned)
+    if (metadata.hasPrintableLyricist) {
+      final lyricistText = metadata.lyricist.trim();
+      final lyricistYMm = firstSystemTopY - 3.5;
+      final fontSizeMm =
+          ScoreTypographyMetrics.contributorFontSizePt * (25.4 / 72.0);
+      _writeLeftAlignedText(
+        buf: buf,
+        text: lyricistText,
+        leftAnchorXMm: leftX,
+        baselineYMm: lyricistYMm,
+        fontSizeMm: fontSizeMm,
+        fontFamily: fontFamily,
+      );
+    }
+
+    // 4. Composer / Arranger (Right-aligned)
+    final hasComp = metadata.hasPrintableComposer;
+    final hasArr = metadata.hasPrintableArranger;
+    if (hasComp || hasArr) {
+      final composerText = metadata.composer.trim();
+      final arrangerText = metadata.arranger.trim();
+      final contribFontSizeMm =
+          ScoreTypographyMetrics.contributorFontSizePt * (25.4 / 72.0);
+      final arrFontSizeMm =
+          ScoreTypographyMetrics.copyrightFontSizePt * (25.4 / 72.0);
+
+      if (hasComp && hasArr) {
+        final compYMm = firstSystemTopY - 6.5;
+        final arrYMm = firstSystemTopY - 2.5;
+        _writeRightAlignedText(
+          buf: buf,
+          text: composerText,
+          rightAnchorXMm: rightX,
+          centerYMm: compYMm,
+          fontSizeMm: contribFontSizeMm,
+          fontFamily: fontFamily,
+          isBold: true,
+        );
+        _writeRightAlignedText(
+          buf: buf,
+          text: 'arr. $arrangerText',
+          rightAnchorXMm: rightX,
+          centerYMm: arrYMm,
+          fontSizeMm: arrFontSizeMm,
+          fontFamily: fontFamily,
+          isItalic: true,
+        );
+      } else if (hasComp) {
+        final compYMm = firstSystemTopY - 3.5;
+        _writeRightAlignedText(
+          buf: buf,
+          text: composerText,
+          rightAnchorXMm: rightX,
+          centerYMm: compYMm,
+          fontSizeMm: contribFontSizeMm,
+          fontFamily: fontFamily,
+          isBold: true,
+        );
+      } else {
+        final arrYMm = firstSystemTopY - 3.5;
+        _writeRightAlignedText(
+          buf: buf,
+          text: 'arr. $arrangerText',
+          rightAnchorXMm: rightX,
+          centerYMm: arrYMm,
+          fontSizeMm: contribFontSizeMm,
+          fontFamily: fontFamily,
+          isItalic: true,
+        );
+      }
+    }
+
+    // 5. Copyright (Bottom Centered)
+    if (metadata.hasPrintableCopyright) {
+      final copyrightYMm =
+          config.effectiveHeight - config.margins.bottom + 4.0;
+      final fontSizeMm =
+          ScoreTypographyMetrics.copyrightFontSizePt * (25.4 / 72.0);
+      _writeCenteredText(
+        buf: buf,
+        text: metadata.copyright.trim(),
+        centerXMm: centerXMm,
+        baselineYMm: copyrightYMm,
+        fontSizeMm: fontSizeMm,
+        fontFamily: fontFamily,
+      );
+    }
+  } else if (metadata.hasPrintablePageNumbers) {
+    // Running page number for subsequent pages
+    final pageNumYMm = config.margins.top - 4.0;
+    final fontSizeMm = 9.0 * (25.4 / 72.0);
+    _writeCenteredText(
+      buf: buf,
+      text: '- ${layout.pageIndex + 1} -',
+      centerXMm: centerXMm,
+      baselineYMm: pageNumYMm,
+      fontSizeMm: fontSizeMm,
+      fontFamily: fontFamily,
+    );
+  }
+
+
+  buf.writeln('  </g>');
 }
 
 /// Helper method to draw system connectors (braces, brackets, sub-brackets,

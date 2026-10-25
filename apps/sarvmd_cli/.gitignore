@@ -2,3 +2,4 @@
 bin/*.exe
 *.exe
 .dart_tool/
+output/

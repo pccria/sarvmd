@@ -8,6 +8,7 @@ import 'package:sarvmd_core/sarvmd_core.dart' as core;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/staff/document_settings_group.dart';
 import '../widgets/staff/margins_settings_group.dart';
+import '../widgets/staff/score_typography_settings_group.dart';
 import '../../core/theme/app_metrics.dart';
 import '../../core/theme/layout_policy.dart';
 import '../widgets/staff/staff_spacing_group.dart';
@@ -18,7 +19,8 @@ import '../widgets/common/shortcut_gateway.dart';
 import '../../l10n/app_localizations.dart';
 import '../widgets/staff/profile_picker.dart';
 import '../widgets/canvas/canvas_zoom_calculator.dart';
-import '../widgets/canvas/preview_canvas.dart';
+import '../widgets/canvas/canvas_page_navigator.dart';
+import '../widgets/canvas/score_arrangement_canvas.dart';
 import '../widgets/panels/view_panel.dart';
 import '../widgets/canvas/ruler_box.dart';
 import '../widgets/common/integrated_scale_control.dart';
@@ -46,6 +48,7 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
   final ScrollController _sidebarScrollController = ScrollController();
   final GlobalKey _profilesAnchorKey = GlobalKey();
   final GlobalKey _pageSetupAnchorKey = GlobalKey();
+  final GlobalKey _scoreTypographyAnchorKey = GlobalKey();
   final GlobalKey _marginsAnchorKey = GlobalKey();
   final GlobalKey _staffSpacingAnchorKey = GlobalKey();
   final GlobalKey _hierarchyAnchorKey = GlobalKey();
@@ -519,6 +522,13 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
         isExpanded: viewState.isPointerSectionExpanded(SettingsSection.pageSetup),
       ),
       SectionSpineEntry(
+        section: SettingsSection.scoreTypography,
+        label: l10n.sectionScoreTypography,
+        icon: Icons.title_rounded,
+        key: _scoreTypographyAnchorKey,
+        isExpanded: viewState.isPointerSectionExpanded(SettingsSection.scoreTypography),
+      ),
+      SectionSpineEntry(
         section: SettingsSection.margins,
         label: l10n.marginsLabel,
         icon: Icons.space_dashboard_outlined,
@@ -740,6 +750,30 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
                                 orientation: configState.orientation,
                                 onOrientationChanged:
                                     documentCubit.updateOrientation,
+                                pageCount: documentCubit.state.pageCount,
+                                onPageCountChanged: documentCubit.setPageCount,
+                                arrangementMode: viewState.pageArrangement,
+                                onArrangementModeChanged: viewCubit.setPageArrangement,
+                                gridColumns: viewState.gridColumns,
+                                onGridColumnsChanged: viewCubit.setGridColumns,
+                                autoFocusOnPageChange: viewState.autoFocusOnPageChange,
+                                onAutoFocusChanged: viewCubit.setAutoFocusOnPageChange,
+                                pageSwipeGestures: viewState.pageSwipeGestures,
+                                onPageSwipeGesturesChanged: viewCubit.setPageSwipeGestures,
+                              ),
+                            ),
+                            CollapsibleSectionCard(
+                              section: SettingsSection.scoreTypography,
+                              title: l10n.sectionScoreTypography,
+                              icon: Icons.title_rounded,
+                              isExpanded: viewState.isPointerSectionExpanded(
+                                  SettingsSection.scoreTypography),
+                              onToggle: () => viewCubit.togglePointerSection(
+                                  SettingsSection.scoreTypography),
+                              anchorKey: _scoreTypographyAnchorKey,
+                              child: ScoreTypographySettingsGroup(
+                                metadata: documentCubit.state.metadata,
+                                onMetadataChanged: documentCubit.updateMetadata,
                               ),
                             ),
                             CollapsibleSectionCard(
@@ -1074,9 +1108,39 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
     );
 
     if (animate && _hasCentered) {
+      _cameraAnimationController.duration = const Duration(milliseconds: 150);
       _animateMatrixTo(transform.matrix);
     } else {
       _transformationController.value = transform.matrix;
+    }
+  }
+
+  void _focusPage(int pageIndex, {bool animate = true}) {
+    final constraints = _lastConstraints;
+    if (constraints == null) return;
+
+    final docCubit = context.read<DocumentCubit>();
+    final viewState = context.read<ViewCubit>().state;
+    final config = docCubit.state.config;
+
+    final currentMatrix = _transformationController.value;
+    final currentScale = currentMatrix.row0[0];
+
+    final targetMatrix = CanvasZoomCalculator.computePageFocusMatrix(
+      arrangement: viewState.pageArrangement,
+      pageIndex: pageIndex,
+      constraints: constraints,
+      config: config,
+      currentScale: currentScale,
+      gridColumns: viewState.gridColumns,
+      padding: 40.0,
+    );
+
+    if (animate && _hasCentered) {
+      _cameraAnimationController.duration = const Duration(milliseconds: 250);
+      _animateMatrixTo(targetMatrix);
+    } else {
+      _transformationController.value = targetMatrix;
     }
   }
 
@@ -1126,6 +1190,18 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (mounted) _applyZoomPreset(_currentPreset, animate: true);
             });
+          },
+        ),
+        BlocListener<ViewCubit, ViewState>(
+          listenWhen: (previous, current) =>
+              previous.currentPageIndex != current.currentPageIndex ||
+              previous.pageArrangement != current.pageArrangement,
+          listener: (context, state) {
+            if (state.autoFocusOnPageChange) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) _focusPage(state.currentPageIndex, animate: true);
+              });
+            }
           },
         ),
       ],
@@ -1215,6 +1291,11 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
                                     child: LayoutBuilder(
                                       builder: (context, constraints) {
                                         _lastConstraints = constraints;
+                                        final pageCount = documentCubit.state.pageCount;
+                                        final int effectivePageIndex = viewState.currentPageIndex.clamp(
+                                          0,
+                                          math.max(0, pageCount - 1),
+                                        ).toInt();
                                         if (!_hasCentered) {
                                           _hasCentered = true;
                                           WidgetsBinding.instance
@@ -1260,10 +1341,15 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
                                                             constrained: false,
                                                             alignment:
                                                                 Alignment.topLeft,
-                                                            child: PreviewCanvas(
-                                                              layout:
-                                                                  documentCubit.layout,
+                                                            child: ScoreArrangementCanvas(
+                                                              documentCubit: documentCubit,
                                                               viewState: viewState,
+                                                              onPageTapped: (index) => context
+                                                                  .read<ViewCubit>()
+                                                                  .setPageIndex(
+                                                                    index,
+                                                                    maxPages: documentCubit.state.pageCount,
+                                                                  ),
                                                             ),
                                                           ),
                                                         ),
@@ -1330,6 +1416,31 @@ class _PointerEditorScreenState extends State<PointerEditorScreen>
                                                                   : Icons
                                                                       .arrow_forward_ios,
                                                               size: 20,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        // Floating Page Navigator (Bottom Center)
+                                                        Positioned(
+                                                          bottom: 24,
+                                                          left: 0,
+                                                          right: 0,
+                                                          child: Center(
+                                                            child: CanvasPageNavigator(
+                                                              currentPageIndex: effectivePageIndex,
+                                                              pageCount: pageCount,
+                                                              arrangementMode: viewState.pageArrangement,
+                                                              onArrangementModeChanged: (mode) => context
+                                                                  .read<ViewCubit>()
+                                                                  .setPageArrangement(mode),
+                                                              autoFocusOnPageChange: viewState.autoFocusOnPageChange,
+                                                              onAutoFocusChanged: (val) => context
+                                                                  .read<ViewCubit>()
+                                                                  .setAutoFocusOnPageChange(val),
+                                                              onPageChanged: (idx) => context
+                                                                  .read<ViewCubit>()
+                                                                  .setPageIndex(idx, maxPages: pageCount),
+                                                              onAddPage: () => documentCubit.addPage(),
+                                                              onRemovePage: () => documentCubit.removeLastPage(),
                                                             ),
                                                           ),
                                                         ),

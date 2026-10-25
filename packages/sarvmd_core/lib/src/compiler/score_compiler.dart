@@ -5,6 +5,8 @@ import 'dart:typed_data';
 
 import '../compiler.dart' as pdflatex;
 import '../config.dart';
+import '../domain/booklet_imposition.dart';
+import '../domain/metadata.dart';
 import '../domain/score.dart';
 import '../domain/svg_layering_mode.dart';
 import '../emitter.dart' as tex_emitter;
@@ -89,8 +91,14 @@ abstract final class ScoreCompiler {
     PageConfig config,
     PageLayout layout, {
     int pageCount = 1,
+    DocumentMetadata? metadata,
   }) {
-    return tex_emitter.emit(config, layout, pageCount: pageCount);
+    return tex_emitter.emit(
+      config,
+      layout,
+      pageCount: pageCount,
+      metadata: metadata,
+    );
   }
 
   /// Compiles the score layout configuration directly to vector PDF bytes (`.pdf`).
@@ -98,8 +106,14 @@ abstract final class ScoreCompiler {
     PageConfig config,
     PageLayout layout, {
     int pageCount = 1,
+    DocumentMetadata? metadata,
   }) async {
-    final bytes = await pdf_emitter.emitPdf(config, layout, pageCount: pageCount);
+    final bytes = await pdf_emitter.emitPdf(
+      config,
+      layout,
+      pageCount: pageCount,
+      metadata: metadata,
+    );
     return Uint8List.fromList(bytes);
   }
 
@@ -108,10 +122,75 @@ abstract final class ScoreCompiler {
     PageConfig config,
     PageLayout layout, {
     SvgLayeringMode layeringMode = SvgLayeringMode.flatByCategory,
+    DocumentMetadata? metadata,
   }) {
-    return svg_emitter.emitSvg(config, layout, layeringMode: layeringMode);
+    return svg_emitter.emitSvg(
+      config,
+      layout,
+      layeringMode: layeringMode,
+      metadata: metadata,
+    );
   }
 
+  /// Compiles the manuscript layout directly into a saddle-stitch booklet PDF document.
+  ///
+  /// Pairs pages 2-up per sheet side according to saddle-stitch imposition signatures.
+  static Future<Uint8List> compileToBookletPdf(
+    PageConfig config,
+    PageLayout layout, {
+    int pageCount = 1,
+    DocumentMetadata? metadata,
+    BookletConfig bookletConfig = const BookletConfig(),
+  }) {
+    return pdf_emitter.emitBookletPdf(
+      config,
+      layout,
+      pageCount: pageCount,
+      metadata: metadata,
+      bookletConfig: bookletConfig,
+    );
+  }
+
+
+  /// Compiles a specific page of the score layout configuration to scalable vector graphics (`.svg`).
+  static String compilePageToSvg(
+    PageConfig config, {
+    required int pageIndex,
+    PageLayout? layout,
+    SvgLayeringMode layeringMode = SvgLayeringMode.flatByCategory,
+    DocumentMetadata? metadata,
+  }) {
+    final effectiveMeta = metadata ?? layout?.metadata;
+    final pageLayout = (layout != null && layout.pageIndex == pageIndex)
+        ? layout
+        : computeLayout(config, pageIndex: pageIndex, metadata: effectiveMeta);
+    return svg_emitter.emitSvg(
+      config,
+      pageLayout,
+      layeringMode: layeringMode,
+      metadata: effectiveMeta,
+    );
+  }
+
+  /// Compiles all pages of the score layout configuration to a list of SVG strings.
+  static List<String> compileAllPagesToSvg(
+    PageConfig config, {
+    required int pageCount,
+    PageLayout? initialLayout,
+    SvgLayeringMode layeringMode = SvgLayeringMode.flatByCategory,
+    DocumentMetadata? metadata,
+  }) {
+    final count = pageCount < 1 ? 1 : pageCount;
+    return List.generate(count, (p) {
+      return compilePageToSvg(
+        config,
+        pageIndex: p,
+        layout: initialLayout,
+        layeringMode: layeringMode,
+        metadata: metadata,
+      );
+    });
+  }
 
   /// Shells out to `pdflatex` to compile an existing `.tex` file on disk to a `.pdf` file.
   static Future<String> compileTexFileToPdf(

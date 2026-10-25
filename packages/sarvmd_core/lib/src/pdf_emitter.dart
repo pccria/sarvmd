@@ -7,22 +7,28 @@
 /// Generates vector PDF document byte streams directly from manuscript layouts,
 /// running 100% in memory on Web, Desktop, and Mobile without requiring pdflatex.
 
+import 'dart:typed_data';
+
 import 'package:pdf/pdf.dart' as pdf;
 import 'package:pdf/widgets.dart' as pw;
 
 import 'config.dart';
+import 'domain/booklet_imposition.dart';
 import 'domain/clef.dart';
+import 'domain/metadata.dart';
 import 'engraving_config.dart';
 import 'layout.dart';
 
 const double _mmToPt = 72.0 / 25.4;
 
 /// Emit a complete PDF document byte stream for a manuscript layout.
-Future<List<int>> emitPdf(
+Future<Uint8List> emitPdf(
   PageConfig config,
   PageLayout layout, {
   int pageCount = 1,
+  DocumentMetadata? metadata,
 }) async {
+  final effectiveMetadata = metadata ?? layout.metadata;
   final pdfDoc = pw.Document();
   final wPt = config.effectiveWidth * _mmToPt;
   final hPt = config.effectiveHeight * _mmToPt;
@@ -34,6 +40,10 @@ Future<List<int>> emitPdf(
   final rightX = config.effectiveWidth - config.margins.right;
 
   for (var p = 0; p < pageCount; p++) {
+    final pageLayout = (p == layout.pageIndex)
+        ? layout
+        : computeLayout(config, pageIndex: p, metadata: effectiveMetadata);
+
     pdfDoc.addPage(
       pw.Page(
         pageFormat: pageFormat,
@@ -41,10 +51,19 @@ Future<List<int>> emitPdf(
           return pw.CustomPaint(
             size: pdf.PdfPoint(wPt, hPt),
             painter: (pdf.PdfGraphics canvas, pdf.PdfPoint size) {
-              _drawSystemConnectors(canvas, config, layout.systems, hPt);
-              _drawStaffLines(canvas, layout.systems, leftX, rightX, gap, strokeMm, hPt);
-              _drawClefs(canvas, layout.systems, leftX, gap, config.engraving, hPt);
-              _drawStaffLabels(canvas, layout.systems, leftX, hPt, pdfDoc.document, gap);
+              _renderSinglePageToCanvas(
+                canvas,
+                config,
+                pageLayout,
+                hPt,
+                pdfDoc.document,
+                p,
+                leftX,
+                rightX,
+                gap,
+                strokeMm,
+                effectiveMetadata,
+              );
             },
           );
         },
@@ -53,6 +72,166 @@ Future<List<int>> emitPdf(
   }
 
   return pdfDoc.save();
+}
+
+/// Emit a complete saddle-stitch booklet PDF document byte stream.
+///
+/// Pairs pages 2-up per sheet side according to saddle-stitch imposition signatures.
+Future<Uint8List> emitBookletPdf(
+  PageConfig config,
+  PageLayout layout, {
+  int pageCount = 1,
+  DocumentMetadata? metadata,
+  BookletConfig bookletConfig = const BookletConfig(),
+}) async {
+  final effectiveMetadata = metadata ?? layout.metadata;
+  final pdfDoc = pw.Document();
+
+  final wPt = config.effectiveWidth * _mmToPt;
+  final hPt = config.effectiveHeight * _mmToPt;
+
+  final gap = config.staffConfig.lineGapMm;
+  final strokeMm = config.staffConfig.lineThicknessPt * 25.4 / 72.0;
+  final leftX = config.margins.left;
+  final rightX = config.effectiveWidth - config.margins.right;
+
+  // Determine physical sheet dimensions in Pt
+  final double sheetWidthPt;
+  final double sheetHeightPt;
+  if (bookletConfig.sheetMode == BookletSheetMode.doubleSize) {
+    sheetWidthPt = wPt * 2.0;
+    sheetHeightPt = hPt;
+  } else {
+    // sameSizeScaled: landscape sheet of the same paper size
+    if (config.orientation == PageOrientation.portrait) {
+      sheetWidthPt = hPt;
+      sheetHeightPt = wPt;
+    } else {
+      sheetWidthPt = wPt * 2.0;
+      sheetHeightPt = hPt;
+    }
+  }
+
+  final sheetFormat = pdf.PdfPageFormat(sheetWidthPt, sheetHeightPt, marginAll: 0);
+  final halfSheetWidthPt = sheetWidthPt / 2.0;
+
+  final spreads = BookletImpositionCalculator.computeSpreads(pageCount);
+
+  // Pre-cache layouts for referenced pages
+  final pageLayouts = <int, PageLayout>{};
+  PageLayout getLayoutForPage(int p) {
+    return pageLayouts.putIfAbsent(p, () {
+      return (p == layout.pageIndex)
+          ? layout
+          : computeLayout(config, pageIndex: p, metadata: effectiveMetadata);
+    });
+  }
+
+  pw.Widget buildPageSlot(int? pageIndex) {
+    if (pageIndex == null) {
+      return pw.Container(width: halfSheetWidthPt, height: sheetHeightPt);
+    }
+    final pageLayout = getLayoutForPage(pageIndex);
+    return pw.Container(
+      width: halfSheetWidthPt,
+      height: sheetHeightPt,
+      child: pw.Center(
+        child: pw.FittedBox(
+          fit: pw.BoxFit.contain,
+          child: pw.CustomPaint(
+            size: pdf.PdfPoint(wPt, hPt),
+            painter: (pdf.PdfGraphics canvas, pdf.PdfPoint size) {
+              _renderSinglePageToCanvas(
+                canvas,
+                config,
+                pageLayout,
+                hPt,
+                pdfDoc.document,
+                pageIndex,
+                leftX,
+                rightX,
+                gap,
+                strokeMm,
+                effectiveMetadata,
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  for (final spread in spreads) {
+    pdfDoc.addPage(
+      pw.Page(
+        pageFormat: sheetFormat,
+        build: (pw.Context context) {
+          return pw.Stack(
+            children: [
+              pw.Row(
+                children: [
+                  buildPageSlot(spread.leftPageIndex),
+                  buildPageSlot(spread.rightPageIndex),
+                ],
+              ),
+              if (bookletConfig.drawSpineTicks)
+                pw.CustomPaint(
+                  size: pdf.PdfPoint(sheetWidthPt, sheetHeightPt),
+                  painter: (pdf.PdfGraphics canvas, pdf.PdfPoint size) {
+                    canvas.saveContext();
+                    canvas.setStrokeColor(pdf.PdfColors.grey400);
+                    canvas.setLineWidth(0.5);
+
+                    final midX = halfSheetWidthPt;
+                    final tickPt = 3.0 * _mmToPt;
+
+                    // Top spine tick mark (3mm)
+                    canvas.drawLine(midX, sheetHeightPt, midX, sheetHeightPt - tickPt);
+                    // Bottom spine tick mark (3mm)
+                    canvas.drawLine(midX, 0, midX, tickPt);
+                    canvas.strokePath();
+
+                    canvas.restoreContext();
+                  },
+                ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  return pdfDoc.save();
+}
+
+void _renderSinglePageToCanvas(
+  pdf.PdfGraphics canvas,
+  PageConfig config,
+  PageLayout pageLayout,
+  double hPt,
+  pdf.PdfDocument document,
+  int pageIndex,
+  double leftX,
+  double rightX,
+  double gap,
+  double strokeMm,
+  DocumentMetadata? metadata,
+) {
+  _drawScoreTypography(
+    canvas,
+    config,
+    pageLayout,
+    hPt,
+    document,
+    pageIndex,
+    leftX,
+    rightX,
+    metadata,
+  );
+  _drawSystemConnectors(canvas, config, pageLayout.systems, hPt);
+  _drawStaffLines(canvas, pageLayout.systems, leftX, rightX, gap, strokeMm, hPt);
+  _drawClefs(canvas, pageLayout.systems, leftX, gap, config.engraving, hPt);
+  _drawStaffLabels(canvas, pageLayout.systems, leftX, hPt, document, gap, pageIndex);
 }
 
 
@@ -137,12 +316,13 @@ void _drawStaffLabels(
   double baseLeftX,
   double hPt,
   pdf.PdfDocument doc,
-  double lineGapMm,
-) {
+  double lineGapMm, [
+  int pageIndex = 0,
+]) {
   for (var sysIdx = 0; sysIdx < systems.length; sysIdx++) {
     final system = systems[sysIdx];
     final leftX = baseLeftX + system.leftIndentMm;
-    final bool isFirstSystem = sysIdx == 0;
+    final bool isFirstSystem = (pageIndex == 0 && sysIdx == 0);
 
     // 1. Group labels (Outer tier or section header above staff)
     for (final group in system.groupPlacements) {
@@ -336,6 +516,28 @@ void _drawLeftAlignedText({
   }
 }
 
+/// Helper method to draw centered single or multi-line text blocks on PDF.
+void _drawCenteredText({
+  required pdf.PdfGraphics canvas,
+  required pdf.PdfFont font,
+  required double fontPt,
+  required String text,
+  required double centerXPt,
+  required double baselineYPt,
+}) {
+  final safeText = _sanitizePdfText(text);
+  final lines = safeText.split('\n');
+  final lineHeightPt = fontPt * 1.2;
+  for (var i = 0; i < lines.length; i++) {
+    final line = lines[i];
+    final textMetrics = font.stringMetrics(line);
+    final textWidthPt = textMetrics.width * fontPt;
+    final drawXPt = centerXPt - (textWidthPt / 2.0);
+    final drawYPt = baselineYPt - (i * lineHeightPt);
+    canvas.drawString(font, fontPt, line, drawXPt, drawYPt);
+  }
+}
+
 /// Helper method to draw right-aligned single or multi-line text blocks on PDF.
 void _drawRightAlignedText({
   required pdf.PdfGraphics canvas,
@@ -343,14 +545,16 @@ void _drawRightAlignedText({
   required double fontPt,
   required String text,
   required double rightAnchorXPt,
-  required double centerYPt,
+  double? centerYPt,
+  double? baselineYPt,
 }) {
   final safeText = _sanitizePdfText(text);
   final lines = safeText.split('\n');
   final lineHeightPt = fontPt * 1.2;
-  final totalBlockHeightPt = (lines.length - 1) * lineHeightPt;
-  final startBaselineYPt =
-      centerYPt + (totalBlockHeightPt / 2.0) - (fontPt * 0.3);
+  final double startBaselineYPt = baselineYPt ??
+      ((centerYPt ?? 0.0) +
+          (((lines.length - 1) * lineHeightPt) / 2.0) -
+          (fontPt * 0.3));
 
   for (var i = 0; i < lines.length; i++) {
     final line = lines[i];
@@ -360,6 +564,164 @@ void _drawRightAlignedText({
     final drawYPt = startBaselineYPt - (i * lineHeightPt);
     canvas.drawString(font, fontPt, line, drawXPt, drawYPt);
   }
+}
+
+/// Draws professional score typography (Title block on page 1, page numbers on subsequent pages,
+/// and copyright at the bottom) according to Elaine Gould engraving standards.
+void _drawScoreTypography(
+  pdf.PdfGraphics canvas,
+  PageConfig config,
+  PageLayout layout,
+  double hPt,
+  pdf.PdfDocument doc,
+  int pageIndex,
+  double leftX,
+  double rightX,
+  DocumentMetadata? metadata,
+) {
+  if (metadata == null || !metadata.hasPrintableTypography) return;
+
+  final centerXPt = ((leftX + rightX) / 2.0) * _mmToPt;
+  final leftXPt = leftX * _mmToPt;
+  final rightXPt = rightX * _mmToPt;
+
+  final titleFont = pdf.PdfFont.timesBold(doc);
+  final italicFont = pdf.PdfFont.timesItalic(doc);
+  final regularFont = pdf.PdfFont.times(doc);
+  final boldFont = pdf.PdfFont.timesBold(doc);
+
+  if (pageIndex == 0) {
+    canvas.saveContext();
+    canvas.setFillColor(pdf.PdfColors.black);
+
+    // 1. Work Title
+    if (metadata.hasPrintableTitle) {
+      final titleYMm = config.margins.top + 6.0;
+      final titleYPt = hPt - (titleYMm * _mmToPt);
+      _drawCenteredText(
+        canvas: canvas,
+        font: titleFont,
+        fontPt: ScoreTypographyMetrics.titleFontSizePt,
+        text: metadata.title.trim(),
+        centerXPt: centerXPt,
+        baselineYPt: titleYPt,
+      );
+    }
+
+    // 2. Subtitle / Movement / Opus
+    if (metadata.hasPrintableSubtitle) {
+      final subtitleYMm = config.margins.top + 13.0;
+      final subtitleYPt = hPt - (subtitleYMm * _mmToPt);
+      _drawCenteredText(
+        canvas: canvas,
+        font: italicFont,
+        fontPt: ScoreTypographyMetrics.subtitleFontSizePt,
+        text: metadata.subtitle.trim(),
+        centerXPt: centerXPt,
+        baselineYPt: subtitleYPt,
+      );
+    }
+
+    // Reference top of the first system
+    final firstSystemTopY = layout.systems.isNotEmpty
+        ? layout.systems.first.topY
+        : (config.margins.top + layout.headerHeadroomMm);
+
+    // 3. Poet / Lyricist / Instrumentation (Left-aligned)
+    if (metadata.hasPrintableLyricist) {
+      final lyricistText = metadata.lyricist.trim();
+      final lyricistYMm = firstSystemTopY - 3.5;
+      final lyricistYPt = hPt - (lyricistYMm * _mmToPt);
+      _drawLeftAlignedText(
+        canvas: canvas,
+        font: regularFont,
+        fontPt: ScoreTypographyMetrics.contributorFontSizePt,
+        text: lyricistText,
+        leftAnchorXPt: leftXPt,
+        baselineYPt: lyricistYPt,
+      );
+    }
+
+    // 4. Composer / Arranger (Right-aligned)
+    final hasComp = metadata.hasPrintableComposer;
+    final hasArr = metadata.hasPrintableArranger;
+    if (hasComp || hasArr) {
+      final composerText = metadata.composer.trim();
+      final arrangerText = metadata.arranger.trim();
+      if (hasComp && hasArr) {
+        final compYMm = firstSystemTopY - 6.5;
+        final arrYMm = firstSystemTopY - 2.5;
+        _drawRightAlignedText(
+          canvas: canvas,
+          font: boldFont,
+          fontPt: ScoreTypographyMetrics.contributorFontSizePt,
+          text: composerText,
+          rightAnchorXPt: rightXPt,
+          baselineYPt: hPt - (compYMm * _mmToPt),
+        );
+        _drawRightAlignedText(
+          canvas: canvas,
+          font: italicFont,
+          fontPt: ScoreTypographyMetrics.copyrightFontSizePt,
+          text: 'arr. $arrangerText',
+          rightAnchorXPt: rightXPt,
+          baselineYPt: hPt - (arrYMm * _mmToPt),
+        );
+      } else if (hasComp) {
+        final compYMm = firstSystemTopY - 3.5;
+        _drawRightAlignedText(
+          canvas: canvas,
+          font: boldFont,
+          fontPt: ScoreTypographyMetrics.contributorFontSizePt,
+          text: composerText,
+          rightAnchorXPt: rightXPt,
+          baselineYPt: hPt - (compYMm * _mmToPt),
+        );
+      } else {
+        final arrYMm = firstSystemTopY - 3.5;
+        _drawRightAlignedText(
+          canvas: canvas,
+          font: italicFont,
+          fontPt: ScoreTypographyMetrics.contributorFontSizePt,
+          text: 'arr. $arrangerText',
+          rightAnchorXPt: rightXPt,
+          baselineYPt: hPt - (arrYMm * _mmToPt),
+        );
+      }
+    }
+
+    // 5. Copyright (Bottom Centered)
+    if (metadata.hasPrintableCopyright) {
+      final copyrightYMm = config.effectiveHeight - config.margins.bottom + 4.0;
+      final copyrightYPt = hPt - (copyrightYMm * _mmToPt);
+      _drawCenteredText(
+        canvas: canvas,
+        font: regularFont,
+        fontPt: ScoreTypographyMetrics.copyrightFontSizePt,
+        text: metadata.copyright.trim(),
+        centerXPt: centerXPt,
+        baselineYPt: copyrightYPt,
+      );
+    }
+
+    canvas.restoreContext();
+  } else if (metadata.hasPrintablePageNumbers) {
+    // Running header for subsequent pages (e.g. "- 2 -")
+    canvas.saveContext();
+    canvas.setFillColor(pdf.PdfColors.black);
+    final pageNumYMm = config.margins.top - 4.0;
+    final pageNumYPt = hPt - (pageNumYMm * _mmToPt);
+    _drawCenteredText(
+      canvas: canvas,
+      font: regularFont,
+      fontPt: 9.0,
+      text: '- ${pageIndex + 1} -',
+      centerXPt: centerXPt,
+      baselineYPt: pageNumYPt,
+    );
+    canvas.restoreContext();
+  }
+
 }
 
 /// Helper method to draw system connectors (braces, brackets, sub-brackets,

@@ -1,0 +1,98 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - dev
+  pull_request:
+    branches:
+      - master
+      - dev
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Static Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: |
+          cd packages/sarvmd_core && flutter pub get
+          cd ../../apps/sarvmd_cli && dart pub get
+          cd ../../apps/sarvmd_ui && flutter pub get
+
+      - name: Run Workspace Static Analysis
+        run: dart analyze
+
+  test-core:
+    name: Test Engine (sarvmd_core)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+        working-directory: packages/sarvmd_core
+
+      - name: Run Tests
+        run: flutter test
+        working-directory: packages/sarvmd_core
+
+  test-cli:
+    name: Test CLI (sarvmd_cli)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Dart SDK
+        uses: dart-lang/setup-dart@v1
+
+      - name: Install dependencies
+        run: dart pub get
+        working-directory: apps/sarvmd_cli
+
+      - name: Run Tests
+        run: dart test
+        working-directory: apps/sarvmd_cli
+
+  test-ui:
+    name: Test UI (sarvmd_ui)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+        working-directory: apps/sarvmd_ui
+
+      - name: Run Tests
+        run: flutter test
+        working-directory: apps/sarvmd_ui

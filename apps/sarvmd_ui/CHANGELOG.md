@@ -9,6 +9,78 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Touch Screen Horizontal Page Swipe Gestures & Glassmorphic HUD Toast**:
+  - Added horizontal swipe navigation on touch screens and mobile displays:
+    - 1-finger horizontal fling or displacement drag in `single` and `facingSpread` page modes.
+    - 2-finger horizontal swipe/fling at any zoom level.
+    - Edge-swipe detection honoring Gouldian multi-page flow.
+    - Automatic spread-by-spread jumping in `facingSpread` mode and page-by-page in `single` mode.
+    - Tactile haptic feedback (`HapticFeedback.selectionClick()` / `HapticFeedback.lightImpact()`).
+    - Floating frosted glassmorphic HUD toast displaying page turn feedback (`Page 2 of 3`, `First page`, `Last page`) with automatic 900 ms dismiss timer.
+    - Toggle switch `pageSwipeGestures` in `ViewPanel` and `DocumentSettingsGroup` (Page Setup) with SharedPreferences persistence.
+    - Full English and Persian localization keys (`pageSwipeGestures`, `pageSwipeGesturesTooltip`, `swipeTurnedToPage`, `swipeFirstPageReached`, `swipeLastPageReached`).
+- **Direct Native Print Workflow (`Ctrl+P` / `⌘P` & File Menu)**:
+  - Added native `Print…` entry in `FileMenu` and wired global desktop shortcuts (`Ctrl+P` on Linux/Windows, `Cmd+P` on macOS) via `PrintIntent` in `ShortcutGateway`.
+  - Implemented `ExportService.printScore` generating high-resolution vector PDF in temporary cache and invoking the host OS system print dialog / PDF viewer via `url_launcher`.
+  - Added bilingual localization keys (`menuPrint`: "Print…", "چاپ…").
+  - Documented `Ctrl+P` / `⌘P` in `KeyboardShortcutsDialog` under the File category.
+- **Multi-Page SVG Export Support in `ExportDialog`**:
+  - Added export options when saving SVG format with multi-page scores: users can choose between exporting all pages as a batch of numbered files (`score_p1.svg`, `score_p2.svg`…) or exporting only the currently active page.
+  - Added `ExportService.exportAllPagesToSvg` and `ExportService.exportSinglePageToSvg`.
+- **Saddle-Stitch Booklet Imposition in `ExportDialog` & `ExportService`**:
+  - Added "Impose as Foldable Booklet" toggle in `ExportDialog` when PDF format is selected.
+  - Interactive signature badge dynamically calculating total padded pages, physical sheets, and sides (e.g. "4 pages imposed on 1 sheet(s) (2 sides)").
+  - Support for `BookletSheetMode.doubleSize` (1:1 scale onto double sheet, e.g. A3) and `BookletSheetMode.sameSizeScaled` (scaled 2-up onto standard sheet, e.g. A4).
+  - Subtle hairline spine fold ticks at top and bottom edges for precise manual and mechanical folding.
+  - Full bilingual English and Persian localization.
+- **Multi-Page Canvas Arrangement Modes (Single, Facing Spread, Continuous Flow, Grid)**:
+  - Created top-level `ScoreArrangementCanvas` supporting 5 distinct Gouldian and workflow-optimized layout arrangement modes:
+    - `single`: Focused, single-page presentation centered on the canvas.
+    - `facingSpread`: Authentic two-page book spread honoring Gouldian engraving conventions (Spread 0: Page 1 on recto with subtle verso placeholder; Spread $S$: Page $2S$ verso | Page $2S+1$ recto separated by an 18 mm book spine gutter).
+    - `continuousVertical`: Continuous vertical ribbon stacking all manuscript sheets top-to-bottom with 32 px drop-shadow spacing.
+    - `continuousHorizontal`: Continuous horizontal ribbon arranging all pages side-by-side with 32 px spacing.
+    - `grid`: Matrix contact sheet overview grouping pages into customizable column chunks (`gridColumns`, 1 to 6).
+  - **Interactive Page Activation & Badges**: Integrated active page border highlights and floating page badges (`p. 1`, `p. 2`…) in multi-page modes with seamless tap-to-activate page switching (`onPageTapped`).
+  - **Floating Canvas Pill Quick Switcher**: Integrated arrangement mode selector popup directly into the glassmorphic `CanvasPageNavigator` pill on the scoring canvas.
+  - **Desktop ViewPanel & Mobile Page Setup Integration**:
+    - Added dedicated `Page Arrangement` section with sliding animated segmented buttons and grid column stepper in `ViewPanel`.
+    - Added responsive arrangement chip selector directly within `DocumentSettingsGroup` (Page Setup) in `SettingsPanel` (touch drawer) and pointer sidebar.
+  - **Auto-Focus Active Page on Navigation**:
+    - Implemented mathematical camera centering in `CanvasZoomCalculator.computePageCenter` and `computePageFocusMatrix`, calculating canvas-space bounding centers across all 5 arrangement modes while preserving user zoom level.
+    - Added buttery smooth 250 ms `CurvedAnimation(curve: Curves.easeOutCubic)` camera panning in `PointerEditorScreen` and `TouchCanvasArea` triggered whenever the active page changes (via `CanvasPageNavigator`, keyboard shortcuts `PageDown`/`PageUp`, or tapping page badges).
+    - Added configurable `autoFocusOnPageChange` toggle in `ViewState`/`ViewCubit` with SharedPreferences persistence, surfaced in `ViewPanel`, `DocumentSettingsGroup`, and the floating `CanvasPageNavigator` pill quick-menu.
+    - Added bilingual English (`Auto-Focus Active Page`) and Persian (`تمرکز خودکار روی صفحه فعال`) localization strings.
+  - **State & SharedPreferences Persistence**: Extended `ViewState` and `ViewCubit` with `pageArrangement` and `gridColumns` properties with instant local persistence.
+  - **Bilingual Localization**: Added full English (`app_en.arb`) and Persian (`app_fa.arb`) localization keys for all 5 modes, section descriptions, and grid column counters.
+- **Multi-Page Canvas Navigation & Interactive Pagination**:
+  - Implemented floating, glassmorphic `CanvasPageNavigator` widget providing seamless page stepping (`< Page X of Y >`), direct sheet increment (`+`), and sheet removal (`-`) directly on the scoring canvas.
+  - Enabled multi-page layout rendering across `PreviewCanvas`, automatically computing Gouldian title blocks and first-system indentation on Page 1 while restoring full staff headroom (0 mm) and running headers (`- 2 -`, `- 3 -`) on Page 2+.
+  - Integrated document page count management directly into `DocumentSettingsGroup` (Page Setup) featuring an interactive stepper and quick preset chips (`1`, `2`, `4`, `8`), wired to `DocumentCubit.setPageCount`.
+  - Added global multi-page keyboard navigation intents (`NextPageIntent`, `PreviousPageIntent`) bound to `PageDown` / `Alt+ArrowRight` and `PageUp` / `Alt+ArrowLeft` in `ShortcutGateway`, and documented them in `KeyboardShortcutsDialog`.
+  - Synced multi-page settings with `ExportDialog` so export flows default to the active document page count.
+- **Printable Score Typography Canvas & Export Integration**:
+  - Implemented `_paintScoreTypography` in `PreviewCanvas` rendering title, subtitle, composer, arranger, lyricist, bottom copyright, and running page numbers in real time.
+  - Wired `DocumentCubit.layout` with document metadata and updated `PointerEditorScreen` and `TouchCanvasArea` canvas bindings.
+  - Connected `ExportService` (`exportTex`, `exportPdf`, `exportSvg`) to pass active score metadata to compiler emitters.
+- **Score Information & Typography Configuration Section & Rationalized UX**:
+  - Added dedicated `ScoreTypographySettingsGroup` widget positioned directly below Page Setup in both the Pointer Editor left sidebar (`CollapsibleSectionCard`) and Touch Drawer (`SettingsPanel`).
+  - **Progressive Disclosure Architecture**: Prominently features primary work credits (Title, Composer) while nesting situational secondary credits (Subtitle, Arranger, Lyricist) within a smooth animated progressive disclosure accordion that automatically expands whenever secondary credits contain text.
+  - **Animated Master Switch Collapse**: Toggling off the master Header Block smoothly collapses first-page inputs using `AnimatedSize` rather than occupying dead vertical sidebar space, displaying an informative notice.
+  - **Live Gouldian Headroom Badge**: Integrated dynamic headroom badge showing calculated millimetric clearance reserved on page 1 for title typography (`ScoreTypographyMetrics.computeHeaderHeadroomMm`).
+  - **Reactive Eye Toggles**: Eye visibility buttons dynamically reflect input state (ghosted/muted when empty with "Enter text to display" tooltip, active primary when visible, and strike-through when hidden on score).
+  - Added master Header Block and Page Numbers switches, and "Advanced Properties…" shortcut button.
+  - Added `SettingsSection.scoreTypography` to `ViewState` and wired SectionSpine 8-bead navigation.
+  - Enhanced `DocumentPropertiesDialog` with inline show/hide switches for all metadata fields.
+  - Added complete English (`app_en.arb`) and Persian (`app_fa.arb`) localization strings.
+- **UI Application Manual & Development Guide (`apps/sarvmd_ui/README.md`)**:
+  - Published comprehensive user and contributor manual covering the three-tier Cubit state architecture (`WorkspaceCubit`, `DocumentCubit`, `ViewCubit`), responsive form factors (desktop, tablet, phone), live vector canvas, CAD crosshairs, millimeter HUD bubbles, and complete keyboard shortcuts reference table.
+  - Added build and runtime guides for Linux Desktop, Web (CanvasKit/WASM), Windows, and Android.
+- **Monorepo Architecture & Synchronized Versioning**:
+  - Decoupled changelog tracking across monorepo packages into dedicated domain changelogs (`packages/sarvmd_core/CHANGELOG.md`, `apps/sarvmd_cli/CHANGELOG.md`, `apps/sarvmd_ui/CHANGELOG.md`).
+  - Standardized package manifest versions (`0.12.4`) across `sarvmd_core`, `sarvmd_cli`, and `sarvmd_ui`.
+  - Added centralized documentation navigation hubs in root [`README.md`](file:///home/ono/Projects/sarvmd/README.md) and [`README.fa.md`](file:///home/ono/Projects/sarvmd/README.fa.md).
+
 ## [0.12.4] - 2026-10-22
 
 ### Added

@@ -24,10 +24,29 @@ enum SettingsSection {
   mainMenu,
   profiles,
   pageSetup,
+  scoreTypography,
   margins,
   staffSpacing,
   systemHierarchy,
   export,
+}
+
+/// Defines how pages of the music manuscript are arranged in the 2D workspace.
+enum PageArrangementMode {
+  /// Focused single sheet centered on canvas.
+  single,
+
+  /// Two-page book spread: Page 1 on the right (recto), then [2 | 3], [4 | 5].
+  facingSpread,
+
+  /// Continuous vertical ribbon: pages stacked top-to-bottom.
+  continuousVertical,
+
+  /// Continuous horizontal ribbon: pages lined up left-to-right.
+  continuousHorizontal,
+
+  /// Multi-page matrix / contact sheet overview.
+  grid,
 }
 
 /// The immutable state container for user interface display preferences.
@@ -46,6 +65,11 @@ class ViewState {
   final Set<int> collapsedHierarchyGroups;
   final Set<String> selectedHierarchyStaffUids;
   final SettingsSection? jumpTargetSection;
+  final int currentPageIndex;
+  final PageArrangementMode pageArrangement;
+  final int gridColumns;
+  final bool autoFocusOnPageChange;
+  final bool pageSwipeGestures;
 
   const ViewState({
     this.themeMode = ThemeMode.system,
@@ -61,6 +85,7 @@ class ViewState {
     this.expandedPointerSections = const {
       SettingsSection.profiles,
       SettingsSection.pageSetup,
+      SettingsSection.scoreTypography,
       SettingsSection.margins,
       SettingsSection.staffSpacing,
       SettingsSection.systemHierarchy,
@@ -68,6 +93,11 @@ class ViewState {
     this.collapsedHierarchyGroups = const {},
     this.selectedHierarchyStaffUids = const {},
     this.jumpTargetSection,
+    this.currentPageIndex = 0,
+    this.pageArrangement = PageArrangementMode.single,
+    this.gridColumns = 2,
+    this.autoFocusOnPageChange = true,
+    this.pageSwipeGestures = true,
   });
 
   ViewState copyWith({
@@ -88,6 +118,11 @@ class ViewState {
     Set<String>? selectedHierarchyStaffUids,
     SettingsSection? jumpTargetSection,
     bool clearJumpTarget = false,
+    int? currentPageIndex,
+    PageArrangementMode? pageArrangement,
+    int? gridColumns,
+    bool? autoFocusOnPageChange,
+    bool? pageSwipeGestures,
   }) {
     return ViewState(
       themeMode: themeMode ?? this.themeMode,
@@ -113,6 +148,12 @@ class ViewState {
       jumpTargetSection: clearJumpTarget
           ? null
           : (jumpTargetSection ?? this.jumpTargetSection),
+      currentPageIndex: currentPageIndex ?? this.currentPageIndex,
+      pageArrangement: pageArrangement ?? this.pageArrangement,
+      gridColumns: gridColumns ?? this.gridColumns,
+      autoFocusOnPageChange:
+          autoFocusOnPageChange ?? this.autoFocusOnPageChange,
+      pageSwipeGestures: pageSwipeGestures ?? this.pageSwipeGestures,
     );
   }
 

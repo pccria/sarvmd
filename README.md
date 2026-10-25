@@ -21,29 +21,36 @@ SarvMD is a music manuscript generator designed to provide a flexible environmen
 The motivation for SarvMD is to bridge the gap between static manuscript templates and the struggle of using complicated software to create manuscript layouts.
 SarvMD was designed to boost the creative and diverse workflow of musicians. It provides a flexible interface that stays out of your way, while offering granular control over every aspect of the layout.
 
+## Documentation & Manuals
+
+Comprehensive user and developer documentation is available for each component:
+
+* 📖 **[CLI User Manual & How-To Guide](apps/sarvmd_cli/README.md)**: Command-line reference, single-character shortcuts (`g`, `c`, `i`, `p`), batch rendering, and CI/CD automation recipes.
+* 🛠️ **[Core Engine API Reference](packages/sarvmd_core/README.md)**: Developer guide for embedding `sarvmd_core`, constructing `SystemLayout` trees, and compiling vector PDF/SVG documents.
+* 🖥️ **[UI Application Manual & Development Guide](apps/sarvmd_ui/README.md)**: User guide covering canvas drafting, Rastral sizing, hierarchical labeling, and desktop/web builds.
+* 🎵 **[Musical Engraving Terminology Guide](TERMINOLOGY.md)**: Comprehensive glossary of Gouldian engraving concepts, barlines, Rastral sizes, and brackets.
+* 📜 **[Contributing Guidelines](CONTRIBUTING.md)**: Code contribution standards and Developer Certificate of Origin (DCO) setup.
+
 ## How It Works
 SarvMD operates through a clean, layered pipeline to ensure reliable rendering and positioning:
 
-1. **Config**: The user defines the document's structure, including page size, layout type, staff dimensions, and clef settings.
-2. **Layout Engine**: A core geometric engine calculates staff positions and symbol anchor points based on the configuration.
-3. **Emitter**: Translates the layout data into specific rendering commands:
-   - For PDF export, it generates LaTeX `\pdfliteral` and `picture` commands.
-   - For the UI, it generates `CustomPainter` path commands.
-4. **Compiler/Renderer**: 
-   - The **CLI** uses `pdflatex` to compile the LaTeX into a scalable, vector-based PDF.
-   - The **UI** utilizes Flutter's canvas to render custom Bézier paths, providing an immediate and accurate preview of the manuscript.
+1. **Config & Hierarchical Tree**: The user or code defines the manuscript geometry (`PageConfig`), paper size, Rastral line spacing, and composite staff tree (`SystemLayout`).
+2. **Layout Engine**: A zero-dependency geometric calculator (`SystemLayoutCalculator`) computes millimeter coordinates, dynamic label indentation, and bracket clearances based on Gouldian engraving principles.
+3. **Emitter & Compiler**:
+   - **Native Vector PDF & SVG**: Emits resolution-independent vector PDF and SVG graphics directly in memory via `ScoreCompiler` without requiring any external tools.
+   - **LaTeX Source**: Emits standalone `.tex` files with `\pdfliteral` and `picture` environments with optional `pdflatex` compilation.
+   - **Interactive UI Canvas**: Renders Bézier paths and SMuFL glyphs natively on the Flutter canvas with sub-millimeter precision.
 
 ## Technical Brief
 
 SarvMD is architected as a modular Dart Workspace (monorepo). This structure maintains a single source of truth for the core logic across all interfaces.
 
 ### Workspace Structure
-- **`packages/sarvmd_core`**: The foundational engine. It contains the configuration models, layout calculations, symbol path data, LaTeX emission logic, and PDF compilation wrappers. It operates independently of any UI framework.
-- **`apps/sarvmd_ui`**: A Flutter-based desktop editor, optimized primarily for Linux and Web. Key technical details include:
-  - An **Editor-Workspace** pattern that separates the tooling from the canvas.
-  - **State Management**: A dual-notifier system that decouples the document state (`ConfigNotifier`) from the user's viewport and zoom settings (`ViewNotifier`).
-  - **Premium UI**: A dynamic, accent-based theme system using pastel seeds, complemented by interactive controls and practical features like "mouse wings" alignment crosshairs.
-- **`apps/sarvmd_cli`**: A lightweight command-line interface for headless workflows and batch generation.
+- **[`packages/sarvmd_core`](packages/sarvmd_core/README.md)**: The foundational engine. It contains the configuration models, layout calculations, symbol path data, vector PDF/SVG emitters, and `.sarv` document serialization. Operates independently of any UI framework.
+- **[`apps/sarvmd_ui`](apps/sarvmd_ui/README.md)**: A Flutter-based cross-platform studio optimized for Linux desktop, Web, Windows, and Android:
+  - **State Management**: A decoupled Cubit architecture (`WorkspaceCubit` for multi-tab sessions, `DocumentCubit` with undo/redo history, and `ViewCubit` for viewport controls).
+  - **Premium UI**: Dynamic accent theming, CAD alignment crosshairs, millimeter HUD chips, and two-tier progressive disclosure panels.
+- **[`apps/sarvmd_cli`](apps/sarvmd_cli/README.md)**: A scriptable, headless command-line interface with single-character shortcuts (`g`, `c`, `i`, `p`) for batch score generation and CI/CD pipelines.
 
 ### Design Philosophy
 - **Desktop-First**: The UI is optimized for desktop environments to support detailed layout adjustments, fluid keyboard-and-mouse navigation, and seamless system-level export handling.

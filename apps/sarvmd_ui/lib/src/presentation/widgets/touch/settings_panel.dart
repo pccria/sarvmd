@@ -18,6 +18,7 @@ import '../panels/export_panel.dart';
 import '../staff/document_settings_group.dart';
 import '../staff/margins_settings_group.dart';
 import '../staff/profile_picker.dart';
+import '../staff/score_typography_settings_group.dart';
 import '../staff/staff_spacing_group.dart';
 import '../../../logic/view/view_state.dart';
 import '../canvas/canvas_zoom_calculator.dart';
@@ -458,6 +459,14 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 onTap: () => _navigateTo(context, SettingsSection.pageSetup),
               ),
               _DrawerCategoryTile(
+                icon: Icons.title_rounded,
+                title: l10n.sectionScoreTypography,
+                subtitle: isDense ? null : l10n.sectionScoreTypographySubtitle,
+                isDense: isDense,
+                onTap: () =>
+                    _navigateTo(context, SettingsSection.scoreTypography),
+              ),
+              _DrawerCategoryTile(
                 icon: Icons.space_dashboard_outlined,
                 title: l10n.marginsLabel,
                 subtitle: isDense ? null : 'Paper margins & padding',
@@ -532,6 +541,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
     final docState = context.watch<DocumentCubit>().state;
     final cubit = context.read<DocumentCubit>();
     final config = docState.config;
+    final viewState = context.watch<ViewCubit>().state;
+    final viewCubit = context.read<ViewCubit>();
 
     switch (currentSection) {
       case SettingsSection.profiles:
@@ -549,6 +560,24 @@ class _SettingsPanelState extends State<SettingsPanel> {
           onPageSizeChanged: cubit.updatePageSize,
           orientation: config.orientation,
           onOrientationChanged: cubit.updateOrientation,
+          pageCount: cubit.state.pageCount,
+          onPageCountChanged: cubit.setPageCount,
+          arrangementMode: viewState.pageArrangement,
+          onArrangementModeChanged: viewCubit.setPageArrangement,
+          gridColumns: viewState.gridColumns,
+          onGridColumnsChanged: viewCubit.setGridColumns,
+          autoFocusOnPageChange: viewState.autoFocusOnPageChange,
+          onAutoFocusChanged: viewCubit.setAutoFocusOnPageChange,
+          pageSwipeGestures: viewState.pageSwipeGestures,
+          onPageSwipeGesturesChanged: viewCubit.setPageSwipeGestures,
+        );
+        break;
+
+      case SettingsSection.scoreTypography:
+        title = l10n.sectionScoreTypography;
+        body = ScoreTypographySettingsGroup(
+          metadata: cubit.state.metadata,
+          onMetadataChanged: cubit.updateMetadata,
         );
         break;
 
@@ -932,6 +961,10 @@ class _TouchSectionSpine extends StatelessWidget {
       icon: Icons.description_outlined,
     ),
     _SpineItem(
+      section: SettingsSection.scoreTypography,
+      icon: Icons.title_rounded,
+    ),
+    _SpineItem(
       section: SettingsSection.margins,
       icon: Icons.space_dashboard_outlined,
     ),
@@ -961,6 +994,8 @@ class _TouchSectionSpine extends StatelessWidget {
         return l10n.headerEnsembleProfiles;
       case SettingsSection.pageSetup:
         return l10n.pageSettings;
+      case SettingsSection.scoreTypography:
+        return l10n.sectionScoreTypography;
       case SettingsSection.margins:
         return l10n.marginsLabel;
       case SettingsSection.staffSpacing:

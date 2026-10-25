@@ -1586,6 +1586,48 @@ abstract class AppLocalizations {
   /// **'Export {format} ({pages} Pages)'**
   String exportButtonWithPagesLabel(String format, int pages);
 
+  /// No description provided for @bookletImpositionHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Saddle-Stitch Booklet (Imposition)'**
+  String get bookletImpositionHeader;
+
+  /// No description provided for @bookletToggleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Impose as Foldable Booklet'**
+  String get bookletToggleLabel;
+
+  /// No description provided for @bookletToggleSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pairs pages 2-up per sheet side for folded, stapled sheet music.'**
+  String get bookletToggleSubtitle;
+
+  /// No description provided for @bookletSheetModeDouble.
+  ///
+  /// In en, this message translates to:
+  /// **'Double Sheet (1:1, e.g. A3)'**
+  String get bookletSheetModeDouble;
+
+  /// No description provided for @bookletSheetModeScaled.
+  ///
+  /// In en, this message translates to:
+  /// **'Same Sheet (Scaled 2-up, e.g. A4)'**
+  String get bookletSheetModeScaled;
+
+  /// No description provided for @bookletSpineTicks.
+  ///
+  /// In en, this message translates to:
+  /// **'Spine fold tick marks'**
+  String get bookletSpineTicks;
+
+  /// No description provided for @bookletSignatureBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'{pages} pages imposed on {sheets} sheet(s) ({sides} sides)'**
+  String bookletSignatureBadge(int pages, int sheets, int sides);
+
   /// No description provided for @displayCalibrationTitle.
   ///
   /// In en, this message translates to:
@@ -1963,6 +2005,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save As…'**
   String get menuSaveAs;
+
+  /// No description provided for @menuPrint.
+  ///
+  /// In en, this message translates to:
+  /// **'Print…'**
+  String get menuPrint;
 
   /// No description provided for @unsavedChangesTitle.
   ///
@@ -2437,6 +2485,300 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Press back again to exit'**
   String get pressBackAgainToExit;
+
+  /// No description provided for @sectionScoreTypography.
+  ///
+  /// In en, this message translates to:
+  /// **'Score Information'**
+  String get sectionScoreTypography;
+
+  /// No description provided for @sectionScoreTypographySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Title, contributor credits, and score header engraving'**
+  String get sectionScoreTypographySubtitle;
+
+  /// No description provided for @scoreTypographyHeaderBlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Header Block'**
+  String get scoreTypographyHeaderBlock;
+
+  /// No description provided for @scoreTypographyHeaderBlockSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Master switch to render title and contributor credits on page 1'**
+  String get scoreTypographyHeaderBlockSubtitle;
+
+  /// No description provided for @scoreTypographyPageNumbers.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Page Numbers'**
+  String get scoreTypographyPageNumbers;
+
+  /// No description provided for @scoreTypographyPageNumbersSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Render running page numbers on subsequent pages'**
+  String get scoreTypographyPageNumbersSubtitle;
+
+  /// No description provided for @scoreTypographyVisibility.
+  ///
+  /// In en, this message translates to:
+  /// **'Visibility'**
+  String get scoreTypographyVisibility;
+
+  /// No description provided for @scoreTypographyShowOnScore.
+  ///
+  /// In en, this message translates to:
+  /// **'Show on score'**
+  String get scoreTypographyShowOnScore;
+
+  /// No description provided for @scoreTypographyHideOnScore.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide on score'**
+  String get scoreTypographyHideOnScore;
+
+  /// No description provided for @scoreTypographyMoreProperties.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced Properties…'**
+  String get scoreTypographyMoreProperties;
+
+  /// No description provided for @scoreTypographyMoreCredits.
+  ///
+  /// In en, this message translates to:
+  /// **'Additional Credits (Subtitle, Arranger, Lyricist)'**
+  String get scoreTypographyMoreCredits;
+
+  /// No description provided for @scoreTypographyLessCredits.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide Additional Credits'**
+  String get scoreTypographyLessCredits;
+
+  /// No description provided for @scoreTypographyHiddenNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden on score'**
+  String get scoreTypographyHiddenNotice;
+
+  /// No description provided for @scoreTypographyVisibleNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Visible on score'**
+  String get scoreTypographyVisibleNotice;
+
+  /// No description provided for @scoreTypographyRunningHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Page Numbers (p. 2+)'**
+  String get scoreTypographyRunningHeader;
+
+  /// No description provided for @scoreTypographyEnterTextNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter text to display on score'**
+  String get scoreTypographyEnterTextNotice;
+
+  /// No description provided for @scoreTypographyHeadroom.
+  ///
+  /// In en, this message translates to:
+  /// **'Header Headroom: {headroom} mm (Page 1)'**
+  String scoreTypographyHeadroom(String headroom);
+
+  /// No description provided for @scoreTypographyHeadroomNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Full-page staves (0.0 mm headroom)'**
+  String get scoreTypographyHeadroomNone;
+
+  /// No description provided for @scoreTypographyHeaderDisabledNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Header block is hidden. Staves occupy full first page.'**
+  String get scoreTypographyHeaderDisabledNotice;
+
+  /// No description provided for @pageNavigatorPageOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Page {current} of {total}'**
+  String pageNavigatorPageOf(int current, int total);
+
+  /// No description provided for @pageNavigatorPrevTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous Page (PageUp)'**
+  String get pageNavigatorPrevTooltip;
+
+  /// No description provided for @pageNavigatorNextTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Next Page (PageDown)'**
+  String get pageNavigatorNextTooltip;
+
+  /// No description provided for @pageNavigatorAddPageTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Page'**
+  String get pageNavigatorAddPageTooltip;
+
+  /// No description provided for @pageNavigatorRemovePageTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove Last Page'**
+  String get pageNavigatorRemovePageTooltip;
+
+  /// No description provided for @documentPageCountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Document Pages'**
+  String get documentPageCountLabel;
+
+  /// No description provided for @documentPageCountDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Total pages in score manuscript'**
+  String get documentPageCountDesc;
+
+  /// No description provided for @shortcutNextPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Next page'**
+  String get shortcutNextPage;
+
+  /// No description provided for @shortcutPreviousPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous page'**
+  String get shortcutPreviousPage;
+
+  /// No description provided for @pageArrangementSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Page Arrangement'**
+  String get pageArrangementSection;
+
+  /// No description provided for @pageArrangementSectionDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure how manuscript pages are displayed in the workspace'**
+  String get pageArrangementSectionDesc;
+
+  /// No description provided for @pageArrangementSingle.
+  ///
+  /// In en, this message translates to:
+  /// **'Single Page'**
+  String get pageArrangementSingle;
+
+  /// No description provided for @pageArrangementSingleDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Display one page at a time with quick navigation'**
+  String get pageArrangementSingleDesc;
+
+  /// No description provided for @pageArrangementFacing.
+  ///
+  /// In en, this message translates to:
+  /// **'Facing Pages'**
+  String get pageArrangementFacing;
+
+  /// No description provided for @pageArrangementFacingDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Display score in two-page book spreads (Page 1 recto)'**
+  String get pageArrangementFacingDesc;
+
+  /// No description provided for @pageArrangementContinuousVertical.
+  ///
+  /// In en, this message translates to:
+  /// **'Vertical Flow'**
+  String get pageArrangementContinuousVertical;
+
+  /// No description provided for @pageArrangementContinuousVerticalDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Continuous vertical flow of all manuscript pages'**
+  String get pageArrangementContinuousVerticalDesc;
+
+  /// No description provided for @pageArrangementContinuousHorizontal.
+  ///
+  /// In en, this message translates to:
+  /// **'Horizontal Ribbon'**
+  String get pageArrangementContinuousHorizontal;
+
+  /// No description provided for @pageArrangementContinuousHorizontalDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Continuous horizontal ribbon of all manuscript pages'**
+  String get pageArrangementContinuousHorizontalDesc;
+
+  /// No description provided for @pageArrangementGrid.
+  ///
+  /// In en, this message translates to:
+  /// **'Grid Overview'**
+  String get pageArrangementGrid;
+
+  /// No description provided for @pageArrangementGridDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Matrix overview of all pages across customizable columns'**
+  String get pageArrangementGridDesc;
+
+  /// No description provided for @pageArrangementColumnsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Grid Columns'**
+  String get pageArrangementColumnsLabel;
+
+  /// No description provided for @pageArrangementColumnsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 Column} other{{count} Columns}}'**
+  String pageArrangementColumnsCount(int count);
+
+  /// No description provided for @autoFocusOnPageChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-Focus Active Page'**
+  String get autoFocusOnPageChange;
+
+  /// No description provided for @autoFocusOnPageChangeTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatically centers the camera on the active page during navigation'**
+  String get autoFocusOnPageChangeTooltip;
+
+  /// No description provided for @pageSwipeGestures.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe to Turn Pages'**
+  String get pageSwipeGestures;
+
+  /// No description provided for @pageSwipeGesturesTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe horizontally on touch screens to navigate previous/next score pages'**
+  String get pageSwipeGesturesTooltip;
+
+  /// No description provided for @swipeTurnedToPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Page {page} of {total}'**
+  String swipeTurnedToPage(int page, int total);
+
+  /// No description provided for @swipeFirstPageReached.
+  ///
+  /// In en, this message translates to:
+  /// **'First page'**
+  String get swipeFirstPageReached;
+
+  /// No description provided for @swipeLastPageReached.
+  ///
+  /// In en, this message translates to:
+  /// **'Last page'**
+  String get swipeLastPageReached;
 }
 
 class _AppLocalizationsDelegate

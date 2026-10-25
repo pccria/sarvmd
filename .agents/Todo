@@ -146,3 +146,25 @@
         [x] Implemented double-tap to rename directly on staff instrument labels and replaced group headers in-place during label editing.
         [x] Standardized 6-point layout framework eliminating `RenderFlex` overflows in narrow sidebars (< 280px): bounded `LayoutBuilder` inspection, `PopupMenuButton` action compaction, flow-based `Wrap` layout, adaptive segment labels, and text ellipsis.
         [x] Authored architectural research document `labeling_and_hierarchy_panel_ux_maturation.md` and added unit/widget tests in `hierarchy_tree_utils_test.dart` and `system_hierarchy_panel_test.dart` (all 97 core tests and 254 UI tests passing).
+20. [x] Headless CLI Modernization (`sarvmd_cli`):
+    [x] Implemented modular `CommandRunner` architecture (`SarvCommandRunner`) following official Dart CLI standards (`dart-build-cli-app`).
+    [x] Integrated zero-dependency direct native vector PDF (`ScoreCompiler.compileToPdf`) and SVG (`ScoreCompiler.compileToSvg`) generation, eliminating external `pdflatex` requirement for standard workflows.
+    [x] Implemented `generate` command supporting all 15 built-in profiles, 6 paper sizes, orientation, page counts, and formats (`pdf`, `svg`, `tex`) with `--use-pdflatex` fallback.
+    [x] Implemented `compile` command to compile native `.sarv` project files headlessly to PDF, SVG, or LaTeX with automatic layout calculation.
+    [x] Implemented `inspect` command to display score metadata, geometry, engraving metrics, and staff hierarchies from `.sarv` files with human-readable and `--json` outputs.
+    [x] Implemented `profiles` (short: `p`) command to discover and filter all built-in staff profiles and presets with formatted table and `--json` outputs.
+    [x] Enforced strict command non-redundancy policy: eliminated all arbitrary synonym aliases and multi-character contractions, keeping strictly canonical long form + single-character short form (`generate`/`g`, `compile`/`c`, `inspect`/`i`, `profiles`/`p`).
+    [x] Maintained backward compatibility for legacy CLI flags (`-l`, `--layout`, `-s`, `-o`).
+    [x] Added comprehensive automated test suite (`runner_test.dart`, `generate_command_test.dart`, `compile_command_test.dart`, `inspect_command_test.dart`, `profiles_command_test.dart`) with all 29 CLI tests passing.
+21. [x] Documentation Suite & Developer/User Manuals:
+    [x] Authored comprehensive CLI User Manual (`apps/sarvmd_cli/README.md`) covering command reference, single-character shortcuts, exit codes, and 5 practical How-To recipes (Zero-Dependency Direct PDF Export, Continuous Compilation, Scripted Batch Generation, Project Geometry Extraction, Profiles Discovery).
+    [x] Authored Engine Architecture & Developer API Reference (`packages/sarvmd_core/README.md`) covering domain architecture, Gouldian engraving, layout calculation pipeline, vector emitters, and 5 developer recipes.
+    [x] Authored UI Application Manual (`apps/sarvmd_ui/README.md`) detailing three-tier UI architecture, Cubit state management, multi-platform input modalities, responsive breakpoints, and complete keyboard shortcuts matrix.
+    [x] Updated top-level documentation hubs (`README.md` and `README.fa.md`) with direct links to package documentation and zero-dependency vector pipeline highlights.
+22. [x] Synchronized Monorepo Architecture, Per-Package Changelogs & Automated CI/CD Release Workflows:
+    [x] Adopted synchronized lockstep monorepo versioning (Option A) across `packages/sarvmd_core`, `apps/sarvmd_cli`, and `apps/sarvmd_ui` with dedicated `CHANGELOG.md` files strictly capturing package-specific changes.
+    [x] Established strict Release Versioning Procedure in `.agents/AGENTS.md` and updated `scripts/full_validation_gate.sh` to validate `core`, `cli`, and `ui` packages with static analysis and automated test gates.
+    [x] Built `scripts/cut_release.sh` automating synchronized version bumps, changelog promotion from `[Unreleased]`, gate validation, and signed Git release tagging (`vX.Y.Z`).
+    [x] Created `.github/workflows/ci.yml` providing matrix validation (static analysis, engine tests, CLI tests, UI tests) across PRs and branch pushes.
+    [x] Created tag-driven `.github/workflows/release.yml` for multi-artifact releases (Android APK, Linux desktop bundle, standalone Linux CLI executable, SHA256 checksums, and aggregated release notes), replacing obsolete `release_android.yml`.
+

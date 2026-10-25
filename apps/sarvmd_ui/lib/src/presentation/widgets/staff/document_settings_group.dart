@@ -4,6 +4,7 @@ import '../../../core/theme/app_metrics.dart';
 import '../../../core/utils/unit_formatter.dart';
 import '../common/dropdown_setting.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../logic/view/view_state.dart';
 
 class DocumentSettingsGroup extends StatelessWidget {
   const DocumentSettingsGroup({
@@ -12,12 +13,32 @@ class DocumentSettingsGroup extends StatelessWidget {
     required this.onPageSizeChanged,
     required this.orientation,
     required this.onOrientationChanged,
+    this.pageCount = 1,
+    this.onPageCountChanged,
+    this.arrangementMode = PageArrangementMode.single,
+    this.onArrangementModeChanged,
+    this.gridColumns = 2,
+    this.onGridColumnsChanged,
+    this.autoFocusOnPageChange = true,
+    this.onAutoFocusChanged,
+    this.pageSwipeGestures = true,
+    this.onPageSwipeGesturesChanged,
   });
 
   final core.PageSize pageSize;
   final ValueChanged<core.PageSize> onPageSizeChanged;
   final core.PageOrientation orientation;
   final ValueChanged<core.PageOrientation> onOrientationChanged;
+  final int pageCount;
+  final ValueChanged<int>? onPageCountChanged;
+  final PageArrangementMode arrangementMode;
+  final ValueChanged<PageArrangementMode>? onArrangementModeChanged;
+  final int gridColumns;
+  final ValueChanged<int>? onGridColumnsChanged;
+  final bool autoFocusOnPageChange;
+  final ValueChanged<bool>? onAutoFocusChanged;
+  final bool pageSwipeGestures;
+  final ValueChanged<bool>? onPageSwipeGesturesChanged;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -38,8 +59,160 @@ class DocumentSettingsGroup extends StatelessWidget {
             current: orientation,
             onChanged: onOrientationChanged,
           ),
+          if (onPageCountChanged != null)
+            _PageCountRow(
+              pageCount: pageCount,
+              onChanged: onPageCountChanged!,
+            ),
+          if (onArrangementModeChanged != null)
+            _PageArrangementGroup(
+              arrangementMode: arrangementMode,
+              onArrangementModeChanged: onArrangementModeChanged!,
+              gridColumns: gridColumns,
+              onGridColumnsChanged: onGridColumnsChanged,
+              autoFocusOnPageChange: autoFocusOnPageChange,
+              onAutoFocusChanged: onAutoFocusChanged,
+              pageSwipeGestures: pageSwipeGestures,
+              onPageSwipeGesturesChanged: onPageSwipeGesturesChanged,
+            ),
         ],
       );
+}
+
+class _PageCountRow extends StatelessWidget {
+  const _PageCountRow({
+    required this.pageCount,
+    required this.onChanged,
+  });
+
+  final int pageCount;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
+      decoration: BoxDecoration(
+        color: cs.onSurface.withValues(alpha: AppOpacities.border),
+        borderRadius: BorderRadius.circular(10.0),
+        border: Border.all(
+          color: cs.outlineVariant.withValues(alpha: 0.4),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: 8.0,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.auto_stories_outlined, size: 18.0, color: cs.primary),
+              const SizedBox(width: 8.0),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.documentPageCountLabel,
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      l10n.documentPageCountDesc,
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        color: cs.onSurfaceVariant.withValues(alpha: 0.7),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.remove_rounded, size: 16.0),
+                    onPressed:
+                        pageCount > 1 ? () => onChanged(pageCount - 1) : null,
+                    visualDensity: VisualDensity.compact,
+                    splashRadius: 16.0,
+                  ),
+                  Container(
+                    constraints: const BoxConstraints(minWidth: 28.0),
+                    alignment: Alignment.center,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 6.0, vertical: 2.0),
+                    decoration: BoxDecoration(
+                      color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(6.0),
+                    ),
+                    child: Text(
+                      '$pageCount',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.bold,
+                        color: cs.primary,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.add_rounded, size: 16.0),
+                    onPressed:
+                        pageCount < 100 ? () => onChanged(pageCount + 1) : null,
+                    visualDensity: VisualDensity.compact,
+                    splashRadius: 16.0,
+                  ),
+                ],
+              ),
+            ],
+          ),
+          // Preset Quick Chips
+          Row(
+            spacing: 6.0,
+            children: [1, 2, 4, 8].map((count) {
+              final isSelected = pageCount == count;
+              return Expanded(
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(6.0),
+                  onTap: () => onChanged(count),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 4.0),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? cs.primary
+                          : cs.surfaceContainerHighest.withValues(alpha: 0.35),
+                      borderRadius: BorderRadius.circular(6.0),
+                      border: Border.all(
+                        color: isSelected
+                            ? cs.primary
+                            : cs.outlineVariant.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Text(
+                      '$count',
+                      style: TextStyle(
+                        fontSize: 11.0,
+                        fontWeight:
+                            isSelected ? FontWeight.bold : FontWeight.w500,
+                        color: isSelected ? cs.onPrimary : cs.onSurface,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class OrientationSwitcher extends StatelessWidget {
@@ -205,6 +378,181 @@ class _MiniPaperOrientationIcon extends StatelessWidget {
             color: color.withValues(alpha: 0.5),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _PageArrangementGroup extends StatelessWidget {
+  const _PageArrangementGroup({
+    required this.arrangementMode,
+    required this.onArrangementModeChanged,
+    required this.gridColumns,
+    this.onGridColumnsChanged,
+    this.autoFocusOnPageChange = true,
+    this.onAutoFocusChanged,
+    this.pageSwipeGestures = true,
+    this.onPageSwipeGesturesChanged,
+  });
+
+  final PageArrangementMode arrangementMode;
+  final ValueChanged<PageArrangementMode> onArrangementModeChanged;
+  final int gridColumns;
+  final ValueChanged<int>? onGridColumnsChanged;
+  final bool autoFocusOnPageChange;
+  final ValueChanged<bool>? onAutoFocusChanged;
+  final bool pageSwipeGestures;
+  final ValueChanged<bool>? onPageSwipeGesturesChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
+
+    final modes = [
+      (PageArrangementMode.single, Icons.crop_portrait_rounded, l10n.pageArrangementSingle),
+      (PageArrangementMode.facingSpread, Icons.auto_stories_rounded, l10n.pageArrangementFacing),
+      (PageArrangementMode.continuousVertical, Icons.view_day_rounded, l10n.pageArrangementContinuousVertical),
+      (PageArrangementMode.continuousHorizontal, Icons.view_column_rounded, l10n.pageArrangementContinuousHorizontal),
+      (PageArrangementMode.grid, Icons.grid_view_rounded, l10n.pageArrangementGrid),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(12.0),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHighest.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(12.0),
+        border: Border.all(
+          color: cs.outlineVariant.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: 10.0,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.auto_awesome_mosaic_outlined, size: 16.0, color: cs.primary),
+              const SizedBox(width: 6.0),
+              Text(
+                l10n.pageArrangementSection,
+                style: const TextStyle(fontSize: 12.0, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          Wrap(
+            spacing: 6.0,
+            runSpacing: 6.0,
+            children: modes.map((m) {
+              final isSelected = m.$1 == arrangementMode;
+              return ChoiceChip(
+                showCheckmark: false,
+                avatar: Icon(
+                  m.$2,
+                  size: 14.0,
+                  color: isSelected ? cs.onPrimary : cs.onSurfaceVariant,
+                ),
+                label: Text(
+                  m.$3,
+                  style: TextStyle(
+                    fontSize: 11.0,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+                selected: isSelected,
+                selectedColor: cs.primary,
+                labelStyle: TextStyle(
+                  color: isSelected ? cs.onPrimary : cs.onSurface,
+                ),
+                onSelected: (_) => onArrangementModeChanged(m.$1),
+                visualDensity: VisualDensity.compact,
+              );
+            }).toList(),
+          ),
+          if (arrangementMode == PageArrangementMode.grid && onGridColumnsChanged != null)
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.pageArrangementColumnsLabel,
+                    style: const TextStyle(fontSize: 11.0),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.remove_rounded, size: 16.0),
+                  onPressed: gridColumns > 1
+                      ? () => onGridColumnsChanged!(gridColumns - 1)
+                      : null,
+                  visualDensity: VisualDensity.compact,
+                  splashRadius: 16.0,
+                ),
+                Text(
+                  l10n.pageArrangementColumnsCount(gridColumns),
+                  style: TextStyle(
+                    fontSize: 11.0,
+                    fontWeight: FontWeight.bold,
+                    color: cs.primary,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.add_rounded, size: 16.0),
+                  onPressed: gridColumns < 6
+                      ? () => onGridColumnsChanged!(gridColumns + 1)
+                      : null,
+                  visualDensity: VisualDensity.compact,
+                  splashRadius: 16.0,
+                ),
+              ],
+            ),
+          if (onAutoFocusChanged != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 4.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Tooltip(
+                      message: l10n.autoFocusOnPageChangeTooltip,
+                      child: Text(
+                        l10n.autoFocusOnPageChange,
+                        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                  ),
+                  Transform.scale(
+                    scale: 0.8,
+                    child: Switch(
+                      value: autoFocusOnPageChange,
+                      onChanged: onAutoFocusChanged,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          if (onPageSwipeGesturesChanged != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 4.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Tooltip(
+                      message: l10n.pageSwipeGesturesTooltip,
+                      child: Text(
+                        l10n.pageSwipeGestures,
+                        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                  ),
+                  Transform.scale(
+                    scale: 0.8,
+                    child: Switch(
+                      value: pageSwipeGestures,
+                      onChanged: onPageSwipeGesturesChanged,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }
