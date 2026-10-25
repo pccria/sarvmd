@@ -42,6 +42,9 @@ class DocumentState {
   /// Total number of staves in the page layout.
   int get staffCount => config.allStaves.length;
 
+  /// Target page count of the document.
+  int get pageCount => document.pageCount;
+
   /// Whether the document has unsaved modifications.
   ///
   /// If [lastSavedDocument] is set, compares [document] against it.

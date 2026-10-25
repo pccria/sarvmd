@@ -1,6 +1,7 @@
 /// Layout engine — computes the vertical positions of all staves on a page.
 
 import 'config.dart';
+import 'domain/metadata.dart';
 
 /// A staff with its Y-coordinate (top line) in mm from page top.
 class StaffPosition {
@@ -233,18 +234,80 @@ class StaffSystem {
   double bottomY() => staves.last.topY + staves.last.height;
 }
 
+/// Standard typographic metrics and layout clearance calculations for printable score headers and footers.
+abstract final class ScoreTypographyMetrics {
+  /// Font size for the main work title (pt).
+  static const double titleFontSizePt = 20.0;
+
+  /// Font size for the subtitle or movement name (pt).
+  static const double subtitleFontSizePt = 12.0;
+
+  /// Font size for contributors (composer, lyricist, arranger) (pt).
+  static const double contributorFontSizePt = 10.5;
+
+  /// Font size for bottom copyright or license statement (pt).
+  static const double copyrightFontSizePt = 8.5;
+
+  /// Minimum vertical buffer between the header block and the top staff of the first system (mm).
+  static const double headerToSystemBufferMm = 6.0;
+
+  /// Distance from the page top margin to the title baseline (mm).
+  static const double titleTopOffsetMm = 6.0;
+
+  /// Computes the required vertical headroom in mm for the score title block on the first page.
+  static double computeHeaderHeadroomMm(DocumentMetadata? metadata) {
+    if (metadata == null || !metadata.hasTitleBlock) return 0.0;
+    final hasSub = metadata.hasPrintableSubtitle;
+    final hasContrib = metadata.hasPrintableComposer ||
+        metadata.hasPrintableLyricist ||
+        metadata.hasPrintableArranger;
+
+    if (hasSub && hasContrib) return 28.0;
+    if (hasSub || hasContrib) return 22.0;
+    return 18.0;
+  }
+
+  /// Computes the bottom clearance needed if a copyright notice is present.
+  static double computeFooterClearanceMm(DocumentMetadata? metadata) {
+    if (metadata == null || !metadata.hasPrintableCopyright) return 0.0;
+    return 6.0;
+  }
+}
+
 /// Complete layout for a page — a list of systems and their positions.
 class PageLayout {
   const PageLayout({
     required this.config,
     required this.systems,
+    this.metadata,
+    this.pageIndex = 0,
+    this.headerHeadroomMm = 0.0,
+    this.footerClearanceMm = 0.0,
   });
 
   final PageConfig config;
   final List<StaffSystem> systems;
+  final DocumentMetadata? metadata;
+  final int pageIndex;
+  final double headerHeadroomMm;
+  final double footerClearanceMm;
 
   /// Number of systems that fit on the page.
   int get systemCount => systems.length;
+
+  /// Whether this page layout includes a printable score title block.
+  bool get hasTitleBlock =>
+      pageIndex == 0 &&
+      metadata != null &&
+      metadata!.hasTitleBlock &&
+      headerHeadroomMm > 0.0;
+
+  /// Whether this page layout includes a bottom copyright statement.
+  bool get hasCopyright =>
+      pageIndex == 0 &&
+      metadata != null &&
+      metadata!.copyright.trim().isNotEmpty &&
+      footerClearanceMm > 0.0;
 }
 
 /// Checks whether a given string is a valid Roman numeral (e.g. "I", "II", "IV", "VII").
@@ -372,9 +435,20 @@ String resolveStaffLabel({
 /// Places as many systems as will fit vertically within the usable area,
 /// evenly distributing any remaining space by expanding the gap between
 /// systems.
-PageLayout computeLayout(PageConfig config, {int pageIndex = 0}) {
+PageLayout computeLayout(
+  PageConfig config, {
+  int pageIndex = 0,
+  DocumentMetadata? metadata,
+}) {
+  final double headerHeadroom = (pageIndex == 0)
+      ? ScoreTypographyMetrics.computeHeaderHeadroomMm(metadata)
+      : 0.0;
+  final double footerClearance = (pageIndex == 0)
+      ? ScoreTypographyMetrics.computeFooterClearanceMm(metadata)
+      : 0.0;
+
   final systemH = config.systemHeight;
-  final usableH = config.usableHeight;
+  final usableH = config.usableHeight - headerHeadroom - footerClearance;
   final gap = config.staffConfig.systemGapMm;
 
   final bool hasAboveStaffGroups = config.systemLayout.rootGroup.allGroups
@@ -390,7 +464,14 @@ PageLayout computeLayout(PageConfig config, {int pageIndex = 0}) {
       : 1 + ((usableH - systemH) / (systemH + effectiveGap)).floor();
 
   if (count == 0) {
-    return PageLayout(config: config, systems: []);
+    return PageLayout(
+      config: config,
+      systems: [],
+      metadata: metadata,
+      pageIndex: pageIndex,
+      headerHeadroomMm: headerHeadroom,
+      footerClearanceMm: footerClearance,
+    );
   }
 
   // Distribute leftover space evenly between systems.
@@ -403,7 +484,8 @@ PageLayout computeLayout(PageConfig config, {int pageIndex = 0}) {
   final lineGap = config.staffConfig.lineGapMm;
 
   for (var i = 0; i < count; i++) {
-    final systemTopY = config.margins.top + i * (systemH + adjustedGap);
+    final systemTopY =
+        config.margins.top + headerHeadroom + i * (systemH + adjustedGap);
     final staves = <StaffPosition>[];
     final placements = <GroupPlacement>[];
 
@@ -854,7 +936,14 @@ PageLayout computeLayout(PageConfig config, {int pageIndex = 0}) {
     ));
   }
 
-  return PageLayout(config: config, systems: systems);
+  return PageLayout(
+    config: config,
+    systems: systems,
+    metadata: metadata,
+    pageIndex: pageIndex,
+    headerHeadroomMm: headerHeadroom,
+    footerClearanceMm: footerClearance,
+  );
 }
 
 /// Estimates formatted text width in millimeters based on font size and character length.

@@ -63,6 +63,15 @@ class _DocumentPropertiesDialogState extends State<DocumentPropertiesDialog> {
   late final TextEditingController _lyricistController;
   late final TextEditingController _copyrightController;
 
+  late bool _showTitleBlock;
+  late bool _showTitle;
+  late bool _showSubtitle;
+  late bool _showComposer;
+  late bool _showArranger;
+  late bool _showLyricist;
+  late bool _showCopyright;
+  late bool _showPageNumbers;
+
   @override
   void initState() {
     super.initState();
@@ -72,6 +81,15 @@ class _DocumentPropertiesDialogState extends State<DocumentPropertiesDialog> {
     _arrangerController = TextEditingController(text: widget.initialMetadata.arranger);
     _lyricistController = TextEditingController(text: widget.initialMetadata.lyricist);
     _copyrightController = TextEditingController(text: widget.initialMetadata.copyright);
+
+    _showTitleBlock = widget.initialMetadata.showTitleBlock;
+    _showTitle = widget.initialMetadata.showTitle;
+    _showSubtitle = widget.initialMetadata.showSubtitle;
+    _showComposer = widget.initialMetadata.showComposer;
+    _showArranger = widget.initialMetadata.showArranger;
+    _showLyricist = widget.initialMetadata.showLyricist;
+    _showCopyright = widget.initialMetadata.showCopyright;
+    _showPageNumbers = widget.initialMetadata.showPageNumbers;
   }
 
   @override
@@ -93,6 +111,14 @@ class _DocumentPropertiesDialogState extends State<DocumentPropertiesDialog> {
       arranger: _arrangerController.text.trim(),
       lyricist: _lyricistController.text.trim(),
       copyright: _copyrightController.text.trim(),
+      showTitleBlock: _showTitleBlock,
+      showTitle: _showTitle,
+      showSubtitle: _showSubtitle,
+      showComposer: _showComposer,
+      showArranger: _showArranger,
+      showLyricist: _showLyricist,
+      showCopyright: _showCopyright,
+      showPageNumbers: _showPageNumbers,
     );
 
     widget.onApply(updatedMetadata);
@@ -177,12 +203,82 @@ class _DocumentPropertiesDialogState extends State<DocumentPropertiesDialog> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Master Toggles Card (Header Block & Page Numbers)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                    decoration: BoxDecoration(
+                      color: cs.surfaceContainerHighest.withValues(alpha: 0.4),
+                      borderRadius: BorderRadius.circular(10.0),
+                      border: Border.all(
+                        color: cs.outlineVariant.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.view_headline_rounded, size: 18.0, color: cs.primary),
+                            const SizedBox(width: 8.0),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    l10n.scoreTypographyHeaderBlock,
+                                    style: const TextStyle(fontSize: 13.0, fontWeight: FontWeight.w600),
+                                  ),
+                                  Text(
+                                    l10n.scoreTypographyHeaderBlockSubtitle,
+                                    style: TextStyle(fontSize: 11.0, color: cs.onSurfaceVariant.withValues(alpha: 0.7)),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Switch.adaptive(
+                              value: _showTitleBlock,
+                              onChanged: (val) => setState(() => _showTitleBlock = val),
+                            ),
+                          ],
+                        ),
+                        const Divider(height: 12),
+                        Row(
+                          children: [
+                            Icon(Icons.format_list_numbered_rounded, size: 18.0, color: cs.primary),
+                            const SizedBox(width: 8.0),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    l10n.scoreTypographyPageNumbers,
+                                    style: const TextStyle(fontSize: 13.0, fontWeight: FontWeight.w600),
+                                  ),
+                                  Text(
+                                    l10n.scoreTypographyPageNumbersSubtitle,
+                                    style: TextStyle(fontSize: 11.0, color: cs.onSurfaceVariant.withValues(alpha: 0.7)),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Switch.adaptive(
+                              value: _showPageNumbers,
+                              onChanged: (val) => setState(() => _showPageNumbers = val),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14.0),
+
                   // Title Field
                   _buildTextField(
                     controller: _titleController,
                     label: l10n.metadataScoreTitle,
                     icon: Icons.title,
                     hint: 'e.g. Autumn Leaves',
+                    isVisible: _showTitle,
+                    onVisibilityChanged: (val) => setState(() => _showTitle = val),
                   ),
                   const SizedBox(height: 12.0),
 
@@ -192,6 +288,8 @@ class _DocumentPropertiesDialogState extends State<DocumentPropertiesDialog> {
                     label: l10n.metadataSubtitle,
                     icon: Icons.subtitles_outlined,
                     hint: 'e.g. Op. 45, No. 2',
+                    isVisible: _showSubtitle,
+                    onVisibilityChanged: (val) => setState(() => _showSubtitle = val),
                   ),
                   const SizedBox(height: 12.0),
 
@@ -207,6 +305,8 @@ class _DocumentPropertiesDialogState extends State<DocumentPropertiesDialog> {
                                 label: l10n.metadataComposer,
                                 icon: Icons.person_outline,
                                 hint: 'e.g. J. S. Bach',
+                                isVisible: _showComposer,
+                                onVisibilityChanged: (val) => setState(() => _showComposer = val),
                               ),
                             ),
                             const SizedBox(width: 12.0),
@@ -216,6 +316,8 @@ class _DocumentPropertiesDialogState extends State<DocumentPropertiesDialog> {
                                 label: l10n.metadataArranger,
                                 icon: Icons.music_note_outlined,
                                 hint: 'e.g. Arranger',
+                                isVisible: _showArranger,
+                                onVisibilityChanged: (val) => setState(() => _showArranger = val),
                               ),
                             ),
                           ],
@@ -228,6 +330,8 @@ class _DocumentPropertiesDialogState extends State<DocumentPropertiesDialog> {
                               label: l10n.metadataComposer,
                               icon: Icons.person_outline,
                               hint: 'e.g. J. S. Bach',
+                              isVisible: _showComposer,
+                              onVisibilityChanged: (val) => setState(() => _showComposer = val),
                             ),
                             const SizedBox(height: 12.0),
                             _buildTextField(
@@ -235,6 +339,8 @@ class _DocumentPropertiesDialogState extends State<DocumentPropertiesDialog> {
                               label: l10n.metadataArranger,
                               icon: Icons.music_note_outlined,
                               hint: 'e.g. Arranger',
+                              isVisible: _showArranger,
+                              onVisibilityChanged: (val) => setState(() => _showArranger = val),
                             ),
                           ],
                         );
@@ -249,6 +355,8 @@ class _DocumentPropertiesDialogState extends State<DocumentPropertiesDialog> {
                     label: l10n.metadataLyricist,
                     icon: Icons.edit_note_outlined,
                     hint: 'e.g. Lyricist / Librettist',
+                    isVisible: _showLyricist,
+                    onVisibilityChanged: (val) => setState(() => _showLyricist = val),
                   ),
                   const SizedBox(height: 12.0),
 
@@ -258,6 +366,8 @@ class _DocumentPropertiesDialogState extends State<DocumentPropertiesDialog> {
                     label: l10n.metadataCopyright,
                     icon: Icons.copyright_outlined,
                     hint: 'e.g. © 2026 Pooria Askari Moqaddam',
+                    isVisible: _showCopyright,
+                    onVisibilityChanged: (val) => setState(() => _showCopyright = val),
                   ),
                   const SizedBox(height: 16.0),
 
@@ -335,8 +445,11 @@ class _DocumentPropertiesDialogState extends State<DocumentPropertiesDialog> {
     required String label,
     required IconData icon,
     String? hint,
+    bool? isVisible,
+    ValueChanged<bool>? onVisibilityChanged,
   }) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return TextField(
       controller: controller,
@@ -344,13 +457,27 @@ class _DocumentPropertiesDialogState extends State<DocumentPropertiesDialog> {
         labelText: label,
         hintText: hint,
         prefixIcon: Icon(icon, size: 18.0, color: cs.onSurfaceVariant),
+        suffixIcon: onVisibilityChanged != null && isVisible != null
+            ? IconButton(
+                icon: Icon(
+                  isVisible ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                  size: 18.0,
+                  color: isVisible ? cs.primary : cs.onSurfaceVariant.withValues(alpha: 0.4),
+                ),
+                tooltip: isVisible ? l10n.scoreTypographyHideOnScore : l10n.scoreTypographyShowOnScore,
+                onPressed: () => onVisibilityChanged(!isVisible),
+              )
+            : null,
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10.0),
         ),
       ),
-      style: const TextStyle(fontSize: 13.5),
+      style: TextStyle(
+        fontSize: 13.5,
+        color: (isVisible ?? true) ? null : cs.onSurface.withValues(alpha: 0.5),
+      ),
     );
   }
 

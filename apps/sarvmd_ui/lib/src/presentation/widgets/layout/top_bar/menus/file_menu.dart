@@ -98,12 +98,17 @@ class TopBarFileMenu extends StatelessWidget {
         onPressed: () => handleTopBarMenuSelection(context, 'save_as_document', documentState),
         child: Text(l10n.menuSaveAs),
       ),
-      const Divider(),
       MenuItemButton(
         leadingIcon: Icon(Icons.file_upload_outlined, size: 17, color: cs.primary),
         trailingIcon: Text('Ctrl+E', style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant)),
         onPressed: () => handleTopBarMenuSelection(context, 'export', documentState),
         child: Text(l10n.export),
+      ),
+      MenuItemButton(
+        leadingIcon: Icon(Icons.print_outlined, size: 17, color: cs.onSurface),
+        trailingIcon: Text('Ctrl+P', style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant)),
+        onPressed: () => handleTopBarMenuSelection(context, 'print', documentState),
+        child: Text(l10n.menuPrint),
       ),
       const Divider(),
       MenuItemButton(

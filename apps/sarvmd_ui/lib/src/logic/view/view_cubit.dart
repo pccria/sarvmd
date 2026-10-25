@@ -23,6 +23,11 @@ class ViewCubit extends Cubit<ViewState> {
   static const String _keyInputMode = 'view_input_mode';
   static const String _keyExpandedPointerSections =
       'view_expanded_pointer_sections';
+  static const String _keyPageArrangement = 'view_page_arrangement';
+  static const String _keyGridColumns = 'view_grid_columns';
+  static const String _keyAutoFocusOnPageChange =
+      'view_auto_focus_on_page_change';
+  static const String _keyPageSwipeGestures = 'view_page_swipe_gestures';
 
   Future<void> _loadFromPrefs() async {
     final prefs = await SharedPreferences.getInstance();
@@ -109,6 +114,33 @@ class ViewCubit extends Cubit<ViewState> {
       }
     }
 
+    // Load Page Arrangement & Grid Columns
+    PageArrangementMode pageArrangement = state.pageArrangement;
+    final arrangementIndex = prefs.getInt(_keyPageArrangement);
+    if (arrangementIndex != null &&
+        arrangementIndex >= 0 &&
+        arrangementIndex < PageArrangementMode.values.length) {
+      pageArrangement = PageArrangementMode.values[arrangementIndex];
+    }
+
+    int gridColumns = state.gridColumns;
+    final savedGridColumns = prefs.getInt(_keyGridColumns);
+    if (savedGridColumns != null) {
+      gridColumns = savedGridColumns.clamp(1, 6);
+    }
+
+    bool autoFocusOnPageChange = state.autoFocusOnPageChange;
+    final savedAutoFocus = prefs.getBool(_keyAutoFocusOnPageChange);
+    if (savedAutoFocus != null) {
+      autoFocusOnPageChange = savedAutoFocus;
+    }
+
+    bool pageSwipeGestures = state.pageSwipeGestures;
+    final savedSwipeGestures = prefs.getBool(_keyPageSwipeGestures);
+    if (savedSwipeGestures != null) {
+      pageSwipeGestures = savedSwipeGestures;
+    }
+
     if (isClosed) return;
     emit(state.copyWith(
       themeMode: themeMode,
@@ -116,12 +148,20 @@ class ViewCubit extends Cubit<ViewState> {
       calibrationFactor: calibrationFactor,
       inputMode: inputMode,
       expandedPointerSections: expandedPointerSections,
+      pageArrangement: pageArrangement,
+      gridColumns: gridColumns,
+      autoFocusOnPageChange: autoFocusOnPageChange,
+      pageSwipeGestures: pageSwipeGestures,
     ));
     _log.debug('View state restored from SharedPreferences', context: {
       'themeMode': themeMode.name,
       'accent': accent.name,
       'calibrationFactor': calibrationFactor,
       'inputMode': inputMode.name,
+      'pageArrangement': pageArrangement.name,
+      'gridColumns': gridColumns,
+      'autoFocusOnPageChange': autoFocusOnPageChange,
+      'pageSwipeGestures': pageSwipeGestures,
     });
   }
 
@@ -362,5 +402,92 @@ class ViewCubit extends Cubit<ViewState> {
   void clearHierarchySelection() {
     if (state.selectedHierarchyStaffUids.isEmpty) return;
     emit(state.copyWith(selectedHierarchyStaffUids: const {}));
+  }
+
+  // --- Multi-Page Canvas Navigation ---
+
+  void setPageIndex(int index, {int maxPages = 100}) {
+    final clamped = index.clamp(0, (maxPages > 0 ? maxPages - 1 : 0));
+    if (state.currentPageIndex != clamped) {
+      emit(state.copyWith(currentPageIndex: clamped));
+      _log.debug('Canvas page index changed', context: {'pageIndex': clamped});
+    }
+  }
+
+  void nextPage(int maxPages) {
+    if (state.currentPageIndex < maxPages - 1) {
+      setPageIndex(state.currentPageIndex + 1, maxPages: maxPages);
+    }
+  }
+
+  void previousPage() {
+    if (state.currentPageIndex > 0) {
+      setPageIndex(state.currentPageIndex - 1);
+    }
+  }
+
+  void nextSpread(int maxPages) {
+    if (state.pageArrangement == PageArrangementMode.facingSpread) {
+      final currentSpread =
+          (state.currentPageIndex == 0) ? 0 : (state.currentPageIndex + 1) ~/ 2;
+      final nextSpreadIndex = currentSpread + 1;
+      final targetPage =
+          (nextSpreadIndex == 0) ? 0 : (2 * nextSpreadIndex - 1);
+      if (targetPage < maxPages) {
+        setPageIndex(targetPage, maxPages: maxPages);
+      }
+    } else {
+      nextPage(maxPages);
+    }
+  }
+
+  void previousSpread() {
+    if (state.pageArrangement == PageArrangementMode.facingSpread) {
+      final currentSpread =
+          (state.currentPageIndex == 0) ? 0 : (state.currentPageIndex + 1) ~/ 2;
+      if (currentSpread > 0) {
+        final prevSpreadIndex = currentSpread - 1;
+        final targetPage =
+            (prevSpreadIndex <= 0) ? 0 : (2 * prevSpreadIndex - 1);
+        setPageIndex(targetPage);
+      }
+    } else {
+      previousPage();
+    }
+  }
+
+  // --- Multi-Page Canvas Arrangement ---
+
+  Future<void> setPageArrangement(PageArrangementMode mode) async {
+    if (state.pageArrangement == mode) return;
+    emit(state.copyWith(pageArrangement: mode));
+    _log.debug('Page arrangement mode changed', context: {'mode': mode.name});
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_keyPageArrangement, mode.index);
+  }
+
+  Future<void> setGridColumns(int columns) async {
+    final clamped = columns.clamp(1, 6);
+    if (state.gridColumns == clamped) return;
+    emit(state.copyWith(gridColumns: clamped));
+    _log.debug('Grid columns changed', context: {'columns': clamped});
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_keyGridColumns, clamped);
+  }
+
+  Future<void> setAutoFocusOnPageChange(bool enabled) async {
+    if (state.autoFocusOnPageChange == enabled) return;
+    emit(state.copyWith(autoFocusOnPageChange: enabled));
+    _log.debug('Auto-focus on page change toggled', context: {'enabled': enabled});
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyAutoFocusOnPageChange, enabled);
+  }
+
+  Future<void> setPageSwipeGestures(bool enabled) async {
+    if (state.pageSwipeGestures == enabled) return;
+    emit(state.copyWith(pageSwipeGestures: enabled));
+    _log.debug('Page swipe gestures toggled', context: {'enabled': enabled});
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyPageSwipeGestures, enabled);
   }
 }

@@ -799,6 +799,31 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
+  String get bookletImpositionHeader => 'چاپ کتابچه‌ای سه‌لایی (صفحه‌آرایی)';
+
+  @override
+  String get bookletToggleLabel => 'صفحه‌آرایی به صورت کتابچه تا شونده';
+
+  @override
+  String get bookletToggleSubtitle =>
+      'تنظیم جفت‌صفحه‌ای (۲تایی) در هر روی برگه برای تا کردن و منگنه کردن نت موسیقی.';
+
+  @override
+  String get bookletSheetModeDouble => 'برگه اندازه دوبل (۱:۱، مانند A3)';
+
+  @override
+  String get bookletSheetModeScaled =>
+      'همان اندازه برگه (مقیاس‌شده ۲تایی، مانند A4)';
+
+  @override
+  String get bookletSpineTicks => 'نشانه‌های تا شدن عطف';
+
+  @override
+  String bookletSignatureBadge(int pages, int sheets, int sides) {
+    return '$pages صفحه در قالب $sheets برگه ($sides رو)';
+  }
+
+  @override
   String get displayCalibrationTitle => 'کالیبراسیون صفحه نمایش';
 
   @override
@@ -1004,6 +1029,9 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get menuSaveAs => 'ذخیره به نام…';
+
+  @override
+  String get menuPrint => 'چاپ…';
 
   @override
   String get unsavedChangesTitle => 'تغییرات ذخیره‌نشده';
@@ -1253,4 +1281,174 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get pressBackAgainToExit => 'برای خروج، دوباره بازگشت را بزنید';
+
+  @override
+  String get sectionScoreTypography => 'اطلاعات و عنوان اثر';
+
+  @override
+  String get sectionScoreTypographySubtitle =>
+      'عنوان، پدیدآورندگان و حکاکی سربرگ نت';
+
+  @override
+  String get scoreTypographyHeaderBlock => 'نمایش بلوک سربرگ';
+
+  @override
+  String get scoreTypographyHeaderBlockSubtitle =>
+      'کلید اصلی نمایش عنوان و مشخصات پدیدآورندگان در صفحه اول';
+
+  @override
+  String get scoreTypographyPageNumbers => 'نمایش شماره صفحات';
+
+  @override
+  String get scoreTypographyPageNumbersSubtitle =>
+      'نمایش شماره صفحات در بالای صفحات بعدی';
+
+  @override
+  String get scoreTypographyVisibility => 'نمایش در نت';
+
+  @override
+  String get scoreTypographyShowOnScore => 'نمایش در نت';
+
+  @override
+  String get scoreTypographyHideOnScore => 'عدم نمایش در نت';
+
+  @override
+  String get scoreTypographyMoreProperties => 'مشخصات تکمیلی…';
+
+  @override
+  String get scoreTypographyMoreCredits =>
+      'مشخصات بیشتر (زیرعنوان، تنظیم، شعر)';
+
+  @override
+  String get scoreTypographyLessCredits => 'بستن مشخصات بیشتر';
+
+  @override
+  String get scoreTypographyHiddenNotice => 'عدم نمایش در نت';
+
+  @override
+  String get scoreTypographyVisibleNotice => 'نمایش در نت';
+
+  @override
+  String get scoreTypographyRunningHeader => 'شماره صفحات (از صفحه ۲)';
+
+  @override
+  String get scoreTypographyEnterTextNotice =>
+      'برای نمایش در نت، متنی وارد کنید';
+
+  @override
+  String scoreTypographyHeadroom(String headroom) {
+    return 'فاصله سربرگ: $headroom میلی‌متر (صفحه ۱)';
+  }
+
+  @override
+  String get scoreTypographyHeadroomNone =>
+      'حامل‌های تمام‌صفحه (بدون فاصله سربرگ)';
+
+  @override
+  String get scoreTypographyHeaderDisabledNotice =>
+      'سربرگ پنهان است. خطوط حامل تمام صفحه اول را اشغال می‌کنند.';
+
+  @override
+  String pageNavigatorPageOf(int current, int total) {
+    return 'صفحه $current از $total';
+  }
+
+  @override
+  String get pageNavigatorPrevTooltip => 'صفحه قبلی (PageUp)';
+
+  @override
+  String get pageNavigatorNextTooltip => 'صفحه بعدی (PageDown)';
+
+  @override
+  String get pageNavigatorAddPageTooltip => 'افزودن صفحه';
+
+  @override
+  String get pageNavigatorRemovePageTooltip => 'حذف آخرین صفحه';
+
+  @override
+  String get documentPageCountLabel => 'تعداد صفحات سند';
+
+  @override
+  String get documentPageCountDesc => 'تعداد کل صفحات در دست‌نوشته';
+
+  @override
+  String get shortcutNextPage => 'صفحه بعدی';
+
+  @override
+  String get shortcutPreviousPage => 'صفحه قبلی';
+
+  @override
+  String get pageArrangementSection => 'چیدمان صفحات';
+
+  @override
+  String get pageArrangementSectionDesc =>
+      'تنظیم نحوه نمایش صفحات دست‌نوشته در بوم';
+
+  @override
+  String get pageArrangementSingle => 'تک‌صفحه';
+
+  @override
+  String get pageArrangementSingleDesc =>
+      'نمایش یک صفحه به صورت مجزا و تمام‌اندازه';
+
+  @override
+  String get pageArrangementFacing => 'صفحات روبرو (کتابی)';
+
+  @override
+  String get pageArrangementFacingDesc =>
+      'نمایش به صورت دوصفحه‌ای روبرو مثل کتاب موسیقی (صفحه ۱ فرد)';
+
+  @override
+  String get pageArrangementContinuousVertical => 'طومار عمودی';
+
+  @override
+  String get pageArrangementContinuousVerticalDesc =>
+      'چیدمان پیوسته عمودی تمام صفحات روی هم';
+
+  @override
+  String get pageArrangementContinuousHorizontal => 'نوار افقی';
+
+  @override
+  String get pageArrangementContinuousHorizontalDesc =>
+      'چیدمان نواری افقی و پیوسته صفحات کنار هم';
+
+  @override
+  String get pageArrangementGrid => 'نمای شبکه‌ای';
+
+  @override
+  String get pageArrangementGridDesc =>
+      'نمای کلی و شبکه‌ای تمام صفحات در چند ستون';
+
+  @override
+  String get pageArrangementColumnsLabel => 'تعداد ستون‌های شبکه';
+
+  @override
+  String pageArrangementColumnsCount(int count) {
+    return '$count ستون';
+  }
+
+  @override
+  String get autoFocusOnPageChange => 'تمرکز خودکار روی صفحه فعال';
+
+  @override
+  String get autoFocusOnPageChangeTooltip =>
+      'مرکزسازی خودکار بوم بر روی صفحه فعال هنگام پیمایش';
+
+  @override
+  String get pageSwipeGestures => 'ورق زدن با سوایپ';
+
+  @override
+  String get pageSwipeGesturesTooltip =>
+      'سوایپ افقی روی صفحه‌نمایش لمسی برای ورق زدن و پیمایش صفحات';
+
+  @override
+  String swipeTurnedToPage(int page, int total) {
+    return 'صفحه $page از $total';
+  }
+
+  @override
+  String get swipeFirstPageReached => 'صفحه نخست';
+
+  @override
+  String get swipeLastPageReached => 'صفحه پایانی';
 }

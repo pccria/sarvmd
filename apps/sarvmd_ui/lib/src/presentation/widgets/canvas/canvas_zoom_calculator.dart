@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:sarvmd_core/sarvmd_core.dart' as core;
 import '../../../core/theme/app_metrics.dart';
+import '../../../logic/view/view_state.dart';
 import '../common/integrated_scale_control.dart';
 
 /// Calculation result containing scale factor, translation offsets, and the corresponding transform matrix.
@@ -28,6 +29,91 @@ abstract final class CanvasZoomCalculator {
 
   /// Default physical ruler strip dimension in logical pixels.
   static const double defaultRulerSize = 25.0;
+
+  /// Computes the canvas-space center point of [pageIndex] for the specified
+  /// arrangement mode, page dimensions, and grid settings.
+  static Offset computePageCenter({
+    required PageArrangementMode arrangement,
+    required int pageIndex,
+    required double pageWidth,
+    required double pageHeight,
+    int gridColumns = 2,
+    double spacing = 32.0,
+    double spineWidthMm = 18.0,
+  }) {
+    final double spineWidth = spineWidthMm * lpmm;
+
+    switch (arrangement) {
+      case PageArrangementMode.single:
+        return Offset(pageWidth / 2.0, pageHeight / 2.0);
+
+      case PageArrangementMode.facingSpread:
+        final spreadWidth = (pageWidth * 2.0) + spineWidth;
+        return Offset(spreadWidth / 2.0, pageHeight / 2.0);
+
+      case PageArrangementMode.continuousVertical:
+        final top = pageIndex * (pageHeight + spacing);
+        return Offset(pageWidth / 2.0, top + (pageHeight / 2.0));
+
+      case PageArrangementMode.continuousHorizontal:
+        final left = pageIndex * (pageWidth + spacing);
+        return Offset(left + (pageWidth / 2.0), pageHeight / 2.0);
+
+      case PageArrangementMode.grid:
+        final cols = gridColumns.clamp(1, 6);
+        final row = pageIndex ~/ cols;
+        final col = pageIndex % cols;
+        final left = col * (pageWidth + spacing);
+        final top = row * (pageHeight + spacing);
+        return Offset(left + (pageWidth / 2.0), top + (pageHeight / 2.0));
+    }
+  }
+
+  /// Computes the camera transformation matrix to center [pageIndex] within the viewport
+  /// while preserving the user's current zoom [currentScale].
+  static Matrix4 computePageFocusMatrix({
+    required PageArrangementMode arrangement,
+    required int pageIndex,
+    required BoxConstraints constraints,
+    required core.PageConfig config,
+    required double currentScale,
+    int gridColumns = 2,
+    double rulerSize = defaultRulerSize,
+    double padding = 40.0,
+    double topSafeArea = 0.0,
+    double leftSafeArea = 0.0,
+    double bottomPadding = 0.0,
+    double leftInset = 0.0,
+    double rightInset = 0.0,
+    double spacing = 32.0,
+    double spineWidthMm = 18.0,
+  }) {
+    final paperWidth = config.effectiveWidth * lpmm;
+    final paperHeight = config.effectiveHeight * lpmm;
+
+    final totalRulerWidth = rulerSize + leftSafeArea;
+    final totalRulerHeight = rulerSize + topSafeArea;
+    final canvasWidth = (constraints.maxWidth - totalRulerWidth - leftInset - rightInset)
+        .clamp(1.0, double.infinity);
+    final canvasHeight = (constraints.maxHeight - totalRulerHeight - bottomPadding)
+        .clamp(1.0, double.infinity);
+
+    final center = computePageCenter(
+      arrangement: arrangement,
+      pageIndex: pageIndex,
+      pageWidth: paperWidth,
+      pageHeight: paperHeight,
+      gridColumns: gridColumns,
+      spacing: spacing,
+      spineWidthMm: spineWidthMm,
+    );
+
+    final double tx = leftInset + (canvasWidth / 2.0) - (center.dx * currentScale);
+    final double ty = (canvasHeight / 2.0) - (center.dy * currentScale);
+
+    return Matrix4.translationValues(tx, ty, 0.0)
+      ..multiply(Matrix4.diagonal3Values(currentScale, currentScale, 1.0));
+  }
 
   /// Computes the exact zoom scale factor and translation matrix for a given preset and viewport layout.
   static CanvasZoomTransform compute({

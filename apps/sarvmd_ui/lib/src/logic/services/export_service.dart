@@ -8,6 +8,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:sarvmd_core/sarvmd_core.dart' as core;
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/utils/app_logger.dart';
 import 'export_directory_service.dart';
 import 'native_file_save_service.dart';
@@ -120,6 +121,7 @@ class ExportService {
     String? fileName,
     int pageCount = 1,
     String? outputDir,
+    core.DocumentMetadata? metadata,
   }) async {
     _log.info('Exporting TeX', context: {
       'pageSize': config.pageSize.name,
@@ -128,7 +130,13 @@ class ExportService {
     });
     final sw = Stopwatch()..start();
     try {
-      final tex = core.ScoreCompiler.compileToTex(config, layout, pageCount: pageCount);
+      final effectiveMeta = metadata ?? layout.metadata;
+      final tex = core.ScoreCompiler.compileToTex(
+        config,
+        layout,
+        pageCount: pageCount,
+        metadata: effectiveMeta,
+      );
       final name = _cleanFileName(fileName ?? '', config);
       final bytes = Uint8List.fromList(utf8.encode(tex));
 
@@ -168,19 +176,37 @@ class ExportService {
     int pageCount = 1,
     String? outputDir,
     bool useLatexCompiler = false,
+    core.DocumentMetadata? metadata,
+    bool isBooklet = false,
+    core.BookletConfig bookletConfig = const core.BookletConfig(),
   }) async {
     _log.info('Exporting PDF', context: {
       'pageSize': config.pageSize.name,
       'staffCount': config.staffCount,
       'pageCount': pageCount,
       'useLatexCompiler': useLatexCompiler,
+      'isBooklet': isBooklet,
     });
     final sw = Stopwatch()..start();
     try {
       final name = _cleanFileName(fileName ?? '', config);
+      final effectiveMeta = metadata ?? layout.metadata;
 
       if (kIsWeb || !useLatexCompiler) {
-        final pdfBytes = await core.ScoreCompiler.compileToPdf(config, layout, pageCount: pageCount);
+        final pdfBytes = isBooklet
+            ? await core.ScoreCompiler.compileToBookletPdf(
+                config,
+                layout,
+                pageCount: pageCount,
+                metadata: effectiveMeta,
+                bookletConfig: bookletConfig,
+              )
+            : await core.ScoreCompiler.compileToPdf(
+                config,
+                layout,
+                pageCount: pageCount,
+                metadata: effectiveMeta,
+              );
 
         if (kIsWeb) {
           downloadFileWeb('$name.pdf', pdfBytes, 'application/pdf');
@@ -220,6 +246,7 @@ class ExportService {
         fileName: name,
         pageCount: pageCount,
         outputDir: dir,
+        metadata: effectiveMeta,
       );
       final pdfPath = await core.ScoreCompiler.compileTexFileToPdf(texResult.filePath, outputDir: dir);
       final file = File(pdfPath);
@@ -244,23 +271,86 @@ class ExportService {
     }
   }
 
-  /// Export the layout to an SVG file.
+  /// Export the layout to an SVG file (or batch of files for multi-page export).
   static Future<ExportResult> exportSvg(
     core.PageConfig config,
     core.PageLayout layout, {
     String? fileName,
     String? outputDir,
     core.SvgLayeringMode layeringMode = core.SvgLayeringMode.flatByCategory,
+    core.DocumentMetadata? metadata,
+    int pageIndex = 0,
+    int pageCount = 1,
+    bool exportAllPages = false,
   }) async {
     _log.info('Exporting SVG', context: {
       'pageSize': config.pageSize.name,
       'staffCount': config.staffCount,
       'layeringMode': layeringMode.name,
+      'pageCount': pageCount,
+      'exportAllPages': exportAllPages,
     });
     final sw = Stopwatch()..start();
     try {
-      final svg = core.ScoreCompiler.compileToSvg(config, layout, layeringMode: layeringMode);
+      final effectiveMeta = metadata ?? layout.metadata;
       final name = _cleanFileName(fileName ?? '', config);
+
+      if (exportAllPages && pageCount > 1) {
+        final svgs = core.ScoreCompiler.compileAllPagesToSvg(
+          config,
+          pageCount: pageCount,
+          initialLayout: layout,
+          layeringMode: layeringMode,
+          metadata: effectiveMeta,
+        );
+
+        int totalBytes = 0;
+        String firstFilePath = '';
+
+        if (kIsWeb) {
+          for (var pIdx = 0; pIdx < svgs.length; pIdx++) {
+            final pageName = '${name}_p${pIdx + 1}.svg';
+            final bytes = Uint8List.fromList(utf8.encode(svgs[pIdx]));
+            totalBytes += bytes.length;
+            downloadFileWeb(pageName, bytes, 'image/svg+xml;charset=utf-8');
+          }
+          return ExportResult(
+            filePath: 'Browser Downloads/${name}_p1.svg',
+            fileName: '${name}_p1..$pageCount.svg',
+            fileSizeBytes: totalBytes,
+            elapsedMs: sw.elapsedMilliseconds,
+          );
+        }
+
+        final targetDir = (outputDir != null && outputDir.isNotEmpty && outputDir != 'System File Picker')
+            ? outputDir
+            : await ExportDirectoryService.getExportDirectory();
+        await Directory(targetDir).create(recursive: true);
+
+        for (var pIdx = 0; pIdx < svgs.length; pIdx++) {
+          final pageName = '${name}_p${pIdx + 1}.svg';
+          final filePath = p.join(targetDir, pageName);
+          final bytes = Uint8List.fromList(utf8.encode(svgs[pIdx]));
+          await File(filePath).writeAsBytes(bytes);
+          totalBytes += bytes.length;
+          if (pIdx == 0) firstFilePath = filePath;
+        }
+
+        return ExportResult(
+          filePath: firstFilePath,
+          fileName: '${name}_p1..$pageCount.svg',
+          fileSizeBytes: totalBytes,
+          elapsedMs: sw.elapsedMilliseconds,
+        );
+      }
+
+      final svg = core.ScoreCompiler.compilePageToSvg(
+        config,
+        pageIndex: pageIndex,
+        layout: layout,
+        layeringMode: layeringMode,
+        metadata: effectiveMeta,
+      );
       final bytes = Uint8List.fromList(utf8.encode(svg));
 
       if (kIsWeb) {
@@ -288,6 +378,48 @@ class ExportService {
     } catch (e, st) {
       _log.error('SVG export failed', error: e, stackTrace: st);
       rethrow;
+    }
+  }
+
+  /// Generates vector PDF and launches the system default PDF viewer / print handler.
+  static Future<void> printScore(
+    core.PageConfig config,
+    core.PageLayout layout, {
+    int pageCount = 1,
+    core.DocumentMetadata? metadata,
+    bool isBooklet = false,
+    core.BookletConfig bookletConfig = const core.BookletConfig(),
+  }) async {
+    _log.info('Initiating score print', context: {
+      'pageCount': pageCount,
+      'isBooklet': isBooklet,
+    });
+    final effectiveMeta = metadata ?? layout.metadata;
+    final pdfBytes = isBooklet
+        ? await core.ScoreCompiler.compileToBookletPdf(
+            config,
+            layout,
+            pageCount: pageCount,
+            metadata: effectiveMeta,
+            bookletConfig: bookletConfig,
+          )
+        : await core.ScoreCompiler.compileToPdf(
+            config,
+            layout,
+            pageCount: pageCount,
+            metadata: effectiveMeta,
+          );
+
+    if (kIsWeb) {
+      final name = _cleanFileName('', config);
+      downloadFileWeb('$name.pdf', pdfBytes, 'application/pdf');
+    } else {
+      final tempDir = await Directory.systemTemp.createTemp('sarvmd_print_');
+      final name = _cleanFileName('', config);
+      final filePath = p.join(tempDir.path, '$name.pdf');
+      final file = File(filePath);
+      await file.writeAsBytes(pdfBytes);
+      await launchUrl(Uri.file(filePath));
     }
   }
 }

@@ -100,6 +100,16 @@ final List<ShortcutItem> appShortcuts = [
   ),
   ShortcutItem(
     category: ShortcutCategory.file,
+    titleBuilder: (l10n) => l10n.menuPrint,
+    keys: const [
+      ['Ctrl', 'P']
+    ],
+    macKeys: const [
+      ['⌘', 'P']
+    ],
+  ),
+  ShortcutItem(
+    category: ShortcutCategory.file,
     titleBuilder: (l10n) => l10n.shortcutDocumentProperties,
     keys: const [
       ['Ctrl', 'I']
@@ -211,6 +221,30 @@ final List<ShortcutItem> appShortcuts = [
     ],
     macKeys: const [
       ['␣', 'Drag']
+    ],
+  ),
+  ShortcutItem(
+    category: ShortcutCategory.canvas,
+    titleBuilder: (l10n) => l10n.shortcutNextPage,
+    keys: const [
+      ['PageDown'],
+      ['Alt', '→'],
+    ],
+    macKeys: const [
+      ['PageDown'],
+      ['⌥', '→'],
+    ],
+  ),
+  ShortcutItem(
+    category: ShortcutCategory.canvas,
+    titleBuilder: (l10n) => l10n.shortcutPreviousPage,
+    keys: const [
+      ['PageUp'],
+      ['Alt', '←'],
+    ],
+    macKeys: const [
+      ['PageUp'],
+      ['⌥', '←'],
     ],
   ),
 

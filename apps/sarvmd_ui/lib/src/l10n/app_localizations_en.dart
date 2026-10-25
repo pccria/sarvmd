@@ -802,6 +802,30 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get bookletImpositionHeader => 'Saddle-Stitch Booklet (Imposition)';
+
+  @override
+  String get bookletToggleLabel => 'Impose as Foldable Booklet';
+
+  @override
+  String get bookletToggleSubtitle =>
+      'Pairs pages 2-up per sheet side for folded, stapled sheet music.';
+
+  @override
+  String get bookletSheetModeDouble => 'Double Sheet (1:1, e.g. A3)';
+
+  @override
+  String get bookletSheetModeScaled => 'Same Sheet (Scaled 2-up, e.g. A4)';
+
+  @override
+  String get bookletSpineTicks => 'Spine fold tick marks';
+
+  @override
+  String bookletSignatureBadge(int pages, int sheets, int sides) {
+    return '$pages pages imposed on $sheets sheet(s) ($sides sides)';
+  }
+
+  @override
   String get displayCalibrationTitle => 'Display Calibration';
 
   @override
@@ -1010,6 +1034,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get menuSaveAs => 'Save As…';
+
+  @override
+  String get menuPrint => 'Print…';
 
   @override
   String get unsavedChangesTitle => 'Unsaved Changes';
@@ -1260,4 +1287,179 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pressBackAgainToExit => 'Press back again to exit';
+
+  @override
+  String get sectionScoreTypography => 'Score Information';
+
+  @override
+  String get sectionScoreTypographySubtitle =>
+      'Title, contributor credits, and score header engraving';
+
+  @override
+  String get scoreTypographyHeaderBlock => 'Show Header Block';
+
+  @override
+  String get scoreTypographyHeaderBlockSubtitle =>
+      'Master switch to render title and contributor credits on page 1';
+
+  @override
+  String get scoreTypographyPageNumbers => 'Show Page Numbers';
+
+  @override
+  String get scoreTypographyPageNumbersSubtitle =>
+      'Render running page numbers on subsequent pages';
+
+  @override
+  String get scoreTypographyVisibility => 'Visibility';
+
+  @override
+  String get scoreTypographyShowOnScore => 'Show on score';
+
+  @override
+  String get scoreTypographyHideOnScore => 'Hide on score';
+
+  @override
+  String get scoreTypographyMoreProperties => 'Advanced Properties…';
+
+  @override
+  String get scoreTypographyMoreCredits =>
+      'Additional Credits (Subtitle, Arranger, Lyricist)';
+
+  @override
+  String get scoreTypographyLessCredits => 'Hide Additional Credits';
+
+  @override
+  String get scoreTypographyHiddenNotice => 'Hidden on score';
+
+  @override
+  String get scoreTypographyVisibleNotice => 'Visible on score';
+
+  @override
+  String get scoreTypographyRunningHeader => 'Page Numbers (p. 2+)';
+
+  @override
+  String get scoreTypographyEnterTextNotice => 'Enter text to display on score';
+
+  @override
+  String scoreTypographyHeadroom(String headroom) {
+    return 'Header Headroom: $headroom mm (Page 1)';
+  }
+
+  @override
+  String get scoreTypographyHeadroomNone =>
+      'Full-page staves (0.0 mm headroom)';
+
+  @override
+  String get scoreTypographyHeaderDisabledNotice =>
+      'Header block is hidden. Staves occupy full first page.';
+
+  @override
+  String pageNavigatorPageOf(int current, int total) {
+    return 'Page $current of $total';
+  }
+
+  @override
+  String get pageNavigatorPrevTooltip => 'Previous Page (PageUp)';
+
+  @override
+  String get pageNavigatorNextTooltip => 'Next Page (PageDown)';
+
+  @override
+  String get pageNavigatorAddPageTooltip => 'Add Page';
+
+  @override
+  String get pageNavigatorRemovePageTooltip => 'Remove Last Page';
+
+  @override
+  String get documentPageCountLabel => 'Document Pages';
+
+  @override
+  String get documentPageCountDesc => 'Total pages in score manuscript';
+
+  @override
+  String get shortcutNextPage => 'Next page';
+
+  @override
+  String get shortcutPreviousPage => 'Previous page';
+
+  @override
+  String get pageArrangementSection => 'Page Arrangement';
+
+  @override
+  String get pageArrangementSectionDesc =>
+      'Configure how manuscript pages are displayed in the workspace';
+
+  @override
+  String get pageArrangementSingle => 'Single Page';
+
+  @override
+  String get pageArrangementSingleDesc =>
+      'Display one page at a time with quick navigation';
+
+  @override
+  String get pageArrangementFacing => 'Facing Pages';
+
+  @override
+  String get pageArrangementFacingDesc =>
+      'Display score in two-page book spreads (Page 1 recto)';
+
+  @override
+  String get pageArrangementContinuousVertical => 'Vertical Flow';
+
+  @override
+  String get pageArrangementContinuousVerticalDesc =>
+      'Continuous vertical flow of all manuscript pages';
+
+  @override
+  String get pageArrangementContinuousHorizontal => 'Horizontal Ribbon';
+
+  @override
+  String get pageArrangementContinuousHorizontalDesc =>
+      'Continuous horizontal ribbon of all manuscript pages';
+
+  @override
+  String get pageArrangementGrid => 'Grid Overview';
+
+  @override
+  String get pageArrangementGridDesc =>
+      'Matrix overview of all pages across customizable columns';
+
+  @override
+  String get pageArrangementColumnsLabel => 'Grid Columns';
+
+  @override
+  String pageArrangementColumnsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Columns',
+      one: '1 Column',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get autoFocusOnPageChange => 'Auto-Focus Active Page';
+
+  @override
+  String get autoFocusOnPageChangeTooltip =>
+      'Automatically centers the camera on the active page during navigation';
+
+  @override
+  String get pageSwipeGestures => 'Swipe to Turn Pages';
+
+  @override
+  String get pageSwipeGesturesTooltip =>
+      'Swipe horizontally on touch screens to navigate previous/next score pages';
+
+  @override
+  String swipeTurnedToPage(int page, int total) {
+    return 'Page $page of $total';
+  }
+
+  @override
+  String get swipeFirstPageReached => 'First page';
+
+  @override
+  String get swipeLastPageReached => 'Last page';
 }

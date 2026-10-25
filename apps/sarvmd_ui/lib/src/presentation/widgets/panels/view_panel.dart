@@ -49,6 +49,19 @@ class ViewPanel extends StatelessWidget {
                   onThemeModeChanged: viewCubit.updateThemeMode,
                   onAccentChanged: viewCubit.updateAccent,
                 ),
+                const SizedBox(height: AppSpacing.sectionGap),
+                SectionHeader(title: AppLocalizations.of(context)!.pageArrangementSection),
+                const SizedBox(height: AppSpacing.itemGapSmall),
+                _PageArrangementControl(
+                  current: viewState.pageArrangement,
+                  gridColumns: viewState.gridColumns,
+                  autoFocusOnPageChange: viewState.autoFocusOnPageChange,
+                  pageSwipeGestures: viewState.pageSwipeGestures,
+                  onArrangementChanged: viewCubit.setPageArrangement,
+                  onGridColumnsChanged: viewCubit.setGridColumns,
+                  onAutoFocusChanged: viewCubit.setAutoFocusOnPageChange,
+                  onPageSwipeGesturesChanged: viewCubit.setPageSwipeGestures,
+                ),
               ],
             );
           },
@@ -103,9 +116,32 @@ class ViewPanel extends StatelessWidget {
                         child: Divider(height: 32),
                       ),
                       FadeInSlide(
-                          delay: 4, child: SectionHeader(title: AppLocalizations.of(context)!.zoom)),
+                        delay: 4,
+                        child: SectionHeader(
+                          title: AppLocalizations.of(context)!.pageArrangementSection,
+                        ),
+                      ),
                       FadeInSlide(
                         delay: 5,
+                        child: _PageArrangementControl(
+                          current: viewState.pageArrangement,
+                          gridColumns: viewState.gridColumns,
+                          autoFocusOnPageChange: viewState.autoFocusOnPageChange,
+                          pageSwipeGestures: viewState.pageSwipeGestures,
+                          onArrangementChanged: viewCubit.setPageArrangement,
+                          onGridColumnsChanged: viewCubit.setGridColumns,
+                          onAutoFocusChanged: viewCubit.setAutoFocusOnPageChange,
+                          onPageSwipeGesturesChanged: viewCubit.setPageSwipeGestures,
+                        ),
+                      ),
+                      const FadeInSlide(
+                        delay: 6,
+                        child: Divider(height: 32),
+                      ),
+                      FadeInSlide(
+                          delay: 7, child: SectionHeader(title: AppLocalizations.of(context)!.zoom)),
+                      FadeInSlide(
+                        delay: 8,
                         child: IntegratedScaleControl(
                           viewState: viewState,
                           viewCubit: viewCubit,
@@ -114,13 +150,13 @@ class ViewPanel extends StatelessWidget {
                         ),
                       ),
                       const FadeInSlide(
-                        delay: 6,
+                        delay: 9,
                         child: Divider(height: 32),
                       ),
                       FadeInSlide(
-                          delay: 7, child: SectionHeader(title: AppLocalizations.of(context)!.guides)),
+                          delay: 10, child: SectionHeader(title: AppLocalizations.of(context)!.guides)),
                       FadeInSlide(
-                        delay: 8,
+                        delay: 11,
                         child: Column(
                           children: [
                             GuideToggle(
@@ -421,6 +457,301 @@ class _AccentPillPickerState extends State<_AccentPillPicker>
           ),
         );
       }).toList(),
+    );
+  }
+}
+
+class _PageArrangementControl extends StatelessWidget {
+  const _PageArrangementControl({
+    required this.current,
+    required this.gridColumns,
+    this.autoFocusOnPageChange = true,
+    this.pageSwipeGestures = true,
+    required this.onArrangementChanged,
+    required this.onGridColumnsChanged,
+    this.onAutoFocusChanged,
+    this.onPageSwipeGesturesChanged,
+  });
+
+  final PageArrangementMode current;
+  final int gridColumns;
+  final bool autoFocusOnPageChange;
+  final bool pageSwipeGestures;
+  final ValueChanged<PageArrangementMode> onArrangementChanged;
+  final ValueChanged<int> onGridColumnsChanged;
+  final ValueChanged<bool>? onAutoFocusChanged;
+  final ValueChanged<bool>? onPageSwipeGesturesChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
+    final int selectedIndex = switch (current) {
+      PageArrangementMode.single => 0,
+      PageArrangementMode.facingSpread => 1,
+      PageArrangementMode.continuousVertical => 2,
+      PageArrangementMode.continuousHorizontal => 3,
+      PageArrangementMode.grid => 4,
+    };
+
+    final String modeTitle = switch (current) {
+      PageArrangementMode.single => l10n.pageArrangementSingle,
+      PageArrangementMode.facingSpread => l10n.pageArrangementFacing,
+      PageArrangementMode.continuousVertical => l10n.pageArrangementContinuousVertical,
+      PageArrangementMode.continuousHorizontal => l10n.pageArrangementContinuousHorizontal,
+      PageArrangementMode.grid => l10n.pageArrangementGrid,
+    };
+
+    final String modeDesc = switch (current) {
+      PageArrangementMode.single => l10n.pageArrangementSingleDesc,
+      PageArrangementMode.facingSpread => l10n.pageArrangementFacingDesc,
+      PageArrangementMode.continuousVertical => l10n.pageArrangementContinuousVerticalDesc,
+      PageArrangementMode.continuousHorizontal => l10n.pageArrangementContinuousHorizontalDesc,
+      PageArrangementMode.grid => l10n.pageArrangementGridDesc,
+    };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          height: 40,
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: cs.onSurface.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final double segmentWidth = constraints.maxWidth / 5;
+              return Stack(
+                children: [
+                  AnimatedPositioned(
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeOutCubic,
+                    left: selectedIndex * segmentWidth,
+                    width: segmentWidth,
+                    height: 32,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: cs.surface,
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      _ArrangementOption(
+                        icon: Icons.crop_portrait_rounded,
+                        tooltip: l10n.pageArrangementSingle,
+                        isSelected: current == PageArrangementMode.single,
+                        onTap: () => onArrangementChanged(PageArrangementMode.single),
+                      ),
+                      _ArrangementOption(
+                        icon: Icons.auto_stories_rounded,
+                        tooltip: l10n.pageArrangementFacing,
+                        isSelected: current == PageArrangementMode.facingSpread,
+                        onTap: () => onArrangementChanged(PageArrangementMode.facingSpread),
+                      ),
+                      _ArrangementOption(
+                        icon: Icons.view_day_rounded,
+                        tooltip: l10n.pageArrangementContinuousVertical,
+                        isSelected: current == PageArrangementMode.continuousVertical,
+                        onTap: () => onArrangementChanged(PageArrangementMode.continuousVertical),
+                      ),
+                      _ArrangementOption(
+                        icon: Icons.view_column_rounded,
+                        tooltip: l10n.pageArrangementContinuousHorizontal,
+                        isSelected: current == PageArrangementMode.continuousHorizontal,
+                        onTap: () => onArrangementChanged(PageArrangementMode.continuousHorizontal),
+                      ),
+                      _ArrangementOption(
+                        icon: Icons.grid_view_rounded,
+                        tooltip: l10n.pageArrangementGrid,
+                        isSelected: current == PageArrangementMode.grid,
+                        onTap: () => onArrangementChanged(PageArrangementMode.grid),
+                      ),
+                    ],
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          modeTitle,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: cs.primary,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          modeDesc,
+          style: TextStyle(
+            fontSize: 11,
+            color: cs.onSurfaceVariant.withValues(alpha: 0.7),
+          ),
+        ),
+        if (current == PageArrangementMode.grid) ...[
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: cs.surfaceContainerHighest.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: cs.outlineVariant.withValues(alpha: 0.3),
+              ),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.pageArrangementColumnsLabel,
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.remove_rounded, size: 16),
+                  onPressed: gridColumns > 1
+                      ? () => onGridColumnsChanged(gridColumns - 1)
+                      : null,
+                  visualDensity: VisualDensity.compact,
+                  splashRadius: 16,
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Text(
+                    l10n.pageArrangementColumnsCount(gridColumns),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: cs.primary,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.add_rounded, size: 16),
+                  onPressed: gridColumns < 6
+                      ? () => onGridColumnsChanged(gridColumns + 1)
+                      : null,
+                  visualDensity: VisualDensity.compact,
+                  splashRadius: 16,
+                ),
+              ],
+            ),
+          ),
+        ],
+        if (onAutoFocusChanged != null) ...[
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: cs.surfaceContainerHighest.withValues(alpha: 0.25),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: cs.outlineVariant.withValues(alpha: 0.25),
+              ),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Tooltip(
+                    message: l10n.autoFocusOnPageChangeTooltip,
+                    child: Text(
+                      l10n.autoFocusOnPageChange,
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ),
+                Transform.scale(
+                  scale: 0.8,
+                  child: Switch(
+                    value: autoFocusOnPageChange,
+                    onChanged: onAutoFocusChanged,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (onPageSwipeGesturesChanged != null)
+            Container(
+              margin: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: cs.surfaceContainerHighest.withValues(alpha: 0.25),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: cs.outlineVariant.withValues(alpha: 0.25),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Tooltip(
+                      message: l10n.pageSwipeGesturesTooltip,
+                      child: Text(
+                        l10n.pageSwipeGestures,
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                  ),
+                  Transform.scale(
+                    scale: 0.8,
+                    child: Switch(
+                      value: pageSwipeGestures,
+                      onChanged: onPageSwipeGesturesChanged,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ],
+    );
+  }
+}
+
+class _ArrangementOption extends StatelessWidget {
+  const _ArrangementOption({
+    required this.icon,
+    required this.tooltip,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Expanded(
+      child: Tooltip(
+        message: tooltip,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(8),
+          child: Center(
+            child: Icon(
+              icon,
+              size: 18,
+              color: isSelected ? cs.primary : cs.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
