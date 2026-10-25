@@ -548,15 +548,26 @@ void main() {
       expect(tex, contains(r'\makebox(0,0)[r]'));
 
       // If pdflatex is available, verify actual compilation succeeds without syntax errors
-      final tempDir = Directory.systemTemp.createTempSync('sarvmd_tex_test_');
-      try {
-        final texFile = File('${tempDir.path}/test_score.tex');
-        texFile.writeAsStringSync(tex);
-        final pdfPath = await ScoreCompiler.compileTexFileToPdf(texFile.path, outputDir: tempDir.path);
-        expect(File(pdfPath).existsSync(), isTrue);
-        expect(File(pdfPath).lengthSync(), greaterThan(1000));
-      } finally {
-        tempDir.deleteSync(recursive: true);
+      final hasPdflatex = () {
+        try {
+          final res = Process.runSync('which', ['pdflatex']);
+          return res.exitCode == 0;
+        } catch (_) {
+          return false;
+        }
+      }();
+
+      if (hasPdflatex) {
+        final tempDir = Directory.systemTemp.createTempSync('sarvmd_tex_test_');
+        try {
+          final texFile = File('${tempDir.path}/test_score.tex');
+          texFile.writeAsStringSync(tex);
+          final pdfPath = await ScoreCompiler.compileTexFileToPdf(texFile.path, outputDir: tempDir.path);
+          expect(File(pdfPath).existsSync(), isTrue);
+          expect(File(pdfPath).lengthSync(), greaterThan(1000));
+        } finally {
+          tempDir.deleteSync(recursive: true);
+        }
       }
     });
 
