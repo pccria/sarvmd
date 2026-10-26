@@ -34,6 +34,7 @@ When cutting a new application release:
 - **No Alias Constants**: Do not create duplicate version alias fields (e.g. `fallbackVersion`). Reference `AppVersion.version` directly.
 
 ## 4. Architectural & Engraving Knowledge Base
+- **Plain Platform Integration & Development Master Blueprint:** [research/plain_platform_integration_and_development_plan.md](research/plain_platform_integration_and_development_plan.md)
 - **Hierarchical Labeling & Nesting Standards:** [knowledge/hierarchical_labeling_and_nesting_standards.md](knowledge/hierarchical_labeling_and_nesting_standards.md)
 - **UI State Preservation & Panel Architecture:** [knowledge/ui_state_preservation_and_panel_architecture.md](knowledge/ui_state_preservation_and_panel_architecture.md)
 - **Engraving Research & Calculations:** [research/group_and_staff_hierarchical_labeling_standards.md](research/group_and_staff_hierarchical_labeling_standards.md)

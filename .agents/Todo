@@ -167,4 +167,11 @@
     [x] Built `scripts/cut_release.sh` automating synchronized version bumps, changelog promotion from `[Unreleased]`, gate validation, and signed Git release tagging (`vX.Y.Z`).
     [x] Created `.github/workflows/ci.yml` providing matrix validation (static analysis, engine tests, CLI tests, UI tests) across PRs and branch pushes.
     [x] Created tag-driven `.github/workflows/release.yml` for multi-artifact releases (Android APK, Linux desktop bundle, standalone Linux CLI executable, SHA256 checksums, and aggregated release notes), replacing obsolete `release_android.yml`.
-
+23. [ ] Plain Platform Integration & Transition into Plain Composer:
+    [x] Switched GitHub repository visibility from Public to 100% Private on GitHub (`pooriaaskarim/sarvmd`).
+    [x] Authored master architectural migration blueprint (`.agents/research/plain_platform_integration_and_development_plan.md`).
+    [ ] Phase A: Monorepo Package Rebranding (`plain_score`, `plain_cli`, `apps/plain_composer`) and bundle ID migration (`platform.plain.composer`).
+    [ ] Phase B: Decouple and publish `plain_score` pure-Dart engraving engine to `pub.dev` (Pana 140/140).
+    [ ] Phase C: Build Option 3 (On-Canvas Interactive CAD Drag Handles & Spatial Constraint Solver).
+    [ ] Phase D: Implement Measure Division Grids, Key & Time Signatures, and Alternating Facing Spreads.
+    [ ] Phase E: Desktop Code-Signing, Pay-to-Own Activation, and Web CanvasKit WASM Deployment.
