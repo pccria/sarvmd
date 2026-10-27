@@ -5,10 +5,10 @@
 name: sarvmd_core
 description: "Core library for SarvMD music manuscript designer — layout engine, LaTeX emitter, compiler, and vector engraving pipeline."
 version: 0.13.0
-homepage: https://github.com/pooriaaskarim/sarvmd
-repository: https://github.com/pooriaaskarim/sarvmd
-issue_tracker: https://github.com/pooriaaskarim/sarvmd/issues
-documentation: https://github.com/pooriaaskarim/sarvmd#readme
+homepage: https://github.com/pccria/sarvmd
+repository: https://github.com/pccria/sarvmd
+issue_tracker: https://github.com/pccria/sarvmd/issues
+documentation: https://github.com/pccria/sarvmd#readme
 publish_to: none
 resolution: workspace
 environment:
