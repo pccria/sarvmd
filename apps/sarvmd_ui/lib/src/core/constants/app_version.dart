@@ -10,7 +10,7 @@ abstract class AppVersion {
   static const String author = 'Pooria Askari Moqaddam';
   static const String copyright = 'Copyright © 2026 Pooria Askari Moqaddam';
   static const String license = 'Business Source License 1.1 (BUSL-1.1)';
-  static const String githubUrl = 'https://github.com/pooriaaskarim/sarvmd';
+  static const String githubUrl = 'https://github.com/pccria/sarvmd';
 
   static String getFormattedBuildInfo(String displayVersion, String date) =>
       '$name v${displayVersion.isNotEmpty ? displayVersion : version}${date.isNotEmpty ? " ($date)" : ""}\n'
